@@ -2,7 +2,8 @@ import SwiftUI
 import SpriteKit
 
 struct ContentView: View {
-    @StateObject private var model = GameModel()
+    @ObservedObject var model: GameModel
+    let onMenu: () -> Void
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
     }()
@@ -16,15 +17,31 @@ struct ContentView: View {
         ZStack {
             SpriteView(scene: scene).ignoresSafeArea()
             VStack(spacing: 0) { header; Spacer(); tray }
+            VStack {
+                HStack {
+                    Button(action: onMenu) {
+                        Image(systemName: "house.fill").font(.system(size: 16, weight: .heavy))
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(Chip())
+                    .accessibilityLabel("Menu")
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 12).padding(.top, 4)
             if let t = model.toast {
-                Text(t).font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(ink)
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(night.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                Toast(text: t)
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_600_000_000); model.toast = nil }
+            }
+            if let c = model.celebration {
+                CelebrationView(celebration: c, chime: model.chime,
+                                onPlayAgain: { model.celebration = nil; model.start() },
+                                onDismiss: { model.celebration = nil })
+                    .transition(.opacity)
             }
         }
         .onAppear { scene.model = model }
-        .preferredColorScheme(.dark)
     }
 
     private var header: some View {
@@ -35,6 +52,7 @@ struct ContentView: View {
             Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 52)
         .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
         .background(LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
         .allowsHitTesting(false)
@@ -43,7 +61,7 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move. Drag the white handle to tilt. Size sets the note." : "Drag to move. Size sets the note."
+            return p.kind == .bar ? "Use the arrows to move and the dial to tilt, or drag it. Size sets the note." : "Use the arrows to move, or drag it. Size sets the note."
         }
         return "The dotted line is where the marble will go. Gold rings are beats: put pads there."
     }
@@ -52,14 +70,8 @@ struct ContentView: View {
         VStack(spacing: 8) {
             Text(hint).font(.system(size: 13.5, weight: .semibold, design: .rounded)).foregroundStyle(muted)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-            if let p = model.selectedPad, !model.playing {
-                HStack(spacing: 6) {
-                    Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 50)
-                    Button(p.kind == .bar ? "Longer ♭" : "Bigger ♭") { model.stepNote(-1) }
-                    Button(p.kind == .bar ? "Shorter ♯" : "Smaller ♯") { model.stepNote(1) }
-                    Button("Delete") { model.deleteSelected() }
-                }
-                .buttonStyle(Chip())
+            if model.selectedPad != nil, !model.playing {
+                PadController(model: model)
             }
             HStack(spacing: 8) {
                 Button("+ Pad") { model.addPad() }
@@ -98,5 +110,15 @@ struct Chip: ButtonStyle {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18))) }
             }
             .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+    }
+}
+
+/// Short message that fades out after a moment.
+struct Toast: View {
+    let text: String
+    var body: some View {
+        Text(text).font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(Color(red: 0.95, green: 0.96, blue: 1))
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Color(red: 0.03, green: 0.035, blue: 0.075).opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
     }
 }

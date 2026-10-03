@@ -7,6 +7,7 @@ final class GameModel: ObservableObject {
     @Published var selected: UUID?
     @Published private(set) var playing = false
     @Published var toast: String?
+    @Published var celebration: Celebration?
     private(set) var version = 0            // the scene redraws when this changes
     var focusY: Double?                     // the scene scrolls here once, then clears it
 
@@ -38,6 +39,23 @@ final class GameModel: ObservableObject {
         change(&course.pads[i]); refresh()
     }
     func setDrop(x: Double) { course.dropX = x; refresh() }
+
+    var revealY: Double?                    // the scene scrolls here only if it is off screen, then clears it
+
+    /// Pad controller: move the selected pad, staying inside the world.
+    func nudge(dx: Double, dy: Double) {
+        updateSelected { let c = Rules.clampPad(x: $0.x + dx, y: $0.y + dy); $0.x = c.x; $0.y = c.y }
+        revealY = selectedPad?.y
+    }
+    /// Pad controller: tilt the selected bar. Bumpers have no angle.
+    func rotate(by d: Double) {
+        guard selectedPad?.kind == .bar else { return }
+        updateSelected { $0.angle = Rules.clampAngle($0.angle + d) }
+    }
+    func setAngle(_ a: Double) {
+        guard selectedPad?.kind == .bar else { return }
+        updateSelected { $0.angle = Rules.clampAngle(a) }
+    }
 
     func addPad() {
         mark()
@@ -73,11 +91,24 @@ final class GameModel: ObservableObject {
 
     func toggleDrop() { playing ? stop() : start() }
     func start() {
+        celebration = nil
         synth.start(); refresh()
         guard !run.hits.isEmpty else { toast = "Nothing in the way yet. Add a pad first."; return }
         selected = nil; scheduled = 0; t0 = synth.now + 0.08; playing = true; version += 1
     }
     func stop() { playing = false; version += 1 }
+
+    /// The marble reached the end by itself: stop and celebrate.
+    func finish() {
+        let on = run.hits.filter { Engine.isOnBeat($0.time) }.count
+        stop()
+        celebration = Celebration.make(onBeat: on, total: run.hits.count)
+    }
+    /// Rising chime for the sticker's stars (i = 0, 1, 2).
+    func chime(_ i: Int) {
+        synth.start()
+        synth.play(midi: 72 + [0, 4, 7, 12][min(i, 3)], bar: true, gain: 0.3, at: synth.now + 0.02)
+    }
 
     /// Seconds since the drop, on the audio clock. Also queues the notes that are about to sound.
     var playTime: Double {

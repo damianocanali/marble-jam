@@ -13,8 +13,12 @@ final class Synth {
     init() {
         let sr = engine.outputNode.inputFormat(forBus: 0).sampleRate
         sampleRate = sr > 0 ? sr : 44100
-        source = AVAudioSourceNode { [unowned self] _, _, frameCount, bufferList -> OSStatus in
+        source = AVAudioSourceNode { [weak self] _, _, frameCount, bufferList -> OSStatus in
             let buffers = UnsafeMutableAudioBufferListPointer(bufferList)
+            guard let self else {                                                   // the synth is going away: play silence
+                for b in buffers { memset(b.mData, 0, Int(b.mDataByteSize)) }
+                return noErr
+            }
             self.lock.lock()
             let t0 = self.clock
             self.clock += Double(frameCount) / self.sampleRate
@@ -39,6 +43,8 @@ final class Synth {
         engine.attach(source)
         engine.connect(source, to: engine.mainMixerNode, format: AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2))
     }
+
+    deinit { engine.stop() }
 
     func start() {
         try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])

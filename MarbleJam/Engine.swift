@@ -4,6 +4,19 @@ import Foundation
 enum Rules {
     static let width = 720.0, gravity = 1800.0, radius = 14.0, thickness = 14.0
     static let barBounce = 0.45, bumperBounce = 0.9, step = 1.0 / 240.0, beat = 0.5
+    static let rotateStep = 5 * Double.pi / 180
+
+    /// Keeps a pad inside the world, the same limits as dragging.
+    static func clampPad(x: Double, y: Double) -> (x: Double, y: Double) { (max(20, min(width - 20, x)), max(40, y)) }
+    static func clampAngle(_ a: Double) -> Double { max(-1.4, min(1.4, a)) }
+
+    /// A bar's tilt from a direction (either end works), clamped like the tilt handle.
+    static func barAngle(dx: Double, dy: Double) -> Double {
+        var a = atan2(dy, dx)
+        if a > .pi / 2 { a -= .pi }
+        if a < -.pi / 2 { a += .pi }
+        return clampAngle(a)
+    }
 }
 
 struct Pad: Codable, Identifiable, Equatable {

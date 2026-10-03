@@ -104,8 +104,12 @@ ctx.restoreGState()
 ctx.setFillColor(rgb(1, 1, 1, 0.9))
 ctx.fillEllipse(in: CGRect(x: marble.x - 78, y: marble.y - 82, width: 56, height: 40))
 
-try? FileManager.default.createDirectory(atPath: (out as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
-let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: out) as CFURL, UTType.png.identifier as CFString, 1, nil)!
-CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)
-CGImageDestinationFinalize(dest)
-print("wrote \(out)")
+let logo = "MarbleJam/Assets.xcassets/Logo.imageset/Logo.png"
+let image = ctx.makeImage()!
+for path in [out, logo] {
+    try? FileManager.default.createDirectory(atPath: (path as NSString).deletingLastPathComponent, withIntermediateDirectories: true)
+    let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: path) as CFURL, UTType.png.identifier as CFString, 1, nil)!
+    CGImageDestinationAddImage(dest, image, nil)
+    CGImageDestinationFinalize(dest)
+    print("wrote \(path)")
+}
