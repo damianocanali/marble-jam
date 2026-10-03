@@ -43,7 +43,7 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move. Drag the white handle to tilt. Size sets the note." : "Drag to move. Size sets the note."
+            return p.kind == .bar ? "Use the arrows to move and the dial to tilt, or drag it. Size sets the note." : "Use the arrows to move, or drag it. Size sets the note."
         }
         return "The dotted line is where the marble will go. Gold rings are beats: put pads there."
     }
@@ -52,14 +52,8 @@ struct ContentView: View {
         VStack(spacing: 8) {
             Text(hint).font(.system(size: 13.5, weight: .semibold, design: .rounded)).foregroundStyle(muted)
                 .multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
-            if let p = model.selectedPad, !model.playing {
-                HStack(spacing: 6) {
-                    Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 50)
-                    Button(p.kind == .bar ? "Longer ♭" : "Bigger ♭") { model.stepNote(-1) }
-                    Button(p.kind == .bar ? "Shorter ♯" : "Smaller ♯") { model.stepNote(1) }
-                    Button("Delete") { model.deleteSelected() }
-                }
-                .buttonStyle(Chip())
+            if model.selectedPad != nil, !model.playing {
+                PadController(model: model)
             }
             HStack(spacing: 8) {
                 Button("+ Pad") { model.addPad() }
