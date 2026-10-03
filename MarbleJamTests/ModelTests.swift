@@ -70,4 +70,10 @@ final class ModelTests: XCTestCase {
         m.start()
         XCTAssertNil(m.celebration)
     }
+
+    func testStartedModelsCanBeFreed() {
+        for _ in 0..<150 {                   // the audio thread must be mid-render when a model goes away
+            autoreleasepool { let m = GameModel(); m.chime(0); RunLoop.current.run(until: Date() + 0.02) }
+        }
+    }
 }
