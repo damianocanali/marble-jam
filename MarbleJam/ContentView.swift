@@ -29,7 +29,7 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("Marble Composer")
+            Text("Marble Jam")
                 .font(.system(size: 22, weight: .heavy, design: .rounded))
                 .foregroundStyle(LinearGradient(colors: [.cyan, .purple, .pink, .orange], startPoint: .leading, endPoint: .trailing))
             Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()

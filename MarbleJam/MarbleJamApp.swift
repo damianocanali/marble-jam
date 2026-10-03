@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct MarbleComposerApp: App {
+struct MarbleJamApp: App {
     var body: some Scene {
         WindowGroup { ContentView() }
     }
