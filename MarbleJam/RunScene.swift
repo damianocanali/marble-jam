@@ -157,7 +157,7 @@ final class RunScene: SKScene {
             marble.position = CGPoint(x: p.x, y: p.y); marble.alpha = 1
             while hitIndex < m.run.hits.count, m.run.hits[hitIndex].time <= t { flash(m.run.hits[hitIndex], in: m); hitIndex += 1 }
             camY += (p.y - viewHeight * 0.4 - camY) * 0.12                           // the camera follows the marble
-            if t > m.run.duration + 0.7 { m.stop() }
+            if t > m.run.duration + 0.7 { m.finish() }
         } else {
             marble.position = CGPoint(x: m.course.dropX, y: m.course.dropY); marble.alpha = 0.55
             if let ty = targetCamY, drag == nil { camY += (ty - camY) * 0.12; if abs(ty - camY) < 1 { targetCamY = nil } }

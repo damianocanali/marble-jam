@@ -50,4 +50,24 @@ final class ModelTests: XCTestCase {
         let back = m.course.pads.first { $0.id == id }!
         XCTAssertEqual(back.x, start.x, accuracy: 1e-9)
     }
+
+    func testFinishCelebrates() {
+        let m = GameModel(); m.loadDemo(); m.start()
+        m.finish()
+        XCTAssertFalse(m.playing)
+        XCTAssertNotNil(m.celebration)
+        XCTAssertEqual(m.celebration!.notes, m.run.hits.count)
+    }
+
+    func testStopDoesNotCelebrate() {
+        let m = GameModel(); m.loadDemo(); m.start()
+        m.stop()
+        XCTAssertNil(m.celebration)
+    }
+
+    func testStartClearsCelebration() {
+        let m = GameModel(); m.loadDemo(); m.start(); m.finish()
+        m.start()
+        XCTAssertNil(m.celebration)
+    }
 }
