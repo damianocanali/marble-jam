@@ -1,0 +1,22 @@
+# Marble Composer (iOS, step 1: core builder and playback)
+
+Native rebuild of the web prototype. SwiftUI for the controls, SpriteKit for the run, AVAudioEngine for sound.
+
+**Status: written without a compiler. It has not been built or run yet.** Expect a few compile errors on first build.
+
+## Build
+1. Install XcodeGen once: `brew install xcodegen`
+2. In this folder: `xcodegen` (creates `MarbleComposer.xcodeproj` from `project.yml`)
+3. Open the project in Xcode, set your team and bundle identifier, and run on an iPhone or the simulator (iOS 17+).
+
+Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleComposer and replace its Swift files with the ones in `MarbleComposer/`.
+
+## Files
+- `Engine.swift`      rules, pads, the fixed-step simulation, the "pad on the beat" helper, the demo song
+- `Synth.swift`       bell/pluck synth on the audio clock
+- `GameModel.swift`   app state: course, undo, saving, playback
+- `RunScene.swift`    SpriteKit drawing and touch handling
+- `ContentView.swift` header, hint, buttons
+
+## Next steps (not built yet)
+Easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
