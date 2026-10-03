@@ -2,7 +2,8 @@ import SwiftUI
 import SpriteKit
 
 struct ContentView: View {
-    @StateObject private var model = GameModel()
+    @ObservedObject var model: GameModel
+    let onMenu: () -> Void
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
     }()
@@ -16,10 +17,21 @@ struct ContentView: View {
         ZStack {
             SpriteView(scene: scene).ignoresSafeArea()
             VStack(spacing: 0) { header; Spacer(); tray }
+            VStack {
+                HStack {
+                    Button(action: onMenu) {
+                        Image(systemName: "house.fill").font(.system(size: 16, weight: .heavy))
+                            .frame(width: 40, height: 40)
+                    }
+                    .buttonStyle(Chip())
+                    .accessibilityLabel("Menu")
+                    Spacer()
+                }
+                Spacer()
+            }
+            .padding(.horizontal, 12).padding(.top, 4)
             if let t = model.toast {
-                Text(t).font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(ink)
-                    .padding(.horizontal, 16).padding(.vertical, 10)
-                    .background(night.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
+                Toast(text: t)
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_600_000_000); model.toast = nil }
             }
             if let c = model.celebration {
@@ -30,7 +42,6 @@ struct ContentView: View {
             }
         }
         .onAppear { scene.model = model }
-        .preferredColorScheme(.dark)
     }
 
     private var header: some View {
@@ -41,6 +52,7 @@ struct ContentView: View {
             Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.leading, 52)
         .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
         .background(LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
         .allowsHitTesting(false)
@@ -98,5 +110,15 @@ struct Chip: ButtonStyle {
                     .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18))) }
             }
             .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
+    }
+}
+
+/// Short message that fades out after a moment.
+struct Toast: View {
+    let text: String
+    var body: some View {
+        Text(text).font(.system(size: 15, weight: .bold, design: .rounded)).foregroundStyle(Color(red: 0.95, green: 0.96, blue: 1))
+            .padding(.horizontal, 16).padding(.vertical, 10)
+            .background(Color(red: 0.03, green: 0.035, blue: 0.075).opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
     }
 }

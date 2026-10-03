@@ -2,7 +2,7 @@
 
 Native rebuild of the web prototype. SwiftUI for the controls, SpriteKit for the run, AVAudioEngine for sound.
 
-**Status: written without a compiler. It has not been built or run yet.** Expect a few compile errors on first build.
+**Status:** builds and passes its unit tests with `xcodegen && xcodebuild test -scheme MarbleJam -destination 'platform=iOS Simulator,name=iPhone 17'`.
 
 ## Build
 1. Install XcodeGen once: `brew install xcodegen`
@@ -17,7 +17,12 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `GameModel.swift`   app state: course, undo, saving, playback
 - `RunScene.swift`    SpriteKit drawing and touch handling
 - `ContentView.swift` header, hint, buttons
-- `Assets.xcassets`   app icon (regenerate with `swift tools/make_icon.swift` from this folder)
+- `RootView.swift`    switches between the menu and the game
+- `MenuView.swift`    start screen: logo, Play, Demo, Store/Sign in (coming soon)
+- `PadController.swift` D-pad and rotate dial for the selected pad
+- `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
+- `MarbleJamTests/`   unit tests for the rules, the controller commands and the star rating
+- `Assets.xcassets`   app icon and menu logo (regenerate with `swift tools/make_icon.swift` from this folder)
 
 ## Next steps (not built yet)
-Easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
+Login and store (Project B), easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
