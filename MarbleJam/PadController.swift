@@ -3,7 +3,8 @@ import SwiftUI
 /// Shown while a pad is selected: D-pad to move, ♭/♯ for the note, a dial to tilt bars.
 struct PadController: View {
     @ObservedObject var model: GameModel
-    @State private var dialing = false
+    @GestureState private var dialing = false     // resets on its own if the gesture is cancelled
+    @State private var dialMarked = false
 
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let panel = Color(red: 0.055, green: 0.07, blue: 0.15).opacity(0.9)
@@ -69,10 +70,11 @@ struct PadController: View {
             }
             .frame(width: size, height: size)
             .contentShape(Circle())
-            .gesture(DragGesture(minimumDistance: 0).onChanged { v in
-                if !dialing { dialing = true; model.mark() }
+            .gesture(DragGesture(minimumDistance: 0).updating($dialing) { _, s, _ in s = true }.onChanged { v in
+                if !dialMarked { dialMarked = true; model.mark() }
                 model.setAngle(Rules.barAngle(dx: v.location.x - size / 2, dy: v.location.y - size / 2))
-            }.onEnded { _ in dialing = false; model.save() })
+            })
+            .onChange(of: dialing) { _, down in if !down && dialMarked { dialMarked = false; model.save() } }
             HStack(spacing: 6) {
                 spin("arrow.counterclockwise", -1)
                 spin("arrow.clockwise", 1)
@@ -101,27 +103,31 @@ struct HoldButton<Label: View>: View {
     var onEnd: () -> Void = {}
     let onTick: (Int) -> Void
     @ViewBuilder let label: () -> Label
+    @GestureState private var pressed = false     // resets on its own if the gesture is cancelled
     @State private var task: Task<Void, Never>?
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.scenePhase) private var phase
 
     var body: some View {
         label()
-            .opacity(task == nil ? 1 : 0.7)
+            .opacity(pressed ? 0.7 : 1)
             .contentShape(Rectangle())
-            .gesture(DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    guard task == nil, enabled else { return }
-                    onBegin()
-                    task = Task { @MainActor in
-                        var n = 0
-                        while !Task.isCancelled {
-                            onTick(n); n += 1
-                            try? await Task.sleep(nanoseconds: 33_000_000)
-                        }
-                    }
-                }
-                .onEnded { _ in stop() })
+            .gesture(DragGesture(minimumDistance: 0).updating($pressed) { _, s, _ in s = true })
+            .onChange(of: pressed) { _, down in down ? begin() : stop() }
+            .onChange(of: phase) { _, p in if p != .active { stop() } }
             .onDisappear { stop() }
+    }
+
+    private func begin() {
+        guard task == nil, enabled else { return }
+        onBegin()
+        task = Task { @MainActor in
+            var n = 0
+            while !Task.isCancelled {
+                onTick(n); n += 1
+                try? await Task.sleep(nanoseconds: 33_000_000)
+            }
+        }
     }
 
     private func stop() {
