@@ -22,6 +22,12 @@ struct ContentView: View {
                     .background(night.opacity(0.9), in: RoundedRectangle(cornerRadius: 14))
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_600_000_000); model.toast = nil }
             }
+            if let c = model.celebration {
+                CelebrationView(celebration: c, chime: model.chime,
+                                onPlayAgain: { model.celebration = nil; model.start() },
+                                onDismiss: { model.celebration = nil })
+                    .transition(.opacity)
+            }
         }
         .onAppear { scene.model = model }
         .preferredColorScheme(.dark)
