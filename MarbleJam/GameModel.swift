@@ -39,6 +39,23 @@ final class GameModel: ObservableObject {
     }
     func setDrop(x: Double) { course.dropX = x; refresh() }
 
+    var revealY: Double?                    // the scene scrolls here only if it is off screen, then clears it
+
+    /// Pad controller: move the selected pad, staying inside the world.
+    func nudge(dx: Double, dy: Double) {
+        updateSelected { let c = Rules.clampPad(x: $0.x + dx, y: $0.y + dy); $0.x = c.x; $0.y = c.y }
+        revealY = selectedPad?.y
+    }
+    /// Pad controller: tilt the selected bar. Bumpers have no angle.
+    func rotate(by d: Double) {
+        guard selectedPad?.kind == .bar else { return }
+        updateSelected { $0.angle = Rules.clampAngle($0.angle + d) }
+    }
+    func setAngle(_ a: Double) {
+        guard selectedPad?.kind == .bar else { return }
+        updateSelected { $0.angle = Rules.clampAngle(a) }
+    }
+
     func addPad() {
         mark()
         let n = nextNotes[course.pads.filter { $0.kind == .bar }.count % nextNotes.count]

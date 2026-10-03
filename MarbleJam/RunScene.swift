@@ -147,6 +147,10 @@ final class RunScene: SKScene {
             wasPlaying = m.playing
         }
         if let f = m.focusY { targetCamY = max(-140, f - viewHeight * 0.55); m.focusY = nil }
+        if let r = m.revealY {
+            if r < camY + 60 || r > camY + viewHeight * 0.6 { targetCamY = clampCam(r - viewHeight * 0.4) }   // the tray covers the bottom
+            m.revealY = nil
+        }
         if m.version != seenVersion { seenVersion = m.version; rebuild() }
         if m.playing {
             let t = m.playTime, p = m.run.position(at: max(0, min(t, m.run.duration)))
@@ -199,14 +203,9 @@ final class RunScene: SKScene {
         let loc = t.location(in: world), x = Double(loc.x), y = Double(loc.y)
         switch d {
         case let .move(dx, dy):
-            m.updateSelected { $0.x = max(20, min(Rules.width - 20, x + dx)); $0.y = max(40, y + dy) }
+            m.updateSelected { let c = Rules.clampPad(x: x + dx, y: y + dy); $0.x = c.x; $0.y = c.y }
         case .tilt:
-            m.updateSelected { p in
-                var a = atan2(y - p.y, x - p.x)
-                if a > .pi / 2 { a -= .pi }
-                if a < -.pi / 2 { a += .pi }
-                p.angle = max(-1.4, min(1.4, a))
-            }
+            m.updateSelected { p in p.angle = Rules.barAngle(dx: x - p.x, dy: y - p.y) }
         case .hopper:
             m.setDrop(x: max(40, min(Rules.width - 40, x)))
         case let .pan(startY, startCam, moved):
