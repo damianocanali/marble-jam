@@ -44,24 +44,119 @@ let ctx = CGContext(data: nil, width: Int(size), height: Int(size), bitsPerCompo
                     bitmapInfo: CGImageAlphaInfo.noneSkipLast.rawValue)!          // opaque: App Store icons have no alpha
 ctx.setLineCap(.round); ctx.setLineJoin(.round)
 
-// MARK: background — white paper with light music doodles
+// MARK: background — white paper with outlined instruments and music doodles
 
 ctx.setFillColor(rgb(1, 1, 1)); ctx.fill(CGRect(x: 0, y: 0, width: size, height: size))
 let music = font("NotoMusic-Regular.ttf", 120)
-ctx.setStrokeColor(rgb(0.15, 0.15, 0.2, 0.55)); ctx.setLineWidth(3)
-for (i, staffY) in [940.0, 120.0].enumerated() {                                     // two wavy staffs
-    for k in 0..<5 {
-        let y = staffY + Double(k) * 14
-        ctx.move(to: CGPoint(x: -20, y: y))
-        ctx.addCurve(to: CGPoint(x: size + 20, y: y + (i == 0 ? -40 : 40)),
-                     control1: CGPoint(x: 330, y: y + (i == 0 ? 60 : -50)), control2: CGPoint(x: 700, y: y + (i == 0 ? -90 : 80)))
-    }
+let ink = rgb(0.12, 0.12, 0.16, 0.8)
+
+/// Draws `shape` (built around the origin) at a place, angle and scale, as white fill with a dark outline.
+func doodle(at x: Double, _ y: Double, angle: Double, scale: Double = 1, _ shape: () -> Void) {
+    ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: angle); ctx.scaleBy(x: scale, y: scale)
+    ctx.setLineWidth(4.5 / scale); ctx.setStrokeColor(ink); ctx.setFillColor(rgb(1, 1, 1))
+    shape()
+    ctx.restoreGState()
+}
+func outline(_ path: CGPath) { ctx.addPath(path); ctx.drawPath(using: .fillStroke) }
+func lines(_ pts: [(Double, Double, Double, Double)]) {
+    for (x0, y0, x1, y1) in pts { ctx.move(to: CGPoint(x: x0, y: y0)); ctx.addLine(to: CGPoint(x: x1, y: y1)) }
     ctx.strokePath()
 }
-for (glyph, x, y, s, a) in [("♪", 90.0, 830.0, 1.0, -0.2), ("♫", 900, 760, 1.1, 0.15), ("♩", 70, 300, 0.9, 0.1), ("♬", 920, 300, 1.0, -0.1),
-                            ("♪", 560, 975, 0.7, 0.3), ("♫", 300, 60, 0.75, -0.2), ("♩", 960, 520, 0.7, 0.2), ("♪", 40, 560, 0.7, -0.3)] {
+func round(_ x: Double, _ y: Double, _ w: Double, _ h: Double, _ r: Double) -> CGPath {
+    CGPath(roundedRect: CGRect(x: x, y: y, width: w, height: h), cornerWidth: r, cornerHeight: r, transform: nil)
+}
+func circle(_ x: Double, _ y: Double, _ r: Double) -> CGPath { CGPath(ellipseIn: CGRect(x: x - r, y: y - r, width: 2 * r, height: 2 * r), transform: nil) }
+
+func electricGuitar() {                                         // body at the origin, neck pointing up
+    outline(round(-14, 60, 28, 280, 4))                                                      // neck
+    let head = CGMutablePath()
+    head.move(to: CGPoint(x: -16, y: 335)); head.addLine(to: CGPoint(x: -22, y: 420))
+    head.addQuadCurve(to: CGPoint(x: 30, y: 425), control: CGPoint(x: 0, y: 440)); head.addLine(to: CGPoint(x: 16, y: 335)); head.closeSubpath()
+    outline(head)
+    for k in 0..<6 { outline(circle(-30, 350 + Double(k) * 13, 5)) }                        // tuning pegs
+    lines((1...9).map { k in let y = 60 + Double(k) * 30; return (-14, y, 14, y) })        // frets
+    let body = CGMutablePath()
+    body.move(to: CGPoint(x: 0, y: -120))
+    body.addCurve(to: CGPoint(x: 115, y: -55), control1: CGPoint(x: 70, y: -125), control2: CGPoint(x: 115, y: -100))
+    body.addCurve(to: CGPoint(x: 70, y: 30), control1: CGPoint(x: 115, y: -10), control2: CGPoint(x: 70, y: 0))
+    body.addCurve(to: CGPoint(x: 85, y: 115), control1: CGPoint(x: 70, y: 70), control2: CGPoint(x: 95, y: 95))
+    body.addCurve(to: CGPoint(x: 35, y: 75), control1: CGPoint(x: 75, y: 130), control2: CGPoint(x: 40, y: 110))
+    body.addLine(to: CGPoint(x: -35, y: 75))
+    body.addCurve(to: CGPoint(x: -60, y: 95), control1: CGPoint(x: -40, y: 95), control2: CGPoint(x: -50, y: 100))
+    body.addCurve(to: CGPoint(x: -80, y: 20), control1: CGPoint(x: -75, y: 85), control2: CGPoint(x: -80, y: 50))
+    body.addCurve(to: CGPoint(x: -115, y: -60), control1: CGPoint(x: -80, y: -10), control2: CGPoint(x: -115, y: -20))
+    body.addCurve(to: CGPoint(x: 0, y: -120), control1: CGPoint(x: -115, y: -105), control2: CGPoint(x: -70, y: -125))
+    body.closeSubpath()
+    outline(body)
+    for y in [-5.0, 25, 50] { outline(round(-28, y, 56, 13, 5)) }                           // pickups
+    outline(round(-30, -70, 60, 18, 4))                                                      // bridge
+    for (x, y) in [(60.0, -60.0), (78, -30), (45, -88)] { outline(circle(x, y, 10)) }        // knobs
+    lines((0..<6).map { k in let x = -10 + Double(k) * 4; return (x, -62, x, 335) })         // strings
+}
+
+func trumpet() {                                                // mouthpiece left, bell right
+    let bell = CGMutablePath()
+    bell.move(to: CGPoint(x: 70, y: 7)); bell.addQuadCurve(to: CGPoint(x: 170, y: 48), control: CGPoint(x: 140, y: 10))
+    bell.addLine(to: CGPoint(x: 170, y: -48)); bell.addQuadCurve(to: CGPoint(x: 70, y: -7), control: CGPoint(x: 140, y: -10)); bell.closeSubpath()
+    outline(bell)
+    ctx.addEllipse(in: CGRect(x: 160, y: -48, width: 20, height: 96)); ctx.drawPath(using: .fillStroke)
+    outline(round(-140, -7, 212, 14, 7))                                                     // lead pipe
+    let loop = CGMutablePath(); loop.addRoundedRect(in: CGRect(x: -70, y: -55, width: 130, height: 40), cornerWidth: 20, cornerHeight: 20)
+    ctx.addPath(loop); ctx.strokePath()
+    ctx.addPath(CGPath(roundedRect: CGRect(x: -62, y: -47, width: 114, height: 24), cornerWidth: 12, cornerHeight: 12, transform: nil)); ctx.strokePath()
+    for x in [-30.0, -5, 20] {                                                               // valves
+        outline(round(x, -20, 16, 62, 3)); outline(round(x - 4, 42, 24, 9, 4)); outline(circle(x + 8, 60, 9))
+    }
+    let mouth = CGMutablePath()
+    mouth.move(to: CGPoint(x: -140, y: 5)); mouth.addLine(to: CGPoint(x: -175, y: 13)); mouth.addLine(to: CGPoint(x: -175, y: -13))
+    mouth.addLine(to: CGPoint(x: -140, y: -5)); mouth.closeSubpath()
+    outline(mouth)
+}
+
+func keyboard() {                                               // a little synth: 14 white keys and a control strip
+    outline(round(-170, -60, 340, 125, 12))
+    outline(round(-158, -50, 316, 68, 3))
+    lines((1..<14).map { k in let x = -158 + Double(k) * 316 / 14; return (x, -50, x, 18) })
+    ctx.setFillColor(ink)
+    for k in [0, 1, 3, 4, 5, 7, 8, 10, 11, 12] {
+        let x = -158 + Double(k + 1) * 316 / 14 - 7
+        ctx.fill(CGRect(x: x, y: -12, width: 14, height: 30))
+    }
+    ctx.setFillColor(rgb(1, 1, 1))
+    outline(round(-150, 30, 90, 24, 4))                                                      // screen
+    for k in 0..<5 { outline(circle(-30 + Double(k) * 40, 42, 11)) }                         // knobs
+}
+
+
+func snareDrum() {                                              // drum with two crossed sticks
+    lines([(-110, 150, 60, -10), (110, 150, -60, -10)])
+    outline(circle(-110, 150, 8)); outline(circle(110, 150, 8))
+    let shell = CGMutablePath()
+    shell.move(to: CGPoint(x: -100, y: 30)); shell.addLine(to: CGPoint(x: -100, y: -50))
+    shell.addCurve(to: CGPoint(x: 100, y: -50), control1: CGPoint(x: -100, y: -85), control2: CGPoint(x: 100, y: -85))
+    shell.addLine(to: CGPoint(x: 100, y: 30)); shell.closeSubpath()
+    outline(shell)
+    lines((0..<6).map { k in let x = -80 + Double(k) * 32; return (x, 20, x, -65) })         // tension rods
+    ctx.addEllipse(in: CGRect(x: -100, y: 5, width: 200, height: 50)); ctx.drawPath(using: .fillStroke)
+}
+
+
+doodle(at: 150, 880, angle: 0.45) { trumpet() }
+doodle(at: 860, 920, angle: -0.35) { keyboard() }
+doodle(at: 945, 205, angle: 0.3, scale: 0.6) { electricGuitar() }
+doodle(at: 105, 110, angle: -0.15, scale: 0.8) { snareDrum() }
+
+ctx.setStrokeColor(rgb(0.15, 0.15, 0.2, 0.6)); ctx.setLineWidth(3)
+for k in 0..<5 {                                                                     // a wavy staff across the top
+    let y = 960.0 + Double(k) * 14
+    ctx.move(to: CGPoint(x: -20, y: y))
+    ctx.addCurve(to: CGPoint(x: size + 20, y: y - 40), control1: CGPoint(x: 330, y: y + 60), control2: CGPoint(x: 700, y: y - 90))
+}
+ctx.strokePath()
+for (glyph, x, y, s, a) in [("♪", 330.0, 790.0, 1.1, -0.2), ("♫", 640, 790, 1.1, 0.15), ("♬", 740, 40, 1.0, -0.1),
+                            ("♪", 40, 720, 0.9, 0.3), ("♫", 990, 400, 0.9, -0.2), ("♩", 540, 25, 0.8, 0.2)] {
     ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a); ctx.scaleBy(x: s, y: s)
-    ctx.addPath(textPath(glyph, music)); ctx.setStrokeColor(rgb(0.15, 0.15, 0.2, 0.55)); ctx.setLineWidth(3 / s); ctx.strokePath()
+    ctx.addPath(textPath(glyph, music)); ctx.setFillColor(rgb(0.12, 0.12, 0.16, 0.85)); ctx.fillPath()
     ctx.restoreGState()
 }
 
@@ -112,7 +207,7 @@ func marble(_ cx: Double, _ cy: Double, _ r: Double, hue: Double, sat: Double = 
 for (x, y, r, h) in [(370.0, 935.0, 92.0, 0.58), (560, 905, 120, 0.33), (775, 900, 105, 0.6), (650, 1010, 75, 0.0),
                      (175, 650, 60, 0.07), (300, 600, 70, 0.95)] { marble(x, y, r, hue: h) }
 for (x, y, r, h, s) in [(470.0, 420.0, 105.0, 0.0, 0.85), (640, 410, 95, 0.07, 0.9), (380, 280, 70, 0.0, 0.0), (760, 320, 120, 0.58, 0.8),
-                        (560, 250, 130, 0.14, 0.9), (330, 140, 95, 0.55, 0.8), (800, 150, 150, 0.98, 0.85), (560, 60, 120, 0.64, 0.95),
+                        (560, 250, 130, 0.14, 0.9), (330, 140, 95, 0.55, 0.8), (745, 150, 132, 0.98, 0.85), (560, 60, 120, 0.64, 0.95),
                         (330, -10, 90, 0.02, 0.85)] {
     marble(x, y, r, hue: h, sat: max(s, 0.05))
 }
@@ -132,10 +227,10 @@ let clef = textPath("𝄞", font("NotoMusic-Regular.ttf", 420))
 ctx.addPath(clef); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(22); ctx.strokePath()   // white halo so it reads over the marbles
 ctx.addPath(clef); ctx.setFillColor(rgb(0, 0, 0)); ctx.fillPath()
 ctx.restoreGState()
-for (glyph, x, y, s, a) in [("♫", 560.0, 370.0, 1.6, -0.25), ("♪", 690, 310, 1.3, 0.1)] {
+for (glyph, x, y, s, a) in [("♫", 585.0, 365.0, 2.6, -0.2), ("♪", 735, 270, 2.2, 0.12)] {   // big notes flying off the clef
     ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a); ctx.scaleBy(x: s, y: s)
     let p = textPath(glyph, music)
-    ctx.addPath(p); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(14 / s); ctx.strokePath()
+    ctx.addPath(p); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(26 / s); ctx.strokePath()
     ctx.addPath(p); ctx.setFillColor(rgb(0, 0, 0)); ctx.fillPath()
     ctx.restoreGState()
 }
