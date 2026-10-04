@@ -16,13 +16,11 @@ struct MenuView: View {
             DriftingMarbles(paused: reduceMotion).ignoresSafeArea().allowsHitTesting(false)
             VStack(spacing: 18) {
                 Spacer()
-                Image("Logo").resizable().scaledToFit().frame(width: 190, height: 190)
-                    .clipShape(RoundedRectangle(cornerRadius: 44, style: .continuous))
-                    .shadow(color: .cyan.opacity(0.55), radius: 30)
-                    .accessibilityHidden(true)
-                Text("Marble Jam")
-                    .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(red: 0.95, green: 0.96, blue: 1))
+                Image("Logo").resizable().scaledToFit().frame(maxWidth: 280, maxHeight: 280)
+                    .clipShape(RoundedRectangle(cornerRadius: 56, style: .continuous))
+                    .shadow(color: .cyan.opacity(0.45), radius: 30)
+                    .accessibilityLabel("Marble Jam")
+                    .accessibilityAddTraits(.isHeader)
                 Spacer()
                 VStack(spacing: 12) {
                     Button("Play ▶", action: onPlay).buttonStyle(Chip(primary: true)).scaleEffect(1.25).padding(.bottom, 6)
