@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Shown while a pad is selected: D-pad to move, ♭/♯ for the note, a dial to tilt bars.
+/// Shown while a pad is selected: a dial to tilt bars and ♭/♯ for the note. Moving is done by dragging the pad.
 struct PadController: View {
     @ObservedObject var model: GameModel
     @GestureState private var dialing = false     // resets on its own if the gesture is cancelled
@@ -11,77 +11,37 @@ struct PadController: View {
 
     var body: some View {
         if let p = model.selectedPad {
-            HStack(alignment: .center, spacing: 14) {
-                dpad
-                VStack(spacing: 8) {
-                    HStack(spacing: 4) {
-                        Button("♭") { model.stepNote(-1) }.buttonStyle(Chip())
-                        Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
-                        Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
-                    }
-                    HStack(spacing: 6) {
-                        Button { model.deleteSelected() } label: { Image(systemName: "trash") }.buttonStyle(Chip())
-                            .accessibilityLabel("Delete")
-                        Button("✓ Done") { model.selected = nil }.buttonStyle(Chip())
-                    }
+            HStack(spacing: 10) {
+                if p.kind == .bar {
+                    spin("arrow.counterclockwise", -1)
+                    dial(angle: p.angle)
+                    spin("arrow.clockwise", 1)
+                    Spacer().frame(width: 10)
                 }
-                dial(enabled: p.kind == .bar, angle: p.angle)
+                Button("♭") { model.stepNote(-1) }.buttonStyle(Chip())
+                Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
+                Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
             }
-        }
-    }
-
-    // MARK: D-pad
-
-    private var dpad: some View {
-        VStack(spacing: 2) {
-            arrow("chevron.up", 0, -1)
-            HStack(spacing: 2) {
-                arrow("chevron.left", -1, 0)
-                Circle().fill(ink.opacity(0.25)).frame(width: 10, height: 10).frame(width: 38, height: 38)
-                arrow("chevron.right", 1, 0)
-            }
-            arrow("chevron.down", 0, 1)
-        }
-    }
-
-    /// Tap moves 4 points; after a short hold it keeps sliding, speeding up to 12 points a tick.
-    private func arrow(_ icon: String, _ ux: Double, _ uy: Double) -> some View {
-        HoldButton(onBegin: { model.mark() }, onEnd: { model.save() }, onTick: { n in
-            guard n == 0 || n >= 9 else { return }
-            let step = n == 0 ? 4 : min(12, 4 + 8 * Double(n - 9) / 30)
-            model.nudge(dx: ux * step, dy: uy * step)
-        }) {
-            Image(systemName: icon).font(.system(size: 16, weight: .heavy)).foregroundStyle(ink)
-                .frame(width: 38, height: 38)
-                .background(panel, in: RoundedRectangle(cornerRadius: 10))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.white.opacity(0.18)))
         }
     }
 
     // MARK: rotate dial
 
-    private func dial(enabled: Bool, angle: Double) -> some View {
-        let size = 72.0
-        return VStack(spacing: 6) {
-            ZStack {
-                Circle().fill(panel).overlay(Circle().stroke(Color.white.opacity(0.18)))
-                Capsule().fill(Color.cyan).frame(width: size * 0.7, height: 6).rotationEffect(.radians(angle))
-                Circle().fill(.white).frame(width: 10, height: 10)
-            }
-            .frame(width: size, height: size)
-            .contentShape(Circle())
-            .gesture(DragGesture(minimumDistance: 0).updating($dialing) { _, s, _ in s = true }.onChanged { v in
-                if !dialMarked { dialMarked = true; model.mark() }
-                model.setAngle(Rules.barAngle(dx: v.location.x - size / 2, dy: v.location.y - size / 2))
-            })
-            .onChange(of: dialing) { _, down in if !down && dialMarked { dialMarked = false; model.save() } }
-            HStack(spacing: 6) {
-                spin("arrow.counterclockwise", -1)
-                spin("arrow.clockwise", 1)
-            }
+    private func dial(angle: Double) -> some View {
+        let size = 56.0
+        return ZStack {
+            Circle().fill(panel).overlay(Circle().stroke(Color.white.opacity(0.18)))
+            Capsule().fill(Color.cyan).frame(width: size * 0.7, height: 5).rotationEffect(.radians(angle))
+            Circle().fill(.white).frame(width: 8, height: 8)
         }
-        .opacity(enabled ? 1 : 0.35)
-        .disabled(!enabled)
+        .frame(width: size, height: size)
+        .contentShape(Circle())
+        .gesture(DragGesture(minimumDistance: 0).updating($dialing) { _, s, _ in s = true }.onChanged { v in
+            if !dialMarked { dialMarked = true; model.mark() }
+            model.setAngle(Rules.barAngle(dx: v.location.x - size / 2, dy: v.location.y - size / 2))
+        })
+        .onChange(of: dialing) { _, down in if !down && dialMarked { dialMarked = false; model.save() } }
+        .accessibilityLabel("Tilt")
     }
 
     /// 5° per tap; repeats while held.
@@ -89,11 +49,12 @@ struct PadController: View {
         HoldButton(onBegin: { model.mark() }, onEnd: { model.save() }, onTick: { n in
             if n == 0 || (n >= 9 && n % 3 == 0) { model.rotate(by: dir * Rules.rotateStep) }
         }) {
-            Image(systemName: icon).font(.system(size: 13, weight: .heavy)).foregroundStyle(ink)
-                .frame(width: 33, height: 30)
-                .background(panel, in: RoundedRectangle(cornerRadius: 9))
-                .overlay(RoundedRectangle(cornerRadius: 9).stroke(Color.white.opacity(0.18)))
+            Image(systemName: icon).font(.system(size: 15, weight: .heavy)).foregroundStyle(ink)
+                .frame(width: 44, height: 44)
+                .background(panel, in: RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.18)))
         }
+        .accessibilityLabel(dir < 0 ? "Tilt left" : "Tilt right")
     }
 }
 

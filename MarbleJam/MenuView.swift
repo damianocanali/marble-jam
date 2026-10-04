@@ -22,7 +22,7 @@ struct MenuView: View {
                     .accessibilityHidden(true)
                 Text("Marble Jam")
                     .font(.system(size: 48, weight: .black, design: .rounded))
-                    .foregroundStyle(LinearGradient(colors: [.cyan, .purple, .pink, .orange], startPoint: .leading, endPoint: .trailing))
+                    .foregroundStyle(Color(red: 0.95, green: 0.96, blue: 1))
                 Spacer()
                 VStack(spacing: 12) {
                     Button("Play ▶", action: onPlay).buttonStyle(Chip(primary: true)).scaleEffect(1.25).padding(.bottom, 6)

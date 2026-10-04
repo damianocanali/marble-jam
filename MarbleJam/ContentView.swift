@@ -19,13 +19,13 @@ struct ContentView: View {
             VStack(spacing: 0) { header; Spacer(); tray }
             VStack {
                 HStack {
+                    Spacer()
                     Button(action: onMenu) {
                         Image(systemName: "house.fill").font(.system(size: 16, weight: .heavy))
                             .frame(width: 40, height: 40)
                     }
                     .buttonStyle(Chip())
                     .accessibilityLabel("Menu")
-                    Spacer()
                 }
                 Spacer()
             }
@@ -48,11 +48,11 @@ struct ContentView: View {
         VStack(alignment: .leading, spacing: 3) {
             Text("Marble Jam")
                 .font(.system(size: 22, weight: .heavy, design: .rounded))
-                .foregroundStyle(LinearGradient(colors: [.cyan, .purple, .pink, .orange], startPoint: .leading, endPoint: .trailing))
+                .foregroundStyle(ink)
             Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.leading, 52)
+        .padding(.trailing, 52)
         .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
         .background(LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
         .allowsHitTesting(false)
@@ -61,7 +61,7 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Use the arrows to move and the dial to tilt, or drag it. Size sets the note." : "Use the arrows to move, or drag it. Size sets the note."
+            return p.kind == .bar ? "Drag to move. Turn the dial to tilt. ♭ ♯ change the note." : "Drag to move. ♭ ♯ change the note."
         }
         return "The dotted line is where the marble will go. Gold rings are beats: put pads there."
     }
@@ -77,7 +77,11 @@ struct ContentView: View {
                 Button("+ Pad") { model.addPad() }
                 Button("+ Bumper") { model.addBumper() }
                 Button("Undo") { model.undo() }
-                Button("Clear") { model.clear() }
+                if model.selectedPad != nil {
+                    Button("Delete") { model.deleteSelected() }
+                } else {
+                    Button("Clear") { model.clear() }
+                }
             }
             .buttonStyle(Chip()).disabled(model.playing)
             HStack(spacing: 8) {

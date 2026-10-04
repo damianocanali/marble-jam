@@ -147,10 +147,6 @@ final class RunScene: SKScene {
             wasPlaying = m.playing
         }
         if let f = m.focusY { targetCamY = max(-140, f - viewHeight * 0.55); m.focusY = nil }
-        if let r = m.revealY {
-            if r < camY + 60 || r > camY + viewHeight * 0.6 { targetCamY = clampCam(r - viewHeight * 0.4) }   // the tray covers the bottom
-            m.revealY = nil
-        }
         if m.version != seenVersion { seenVersion = m.version; rebuild() }
         if m.playing {
             let t = m.playTime, p = m.run.position(at: max(0, min(t, m.run.duration)))
