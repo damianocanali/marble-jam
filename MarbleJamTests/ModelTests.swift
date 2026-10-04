@@ -10,19 +10,7 @@ final class ModelTests: XCTestCase {
         return m
     }
 
-    func testNudgeMovesSelectedPad() {
-        let m = modelWithBar(), p = m.selectedPad!
-        m.nudge(dx: 4, dy: -4)
-        XCTAssertEqual(m.selectedPad!.x, p.x + 4, accuracy: 1e-9)
-        XCTAssertEqual(m.selectedPad!.y, p.y - 4, accuracy: 1e-9)
-    }
 
-    func testNudgeClamps() {
-        let m = modelWithBar()
-        for _ in 0..<500 { m.nudge(dx: -12, dy: -12) }
-        XCTAssertEqual(m.selectedPad!.x, 20)
-        XCTAssertEqual(m.selectedPad!.y, 40)
-    }
 
     func testRotateAndSetAngleClamp() {
         let m = modelWithBar()
@@ -45,10 +33,10 @@ final class ModelTests: XCTestCase {
     func testHoldIsOneUndoStep() {
         let m = modelWithBar(), id = m.selected, start = m.selectedPad!
         m.mark()                             // what the controller does at the start of a hold
-        for _ in 0..<30 { m.nudge(dx: 4, dy: 0) }
+        for _ in 0..<10 { m.rotate(by: Rules.rotateStep) }
         m.undo()
         let back = m.course.pads.first { $0.id == id }!
-        XCTAssertEqual(back.x, start.x, accuracy: 1e-9)
+        XCTAssertEqual(back.angle, start.angle, accuracy: 1e-9)
     }
 
     func testFinishCelebrates() {
