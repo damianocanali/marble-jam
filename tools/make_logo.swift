@@ -227,7 +227,7 @@ let clef = textPath("𝄞", font("NotoMusic-Regular.ttf", 420))
 ctx.addPath(clef); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(22); ctx.strokePath()   // white halo so it reads over the marbles
 ctx.addPath(clef); ctx.setFillColor(rgb(0, 0, 0)); ctx.fillPath()
 ctx.restoreGState()
-for (glyph, x, y, s, a) in [("♫", 585.0, 365.0, 2.6, -0.2), ("♪", 735, 270, 2.2, 0.12)] {   // big notes flying off the clef
+for (glyph, x, y, s, a) in [("♫", 570.0, 275.0, 2.6, -0.2), ("♪", 735, 205, 2.2, 0.12)] {   // big notes flying off the clef
     ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a); ctx.scaleBy(x: s, y: s)
     let p = textPath(glyph, music)
     ctx.addPath(p); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(26 / s); ctx.strokePath()
