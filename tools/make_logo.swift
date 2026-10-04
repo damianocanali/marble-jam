@@ -216,14 +216,14 @@ for (x, y, r, h, s) in [(470.0, 420.0, 105.0, 0.0, 0.85), (640, 410, 95, 0.07, 0
 
 ctx.setStrokeColor(rgb(0, 0, 0)); ctx.setLineWidth(11)
 for k in 0..<5 {                                                                     // speed lines sweeping out of the clef
-    let y = 330.0 + Double(k) * 38
+    let y = 260.0 + Double(k) * 38
     ctx.move(to: CGPoint(x: 10, y: y + 90 - Double(k) * 10))
     ctx.addCurve(to: CGPoint(x: 680 - Double(k) * 40, y: y + 60 + Double(k) * 18),
                  control1: CGPoint(x: 230, y: y + 20), control2: CGPoint(x: 470, y: y - 30))
 }
 ctx.strokePath()
-ctx.saveGState(); ctx.translateBy(x: 290, y: 400); ctx.rotate(by: -0.12)
-let clef = textPath("𝄞", font("NotoMusic-Regular.ttf", 420))
+ctx.saveGState(); ctx.translateBy(x: 285, y: 310); ctx.rotate(by: -0.12)
+let clef = textPath("𝄞", font("NotoMusic-Regular.ttf", 345))
 ctx.addPath(clef); ctx.setStrokeColor(rgb(1, 1, 1)); ctx.setLineWidth(22); ctx.strokePath()   // white halo so it reads over the marbles
 ctx.addPath(clef); ctx.setFillColor(rgb(0, 0, 0)); ctx.fillPath()
 ctx.restoreGState()
