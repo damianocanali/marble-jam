@@ -19,3 +19,5 @@ build/
 # Canva-made artwork: kept local until the licence is confirmed (repo is public)
 art/backgrounds/
 art/Logo.JPG
+MarbleJamBackgrounds/*
+!MarbleJamBackgrounds/.gitkeep

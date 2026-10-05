@@ -2,17 +2,22 @@ import SwiftUI
 
 /// Start screen: big logo, the name, and the main buttons. Marbles drift in the background.
 struct MenuView: View {
+    let background: BackgroundOption?
+    @Binding var backgroundID: String
     let onPlay: () -> Void
     let onDemo: () -> Void
     @State private var toast: String?
+    @State private var picking = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
 
     var body: some View {
         ZStack {
-            LinearGradient(colors: [Color(red: 0.09, green: 0.11, blue: 0.25), night], startPoint: .top, endPoint: .bottom)
-                .ignoresSafeArea()
+            if background == nil {
+                LinearGradient(colors: [Color(red: 0.09, green: 0.11, blue: 0.25), night], startPoint: .top, endPoint: .bottom)
+                    .ignoresSafeArea()
+            }
             DriftingMarbles(paused: reduceMotion).ignoresSafeArea().allowsHitTesting(false)
             VStack(spacing: 18) {
                 Spacer()
@@ -25,6 +30,9 @@ struct MenuView: View {
                 VStack(spacing: 12) {
                     Button("Play ▶", action: onPlay).buttonStyle(Chip(primary: true)).scaleEffect(1.25).padding(.bottom, 6)
                     Button("Demo Song", action: onDemo).buttonStyle(Chip())
+                    if !BackgroundLibrary.bundled.isEmpty {
+                        Button("Backgrounds") { picking = true }.buttonStyle(Chip())
+                    }
                     HStack(spacing: 10) {
                         Button("Store") { toast = "Store is coming soon" }.buttonStyle(Chip())
                         Button("Sign in") { toast = "Sign in is coming soon" }.buttonStyle(Chip())
@@ -38,6 +46,8 @@ struct MenuView: View {
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_000_000_000); toast = nil }
             }
         }
+        .background { Backdrop(option: background) }
+        .sheet(isPresented: $picking) { BackgroundPicker(options: BackgroundLibrary.bundled, selectedID: $backgroundID) }
     }
 }
 

@@ -21,7 +21,7 @@ final class RunScene: SKScene {
     private var viewHeight: Double { Double(size.height) / base }
 
     override func didMove(to view: SKView) {
-        backgroundColor = UIColor(red: 0.04, green: 0.05, blue: 0.11, alpha: 1)
+        backgroundColor = .clear                                     // the Backdrop behind the SpriteView shows through
         guard world.parent == nil else { return }
         addChild(world)
         [guideLayer, padLayer, fxLayer].forEach { world.addChild($0) }

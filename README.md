@@ -21,6 +21,8 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `MenuView.swift`    start screen: logo, Play, Demo, Store/Sign in (coming soon)
 - `PadController.swift` tilt dial and note buttons for the selected pad
 - `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
+- `Backgrounds.swift` / `BackgroundViews.swift` the background list, the picker and the tinted backdrop
+- `MarbleJamBackgrounds/` the bundled backgrounds, made from `art/backgrounds/` with `swift tools/prepare_backgrounds.swift` (both folders are kept out of git until the artwork licence is confirmed; with no backgrounds the game uses the night sky)
 - `MarbleJamTests/`   unit tests for the rules, the controller commands and the star rating
 - `Assets.xcassets`   app icon (made from `art/Logo.JPG`, kept out of git, with `tools/icon_from_logo.swift`) and menu logo (made from `art/MarbleJam.png`)
 - `art/`              the logo, drawn by `swift tools/make_logo.swift`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Then `tools/icon_from_art.swift` (command at its top) updates the icon and menu logo

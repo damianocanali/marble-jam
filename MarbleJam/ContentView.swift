@@ -3,6 +3,7 @@ import SpriteKit
 
 struct ContentView: View {
     @ObservedObject var model: GameModel
+    let background: BackgroundOption?
     let onMenu: () -> Void
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
@@ -15,7 +16,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
-            SpriteView(scene: scene).ignoresSafeArea()
+            SpriteView(scene: scene, options: [.allowsTransparency]).ignoresSafeArea()
             VStack(spacing: 0) { header; Spacer(); tray }
             VStack {
                 HStack {
@@ -41,6 +42,7 @@ struct ContentView: View {
                     .transition(.opacity)
             }
         }
+        .background { Backdrop(option: background) }
         .onAppear { scene.model = model }
     }
 
