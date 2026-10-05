@@ -22,7 +22,7 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `PadController.swift` tilt dial and note buttons for the selected pad
 - `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
 - `MarbleJamTests/`   unit tests for the rules, the controller commands and the star rating
-- `Assets.xcassets`   app icon and menu logo, both made from `art/MarbleJam.png`
+- `Assets.xcassets`   app icon (made from `art/Logo.JPG`, kept out of git, with `tools/icon_from_logo.swift`) and menu logo (made from `art/MarbleJam.png`)
 - `art/`              the logo, drawn by `swift tools/make_logo.swift`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Then `tools/icon_from_art.swift` (command at its top) updates the icon and menu logo
 
 ## Next steps (not built yet)
