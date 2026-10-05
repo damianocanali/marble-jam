@@ -64,4 +64,22 @@ final class ModelTests: XCTestCase {
             autoreleasepool { let m = GameModel(); m.chime(0); RunLoop.current.run(until: Date() + 0.02) }
         }
     }
+
+    func testLettingGoOfAClosePadSnapsItOnTheBeat() throws {
+        let m = GameModel(); m.loadDemo()
+        let i = 5; m.selected = m.course.pads[i].id
+        var dy = 0
+        repeat { dy += 1; m.updateSelected { $0.y += 1 } } while m.beats[i] != .near && dy < 40
+        XCTAssertEqual(m.beats[i], .near)
+        XCTAssertTrue(m.finishEdit())
+        XCTAssertEqual(m.beats[i], .on)
+    }
+
+    func testLettingGoOfAPadOnTheBeatChangesNothing() {
+        let m = GameModel(); m.loadDemo()
+        m.selected = m.course.pads[5].id
+        let before = m.course
+        XCTAssertFalse(m.finishEdit())
+        XCTAssertEqual(m.course, before)
+    }
 }

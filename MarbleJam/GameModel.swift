@@ -4,6 +4,7 @@ import Foundation
 final class GameModel: ObservableObject {
     @Published private(set) var course = Course()
     @Published private(set) var run = Run()
+    private(set) var beats: [Engine.BeatState] = []    // per pad: on the beat, close, off, or unused
     @Published var selected: UUID?
     @Published private(set) var playing = false
     @Published var toast: String?
@@ -27,7 +28,7 @@ final class GameModel: ObservableObject {
         refresh()
     }
 
-    private func refresh() { run = Engine.simulate(course); version += 1 }
+    private func refresh() { run = Engine.simulate(course); beats = Engine.beatStates(run, padCount: course.pads.count); version += 1 }
     func save() { if let d = try? JSONEncoder().encode(course) { UserDefaults.standard.set(d, forKey: Self.key) } }
     func mark() { undoStack.append(course); if undoStack.count > 40 { undoStack.removeFirst() } }
 
@@ -39,6 +40,15 @@ final class GameModel: ObservableObject {
         change(&course.pads[i]); refresh()
     }
     func setDrop(x: Double) { course.dropX = x; refresh() }
+
+    /// After a drag, a tilt or a rotate: a selected pad that is close to the beat slides onto it. Saves either way.
+    @discardableResult func finishEdit() -> Bool {
+        defer { save() }
+        guard let i = course.pads.firstIndex(where: { $0.id == selected }), beats.indices.contains(i), beats[i] == .near,
+              let snapped = Engine.snapToBeat(course, pad: i) else { return false }
+        course = snapped; refresh()
+        return true
+    }
 
     /// Pad controller: tilt the selected bar. Bumpers have no angle.
     func rotate(by d: Double) {

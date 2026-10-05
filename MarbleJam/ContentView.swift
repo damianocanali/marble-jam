@@ -62,9 +62,9 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move. Turn the dial to tilt. ♭ ♯ change the note." : "Drag to move. ♭ ♯ change the note."
+            return p.kind == .bar ? "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on." : "Drag to move. ♭ ♯ change the note."
         }
-        return "The dotted line is where the marble will go. Gold rings are beats: put pads there."
+        return "The dotted line is where the marble will go. Pads glow gold when they hit on the beat."
     }
 
     private var tray: some View {
