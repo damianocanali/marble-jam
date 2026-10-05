@@ -26,4 +26,10 @@ final class BackgroundTests: XCTestCase {
     func testMissingFolderGivesNoBackgrounds() {
         XCTAssertEqual(BackgroundLibrary.load(from: URL(fileURLWithPath: "/nonexistent-\(UUID())")).count, 0)
     }
+
+    func testNamesComeFromTheManifest() {
+        let json = #"[{"id":"bg-03","name":"White Marble","image":"a.jpg","thumb":"b.jpg","luminance":0.9},{"id":"bg-04","image":"c.jpg","thumb":"d.jpg","luminance":0.4}]"#
+        let list = BackgroundLibrary.parse(Data(json.utf8), base: URL(fileURLWithPath: "/tmp"))
+        XCTAssertEqual(list.map(\.name), ["White Marble", "bg-04"])          // no name: fall back to the id
+    }
 }

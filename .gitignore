@@ -19,5 +19,7 @@ build/
 # Canva-made artwork: kept local until the licence is confirmed (repo is public)
 art/backgrounds/
 art/Logo.JPG
-MarbleJamBackgrounds/*
-!MarbleJamBackgrounds/.gitkeep
+
+# Full-size drawn backgrounds: rebuilt by tools/make_backgrounds.swift (the app uses MarbleJamBackgrounds/)
+art/backgrounds-drawn/
+.build/

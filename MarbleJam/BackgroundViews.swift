@@ -42,8 +42,8 @@ struct BackgroundPicker: View {
                             Text("Night sky").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(.white.opacity(0.8))
                         }
                     }
-                    ForEach(Array(options.enumerated()), id: \.element.id) { i, o in
-                        tile(id: o.id, label: "Background \(i + 1)") { Thumbnail(url: o.thumb) }
+                    ForEach(options) { o in
+                        tile(id: o.id, label: o.name) { Thumbnail(url: o.thumb) }
                     }
                 }
                 .padding(16)

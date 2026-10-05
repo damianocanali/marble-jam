@@ -1,17 +1,17 @@
-// Turns the artwork in art/backgrounds into the phone-sized backgrounds the app bundles.
-// Run from the repo root after adding or changing artwork:  swift tools/prepare_backgrounds.swift
-// Writes MarbleJamBackgrounds/ (kept out of git): bg-NN.jpg, bg-NN-thumb.jpg and manifest.json.
+// Turns the drawn backgrounds in art/backgrounds-drawn (from tools/make_backgrounds.swift) into what the app bundles.
+// Run from the repo root after redrawing:  swift tools/prepare_backgrounds.swift
+// Writes MarbleJamBackgrounds/: bg-NN.jpg, bg-NN-thumb.jpg and manifest.json. Files named "NN-some-name.png" get the name "Some Name".
 import CoreGraphics
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-let srcDir = "art/backgrounds", outDir = "MarbleJamBackgrounds"
+let srcDir = "art/backgrounds-drawn", outDir = "MarbleJamBackgrounds"
 let W = 1170, H = 2532                 // iPhone screen in pixels; the art is scaled to fill and the sides trimmed
 let TW = 240, TH = 520                 // thumbnail for the picker
 let fm = FileManager.default
 
-/// "Untitled (Instagram Story) 12.PNG" -> 12; the one without a number comes first.
+/// "03-white-marble.png" -> 3, for sorting.
 func number(_ name: String) -> Int { Int(name.components(separatedBy: CharacterSet.decimalDigits.inverted).joined()) ?? 1 }
 
 func render(_ img: CGImage, _ w: Int, _ h: Int) -> CGImage {
@@ -43,7 +43,7 @@ func writeJPEG(_ img: CGImage, _ path: String, quality: Double) {
 }
 
 guard let names = try? fm.contentsOfDirectory(atPath: srcDir) else { print("no \(srcDir) folder: nothing to do"); exit(0) }
-let art = names.filter { ["png", "jpg", "jpeg"].contains(($0 as NSString).pathExtension.lowercased()) }.sorted { number($0) < number($1) }
+let art = names.filter { ["png", "jpg", "jpeg"].contains(($0 as NSString).pathExtension.lowercased()) && !$0.hasPrefix("preview") }.sorted { number($0) < number($1) }
 try? fm.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 for old in (try? fm.contentsOfDirectory(atPath: outDir)) ?? [] where old.hasPrefix("bg-") || old == "manifest.json" {
     try? fm.removeItem(atPath: outDir + "/" + old)
@@ -57,7 +57,9 @@ for (i, name) in art.enumerated() {
     let full = render(img, W, H)
     writeJPEG(full, "\(outDir)/\(id).jpg", quality: 0.82)
     writeJPEG(render(img, TW, TH), "\(outDir)/\(id)-thumb.jpg", quality: 0.8)
-    manifest.append(["id": id, "image": "\(id).jpg", "thumb": "\(id)-thumb.jpg", "luminance": (luminance(full) * 1000).rounded() / 1000])
+    let words = ((name as NSString).deletingPathExtension).split(separator: "-").drop { Int($0) != nil }
+    let title = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
+    manifest.append(["id": id, "name": title.isEmpty ? id : title, "image": "\(id).jpg", "thumb": "\(id)-thumb.jpg", "luminance": (luminance(full) * 1000).rounded() / 1000])
     print("\(id)  <- \(name)")
 }
 let json = try! JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
