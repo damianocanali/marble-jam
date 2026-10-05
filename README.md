@@ -18,7 +18,9 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `RunScene.swift`    SpriteKit drawing and touch handling
 - `ContentView.swift` header, hint, buttons
 - `RootView.swift`    switches between the menu and the game
-- `MenuView.swift`    start screen: logo, Play, Demo, Store/Sign in (coming soon)
+- `MenuView.swift`    start screen: lettering, Play, Demo Song, Backgrounds, Store/Sign in (coming soon)
+- `AttractScene.swift` the menu's background: the demo course with marbles dropping and hitting the pads
+- `PadArt.swift`      how pads, the marble and a hit look (shared by the game and the menu)
 - `PadController.swift` tilt dial and note buttons for the selected pad
 - `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
 - `Backgrounds.swift` / `BackgroundViews.swift` the background list, the picker and the tinted backdrop

@@ -5,12 +5,13 @@ final class RunScene: SKScene {
     weak var model: GameModel?
 
     private let world = SKNode(), guideLayer = SKNode(), padLayer = SKNode(), fxLayer = SKNode()
-    private let marble = SKShapeNode(circleOfRadius: Rules.radius)
+    private let marble = PadArt.marble()
     private var padNodes: [SKShapeNode] = []
     private var seenVersion = -1
-    private var camY = -110.0
+    private var camY = 0.0                      // world y at the top of the screen; placed under the header once the size is known
     private var targetCamY: Double?
-    private var backY = -110.0
+    private var backY = 0.0
+    private var cameraPlaced = false
     private var wasPlaying = false
     private var hitIndex = 0
 
@@ -19,30 +20,29 @@ final class RunScene: SKScene {
 
     private var base: Double { max(0.01, Double(size.width) / Rules.width) }
     private var viewHeight: Double { Double(size.height) / base }
+    /// The highest the camera goes: the top of the course (the hopper) sits just below the header.
+    private var topCam: Double { -175 / base }
 
     override func didMove(to view: SKView) {
         backgroundColor = .clear                                     // the Backdrop behind the SpriteView shows through
         guard world.parent == nil else { return }
         addChild(world)
         [guideLayer, padLayer, fxLayer].forEach { world.addChild($0) }
-        marble.fillColor = .white
-        marble.strokeColor = UIColor(red: 0.62, green: 0.83, blue: 1, alpha: 1)
-        marble.glowWidth = 8
-        marble.zPosition = 10
         world.addChild(marble)
         layoutWorld()
     }
 
-    override func didChangeSize(_ oldSize: CGSize) { seenVersion = -1; layoutWorld() }
+    override func didChangeSize(_ oldSize: CGSize) {
+        if !cameraPlaced && size.width > 100 { camY = topCam; backY = topCam; cameraPlaced = true }   // the scene starts as a 1x1 placeholder
+        seenVersion = -1; layoutWorld()
+    }
 
     private func layoutWorld() {
         world.xScale = base; world.yScale = -base
         world.position = CGPoint(x: 0, y: Double(size.height) + camY * base)
     }
 
-    private func color(_ p: Pad, _ brightness: Double = 1) -> UIColor {
-        UIColor(hue: Notes.hue(p), saturation: 0.82, brightness: brightness, alpha: 1)
-    }
+    private func color(_ p: Pad) -> UIColor { PadArt.color(p) }
 
     // MARK: drawing
 
@@ -88,16 +88,7 @@ final class RunScene: SKScene {
         guideLayer.addChild(hopper)
 
         for (i, p) in m.course.pads.enumerated() {
-            let node: SKShapeNode
-            if p.kind == .bar {
-                let L = Notes.barLength(p.note), T = Rules.thickness
-                node = SKShapeNode(rect: CGRect(x: -L / 2, y: -T / 2, width: L, height: T), cornerRadius: T / 2)
-                node.zRotation = p.angle
-            } else {
-                node = SKShapeNode(circleOfRadius: Notes.bumperRadius(p.note))
-            }
-            node.position = CGPoint(x: p.x, y: p.y)
-            node.fillColor = color(p); node.strokeColor = color(p); node.glowWidth = 5
+            let node = PadArt.node(for: p)
             node.alpha = (live.contains(i) || m.playing) ? 1 : 0.4
             padLayer.addChild(node); padNodes.append(node)
 
@@ -127,17 +118,7 @@ final class RunScene: SKScene {
     private func flash(_ h: Hit, in m: GameModel) {
         guard h.pad < padNodes.count else { return }
         let node = padNodes[h.pad], col = color(m.course.pads[h.pad])
-        node.removeAllActions()
-        node.run(.sequence([.scale(to: 1.2, duration: 0.04), .scale(to: 1, duration: 0.26)]))
-        node.glowWidth = 14
-        node.run(.customAction(withDuration: 0.4) { n, t in (n as? SKShapeNode)?.glowWidth = 14 - 9 * t / 0.4 })
-        for _ in 0..<12 {                                                            // sparks
-            let s = SKShapeNode(rectOf: CGSize(width: 4, height: 4))
-            s.fillColor = col; s.strokeColor = .clear; s.position = CGPoint(x: h.x, y: h.y)
-            let a = Double.random(in: 0..<(2 * .pi)), v = Double.random(in: 30...110)
-            fxLayer.addChild(s)
-            s.run(.sequence([.group([.moveBy(x: cos(a) * v, y: sin(a) * v + 40, duration: 0.5), .fadeOut(withDuration: 0.5)]), .removeFromParent()]))
-        }
+        PadArt.flash(node, color: col, at: CGPoint(x: h.x, y: h.y), sparksIn: fxLayer)
     }
 
     override func update(_ currentTime: TimeInterval) {
@@ -146,7 +127,7 @@ final class RunScene: SKScene {
             if m.playing { backY = camY; hitIndex = 0 } else { targetCamY = backY }
             wasPlaying = m.playing
         }
-        if let f = m.focusY { targetCamY = max(-140, f - viewHeight * 0.55); m.focusY = nil }
+        if let f = m.focusY { targetCamY = max(topCam, f - viewHeight * 0.55); m.focusY = nil }
         if m.version != seenVersion { seenVersion = m.version; rebuild() }
         if m.playing {
             let t = m.playTime, p = m.run.position(at: max(0, min(t, m.run.duration)))
@@ -177,7 +158,7 @@ final class RunScene: SKScene {
 
     private func clampCam(_ y: Double) -> Double {
         guard let m = model else { return y }
-        return max(-140, min(m.maxY + 200 - viewHeight * 0.5, y))
+        return max(topCam, min(m.maxY + 200 - viewHeight * 0.5, y))
     }
 
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
