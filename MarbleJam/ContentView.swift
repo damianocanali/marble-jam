@@ -48,9 +48,8 @@ struct ContentView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text("Marble Jam")
-                .font(.system(size: 22, weight: .heavy, design: .rounded))
-                .foregroundStyle(ink)
+            Image("Title").resizable().scaledToFit().frame(height: 54)    // the lettering from art/Text.PNG
+                .accessibilityLabel("Marble Jam")
             Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
         }
         .frame(maxWidth: .infinity, alignment: .leading)
