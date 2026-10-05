@@ -1,0 +1,163 @@
+[
+  {
+    "id" : "bg-01",
+    "image" : "bg-01.jpg",
+    "luminance" : 0.28899999999999998,
+    "name" : "Dark Wood",
+    "thumb" : "bg-01-thumb.jpg"
+  },
+  {
+    "id" : "bg-02",
+    "image" : "bg-02.jpg",
+    "luminance" : 0.83599999999999997,
+    "name" : "Pink Clouds",
+    "thumb" : "bg-02-thumb.jpg"
+  },
+  {
+    "id" : "bg-03",
+    "image" : "bg-03.jpg",
+    "luminance" : 0.91000000000000003,
+    "name" : "White Marble",
+    "thumb" : "bg-03-thumb.jpg"
+  },
+  {
+    "id" : "bg-04",
+    "image" : "bg-04.jpg",
+    "luminance" : 0.42099999999999999,
+    "name" : "Bricks",
+    "thumb" : "bg-04-thumb.jpg"
+  },
+  {
+    "id" : "bg-05",
+    "image" : "bg-05.jpg",
+    "luminance" : 0.12,
+    "name" : "Purple Smoke",
+    "thumb" : "bg-05-thumb.jpg"
+  },
+  {
+    "id" : "bg-06",
+    "image" : "bg-06.jpg",
+    "luminance" : 0.77600000000000002,
+    "name" : "Sheet Music",
+    "thumb" : "bg-06-thumb.jpg"
+  },
+  {
+    "id" : "bg-07",
+    "image" : "bg-07.jpg",
+    "luminance" : 0.55100000000000005,
+    "name" : "Underwater",
+    "thumb" : "bg-07-thumb.jpg"
+  },
+  {
+    "id" : "bg-08",
+    "image" : "bg-08.jpg",
+    "luminance" : 0.66700000000000004,
+    "name" : "Parchment",
+    "thumb" : "bg-08-thumb.jpg"
+  },
+  {
+    "id" : "bg-09",
+    "image" : "bg-09.jpg",
+    "luminance" : 0.23799999999999999,
+    "name" : "Nebula",
+    "thumb" : "bg-09-thumb.jpg"
+  },
+  {
+    "id" : "bg-10",
+    "image" : "bg-10.jpg",
+    "luminance" : 0.23799999999999999,
+    "name" : "Deep Space",
+    "thumb" : "bg-10-thumb.jpg"
+  },
+  {
+    "id" : "bg-11",
+    "image" : "bg-11.jpg",
+    "luminance" : 0.41999999999999998,
+    "name" : "Coral Reef",
+    "thumb" : "bg-11-thumb.jpg"
+  },
+  {
+    "id" : "bg-12",
+    "image" : "bg-12.jpg",
+    "luminance" : 0.80100000000000005,
+    "name" : "City Skyline",
+    "thumb" : "bg-12-thumb.jpg"
+  },
+  {
+    "id" : "bg-13",
+    "image" : "bg-13.jpg",
+    "luminance" : 0.54400000000000004,
+    "name" : "Golden Bokeh",
+    "thumb" : "bg-13-thumb.jpg"
+  },
+  {
+    "id" : "bg-14",
+    "image" : "bg-14.jpg",
+    "luminance" : 0.38300000000000001,
+    "name" : "Earth Orbit",
+    "thumb" : "bg-14-thumb.jpg"
+  },
+  {
+    "id" : "bg-15",
+    "image" : "bg-15.jpg",
+    "luminance" : 0.746,
+    "name" : "Holographic",
+    "thumb" : "bg-15-thumb.jpg"
+  },
+  {
+    "id" : "bg-16",
+    "image" : "bg-16.jpg",
+    "luminance" : 0.104,
+    "name" : "Black Gold",
+    "thumb" : "bg-16-thumb.jpg"
+  },
+  {
+    "id" : "bg-17",
+    "image" : "bg-17.jpg",
+    "luminance" : 0.36899999999999999,
+    "name" : "Dragon Scales",
+    "thumb" : "bg-17-thumb.jpg"
+  },
+  {
+    "id" : "bg-18",
+    "image" : "bg-18.jpg",
+    "luminance" : 0.58199999999999996,
+    "name" : "Pixel Green",
+    "thumb" : "bg-18-thumb.jpg"
+  },
+  {
+    "id" : "bg-19",
+    "image" : "bg-19.jpg",
+    "luminance" : 0.47799999999999998,
+    "name" : "Color Blur",
+    "thumb" : "bg-19-thumb.jpg"
+  },
+  {
+    "id" : "bg-20",
+    "image" : "bg-20.jpg",
+    "luminance" : 0.77000000000000002,
+    "name" : "Water Caustics",
+    "thumb" : "bg-20-thumb.jpg"
+  },
+  {
+    "id" : "bg-21",
+    "image" : "bg-21.jpg",
+    "luminance" : 0.251,
+    "name" : "Stage Lights",
+    "thumb" : "bg-21-thumb.jpg"
+  },
+  {
+    "id" : "bg-22",
+    "image" : "bg-22.jpg",
+    "luminance" : 0.77000000000000002,
+    "name" : "White Wood",
+    "thumb" : "bg-22-thumb.jpg"
+  },
+  {
+    "id" : "bg-23",
+    "image" : "bg-23.jpg",
+    "luminance" : 0.60899999999999999,
+    "name" : "Instruments",
+    "thumb" : "bg-23-thumb.jpg"
+  }
+]

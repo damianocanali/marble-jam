@@ -15,3 +15,11 @@ build/
 # Swift Package Manager
 .build/
 .swiftpm/
+
+# Canva-made artwork: kept local until the licence is confirmed (repo is public)
+art/backgrounds/
+art/Logo.JPG
+
+# Full-size drawn backgrounds: rebuilt by tools/make_backgrounds.swift (the app uses MarbleJamBackgrounds/)
+art/backgrounds-drawn/
+.build/

@@ -8,7 +8,11 @@ targets:
   MarbleJam:
     type: application
     platform: iOS
-    sources: [MarbleJam]
+    sources:
+      - MarbleJam
+      - path: MarbleJamBackgrounds      # made by tools/prepare_backgrounds.swift, kept out of git
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.example.marblejam
