@@ -77,6 +77,7 @@ struct ContentView: View {
                 Button { newName = model.song?.name ?? ""; renaming = true } label: {
                     Text(model.song?.name ?? "Song").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(ink).lineLimit(1)
                 }
+                .layoutPriority(1)                                         // the name keeps its room; the counts give way
                 .accessibilityHint("Rename")
                 Text("· " + model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
                     .lineLimit(1).allowsHitTesting(false)

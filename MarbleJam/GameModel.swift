@@ -152,8 +152,8 @@ final class GameModel: ObservableObject {
     }
 
     var info: String {
-        guard let last = run.hits.last else { return "No notes yet" }
+        guard !run.hits.isEmpty else { return "No notes yet" }
         let on = run.hits.filter { Engine.isOnBeat($0.time) }.count
-        return "\(run.hits.count) notes · \(String(format: "%.1f", last.time)) s · \(on) on the beat"
+        return "\(run.hits.count) notes · \(on) on the beat"
     }
 }

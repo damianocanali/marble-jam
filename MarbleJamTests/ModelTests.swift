@@ -129,4 +129,11 @@ final class ModelTests: XCTestCase {
         m.undo()                                                   // the tap left no step, so undo goes back past loading the demo
         XCTAssertTrue(m.course.pads.isEmpty, "and must not leave an empty undo step behind")
     }
+
+    func testHeaderInfoIsNotesAndBeatsOnly() {
+        let m = GameModel()
+        XCTAssertEqual(m.info, "No notes yet")
+        m.loadDemo()
+        XCTAssertEqual(m.info, "14 notes · 14 on the beat")
+    }
 }
