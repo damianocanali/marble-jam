@@ -58,8 +58,15 @@ for (i, name) in art.enumerated() {
     writeJPEG(full, "\(outDir)/\(id).jpg", quality: 0.82)
     writeJPEG(render(img, TW, TH), "\(outDir)/\(id)-thumb.jpg", quality: 0.8)
     let words = ((name as NSString).deletingPathExtension).split(separator: "-").drop { Int($0) != nil }
-    let title = words.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
-    manifest.append(["id": id, "name": title.isEmpty ? id : title, "image": "\(id).jpg", "thumb": "\(id)-thumb.jpg", "luminance": (luminance(full) * 1000).rounded() / 1000])
+    let seasons: Set<Substring> = ["halloween", "thanksgiving", "christmas"]
+    var parts = Array(words)
+    let season = parts.first.flatMap { seasons.contains($0) ? String($0) : nil }
+    if season != nil { parts.removeFirst() }
+    let title = parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
+    var entry: [String: Any] = ["id": id, "name": title.isEmpty ? id : title, "image": "\(id).jpg", "thumb": "\(id)-thumb.jpg",
+                                "luminance": (luminance(full) * 1000).rounded() / 1000]
+    if let season { entry["season"] = season }
+    manifest.append(entry)
     print("\(id)  <- \(name)")
 }
 let json = try! JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
