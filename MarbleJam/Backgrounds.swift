@@ -14,6 +14,8 @@ struct BackgroundOption: Identifiable, Equatable {
 /// MarbleJamBackgrounds folder, with a manifest.json listing them. No folder or no manifest: no backgrounds.
 enum BackgroundLibrary {
     static let folderName = "MarbleJamBackgrounds"
+    /// Stored when the player picks the night sky on purpose. "" means they never chose (a live season may then show its own).
+    static let nightID = "night"
 
     private struct Entry: Decodable { let id, image, thumb: String; let name: String?; let luminance: Double; let season: String? }
 
@@ -36,6 +38,7 @@ enum BackgroundLibrary {
     /// What to show: the player's choice if it is available now; with no choice, the season's first background; else nil (night sky).
     static func resolve(_ all: [BackgroundOption], chosenID: String, season: String?) -> BackgroundOption? {
         let now = available(all, season: season)
+        if chosenID == nightID { return nil }
         if chosenID.isEmpty { return season == nil ? nil : now.first { $0.season == season } }
         return now.first { $0.id == chosenID }
     }

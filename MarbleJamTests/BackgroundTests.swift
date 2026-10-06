@@ -60,4 +60,10 @@ final class BackgroundTests: XCTestCase {
         XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: "", season: nil))
         XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "wood", season: "halloween")?.id, "wood")
     }
+
+    func testChoosingNightSkyKeepsItEvenDuringASeason() {
+        let all = [opt("wood", nil), opt("pumpkin", "halloween")]
+        XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: "halloween"))
+        XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil))
+    }
 }

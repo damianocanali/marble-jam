@@ -28,7 +28,7 @@ struct Backdrop: View {
 /// Grid of thumbnails: the night sky first, then every bundled background. Tapping one selects it.
 struct BackgroundPicker: View {
     let options: [BackgroundOption]
-    @Binding var selectedID: String          // "" means the night sky
+    @Binding var selectedID: String          // BackgroundLibrary.nightID or "" (never chose) mean the night sky
     @Environment(\.dismiss) private var dismiss
 
     private let columns = [GridItem(.adaptive(minimum: 96), spacing: 12)]
@@ -37,7 +37,7 @@ struct BackgroundPicker: View {
         NavigationStack {
             ScrollView {
                 LazyVGrid(columns: columns, spacing: 12) {
-                    tile(id: "", label: "Night sky") {
+                    tile(id: BackgroundLibrary.nightID, label: "Night sky") {
                         Backdrop.night.overlay {
                             Text("Night sky").font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(.white.opacity(0.8))
                         }
@@ -55,22 +55,24 @@ struct BackgroundPicker: View {
         }
     }
 
+    private func isSelected(_ id: String) -> Bool { id == selectedID || (id == BackgroundLibrary.nightID && selectedID.isEmpty) }
+
     private func tile<Content: View>(id: String, label: String, @ViewBuilder content: () -> Content) -> some View {
         Button { selectedID = id } label: {
             content()
                 .frame(height: 180)
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(selectedID == id ? Color.cyan : Color.white.opacity(0.2), lineWidth: selectedID == id ? 4 : 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected(id) ? Color.cyan : Color.white.opacity(0.2), lineWidth: isSelected(id) ? 4 : 1))
                 .overlay(alignment: .topTrailing) {
-                    if selectedID == id {
+                    if isSelected(id) {
                         Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(.cyan, .white).padding(6)
                     }
                 }
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
-        .accessibilityAddTraits(selectedID == id ? .isSelected : [])
+        .accessibilityAddTraits(isSelected(id) ? .isSelected : [])
     }
 }
 
