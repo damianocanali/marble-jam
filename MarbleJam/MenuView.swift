@@ -4,7 +4,10 @@ import SwiftUI
 /// Start screen: the lettering on top, the main buttons in the middle, and a demo course playing behind them.
 struct MenuView: View {
     let background: BackgroundOption?
+    let backgrounds: [BackgroundOption]                 // what the picker offers right now (season-aware)
+    let season: Season?
     @Binding var backgroundID: String
+    @AppStorage("season.preview") private var seasonPreview = ""
     let onCreate: () -> Void
     @State private var toast: String?
     @State private var picking = false
@@ -27,15 +30,37 @@ struct MenuView: View {
                     .padding(.top, 24)
                     .accessibilityLabel("Marble Jam")
                     .accessibilityAddTraits(.isHeader)
+                if let season {
+                    Text(season.banner)
+                        .font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(.white)
+                        .padding(.horizontal, 16).padding(.vertical, 8)
+                        .background(Color.black.opacity(0.45), in: Capsule())
+                        .overlay(Capsule().stroke(Color.white.opacity(0.25)))
+                }
                 Spacer()
             }
             VStack(spacing: 12) {                                                // centred on the screen, all the same size
                 menuButton("Challenges") { toast = "Challenges are coming soon" }
                 menuButton("Create", primary: true, action: onCreate)
-                if !BackgroundLibrary.bundled.isEmpty { menuButton("Backgrounds") { picking = true } }
+                if !backgrounds.isEmpty { menuButton("Backgrounds") { picking = true } }
                 menuButton("Store") { toast = "Store is coming soon" }
                 menuButton("Sign in") { toast = "Sign in is coming soon" }
             }
+            #if DEBUG
+            VStack {                                                             // preview a holiday pack before its date (never in release builds)
+                Spacer()
+                HStack {
+                    Menu {
+                        Button("By date") { seasonPreview = "" }
+                        Button("Off-season") { seasonPreview = "off" }
+                        ForEach(Seasons.all) { s in Button("\(s.emoji) \(s.title)") { seasonPreview = s.id } }
+                    } label: { Text("Preview season").font(.system(size: 12, weight: .bold, design: .rounded)) }
+                    .menuStyle(.button).buttonStyle(Chip())
+                    Spacer()
+                }
+            }
+            .padding(12)
+            #endif
             if let t = toast {
                 VStack { Spacer(); Toast(text: t).padding(.bottom, 12) }
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_000_000_000); toast = nil }
@@ -44,7 +69,7 @@ struct MenuView: View {
         .background { Backdrop(option: background) }
         .onAppear { attract.animated = !reduceMotion }
         .onChange(of: reduceMotion) { _, still in attract.animated = !still }
-        .sheet(isPresented: $picking) { BackgroundPicker(options: BackgroundLibrary.bundled, selectedID: $backgroundID) }
+        .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID) }
     }
 
     private func menuButton(_ title: String, primary: Bool = false, action: @escaping () -> Void) -> some View {

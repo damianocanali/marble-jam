@@ -97,4 +97,21 @@ final class SongStoreTests: XCTestCase {
         XCTAssertEqual(s.song(mine.id)?.course.pads.count, 1, "the player's song survives")
         XCTAssertEqual(s.all().filter { $0.isDemo }.count, 1, "exactly one demo")
     }
+
+    func testTakingAShelfSongMakesAnOrdinarySong() {
+        let s = store(), r = Seasons.all[2].songs[0]
+        let template = Song(name: r.name, course: r.course(), instrument: r.instrument)
+        let mine = s.addCopy(of: template)
+        XCTAssertEqual(mine.name, "Jingle Bells")
+        XCTAssertEqual(mine.instrument, .bells)
+        XCTAssertFalse(mine.isDemo)
+        XCTAssertEqual(s.song(mine.id)?.course.pads.count, r.melody.count)
+    }
+
+    func testTakingAShelfSongTwiceMakesACopy() {
+        let s = store(), t = Song(name: "Silent Night", course: Course(), instrument: .bells)
+        let first = s.addCopy(of: t), second = s.addCopy(of: t), third = s.addCopy(of: t)
+        XCTAssertEqual([first.name, second.name, third.name], ["Silent Night", "Silent Night copy", "Silent Night copy 2"])
+        XCTAssertEqual(Set([first.id, second.id, third.id]).count, 3)
+    }
 }

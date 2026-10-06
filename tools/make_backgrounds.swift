@@ -754,6 +754,342 @@ func instruments(_ c: Canvas, seed: Int32) {
     }
 }
 
+// MARK: - holidays
+
+/// A bat silhouette centred at (x, y), wingspan about 2.6 × s.
+func bat(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ s: CGFloat, _ color: CGColor) {
+    let p = CGMutablePath()
+    p.move(to: CGPoint(x: x, y: y - s * 0.25))
+    p.addQuadCurve(to: CGPoint(x: x - s * 1.3, y: y - s * 0.4), control: CGPoint(x: x - s * 0.7, y: y - s * 0.9))
+    p.addQuadCurve(to: CGPoint(x: x - s * 0.9, y: y + s * 0.1), control: CGPoint(x: x - s * 1.0, y: y - s * 0.05))
+    p.addQuadCurve(to: CGPoint(x: x - s * 0.45, y: y + s * 0.05), control: CGPoint(x: x - s * 0.7, y: y - s * 0.15))
+    p.addQuadCurve(to: CGPoint(x: x, y: y + s * 0.35), control: CGPoint(x: x - s * 0.2, y: y + s * 0.3))
+    p.addQuadCurve(to: CGPoint(x: x + s * 0.45, y: y + s * 0.05), control: CGPoint(x: x + s * 0.2, y: y + s * 0.3))
+    p.addQuadCurve(to: CGPoint(x: x + s * 0.9, y: y + s * 0.1), control: CGPoint(x: x + s * 0.7, y: y - s * 0.15))
+    p.addQuadCurve(to: CGPoint(x: x + s * 1.3, y: y - s * 0.4), control: CGPoint(x: x + s * 1.0, y: y - s * 0.05))
+    p.addQuadCurve(to: CGPoint(x: x, y: y - s * 0.25), control: CGPoint(x: x + s * 0.7, y: y - s * 0.9))
+    ctx.addPath(p); ctx.setFillColor(color); ctx.fillPath()
+}
+
+/// A pumpkin sitting with its base at (x, y); `face` carves a glowing jack-o'-lantern.
+func pumpkin(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ w: CGFloat, face: Bool) {
+    let h = w * 0.72
+    ctx.saveGState()
+    ctx.setShadow(offset: CGSize(width: 0, height: 8), blur: 16, color: cg((0, 0, 0), 0.5))
+    for k in [-0.32, 0.32, 0.0] as [CGFloat] {                                   // three lobes, middle on top
+        ctx.setFillColor(cg(k == 0 ? rgb(0xF08A24) : rgb(0xD96F14)))
+        ctx.fillEllipse(in: CGRect(x: x - w * 0.36 + k * w, y: y - h, width: w * 0.72, height: h))
+    }
+    ctx.restoreGState()
+    ctx.setStrokeColor(cg(rgb(0x9A4A0A), 0.6)); ctx.setLineWidth(w * 0.025)
+    for k in [-0.18, 0.18] as [CGFloat] {
+        ctx.move(to: CGPoint(x: x + k * w, y: y - h * 0.95)); ctx.addQuadCurve(to: CGPoint(x: x + k * w, y: y - h * 0.05), control: CGPoint(x: x + k * w * 1.6, y: y - h / 2))
+    }
+    ctx.strokePath()
+    ctx.setFillColor(cg(rgb(0x3E6B2A))); ctx.fill(CGRect(x: x - w * 0.04, y: y - h - w * 0.14, width: w * 0.08, height: w * 0.18))
+    if face {
+        ctx.saveGState(); ctx.setShadow(offset: .zero, blur: w * 0.15, color: cg(rgb(0xFFD23F)))
+        ctx.setFillColor(cg(rgb(0xFFD23F)))
+        for sx in [-1.0, 1.0] as [CGFloat] {
+            let e = CGMutablePath(); e.move(to: CGPoint(x: x + sx * w * 0.22, y: y - h * 0.62))
+            e.addLine(to: CGPoint(x: x + sx * w * 0.08, y: y - h * 0.62)); e.addLine(to: CGPoint(x: x + sx * w * 0.15, y: y - h * 0.78)); e.closeSubpath()
+            ctx.addPath(e); ctx.fillPath()
+        }
+        let m = CGMutablePath(); m.move(to: CGPoint(x: x - w * 0.28, y: y - h * 0.38))
+        for k in 1...6 { m.addLine(to: CGPoint(x: x - w * 0.28 + CGFloat(k) * w * 0.0933, y: y - h * (k % 2 == 0 ? 0.38 : 0.3))) }
+        m.addQuadCurve(to: CGPoint(x: x - w * 0.28, y: y - h * 0.38), control: CGPoint(x: x, y: y - h * 0.1)); m.closeSubpath()
+        ctx.addPath(m); ctx.fillPath(); ctx.restoreGState()
+    }
+}
+
+/// Night sky (top to bottom colours), a big moon and stars: shared by the Halloween scenes.
+func spookySky(_ c: Canvas, top: RGB, bottom: RGB, moonX: CGFloat, moonY: CGFloat, seed: Int32) {
+    c.shade { x, y in
+        let t = Float(y) / Float(H)
+        return add(mix(top, bottom, t), scale((0.25, 0.2, 0.35), fbm(Float(x) / 300, Float(y) / 300, seed, 4) * 0.25 * (1 - t)))
+    }
+    stars(c, seed: UInt64(seed), count: 500, bright: 4)
+    c.draw { ctx in
+        glow(ctx, moonX, moonY, 420, rgb(0xFFF2C0), 0.35)
+        ctx.setFillColor(cg(rgb(0xFFF4D0))); ctx.fillEllipse(in: CGRect(x: moonX - 170, y: moonY - 170, width: 340, height: 340))
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<9 {                                                          // craters
+            let cx = moonX + CGFloat(r.range(-110, 110)), cy = moonY + CGFloat(r.range(-110, 110)), s = CGFloat(r.range(12, 34))
+            ctx.setFillColor(cg(rgb(0xE6D9AE), 0.7)); ctx.fillEllipse(in: CGRect(x: cx - s, y: cy - s, width: 2 * s, height: 2 * s))
+        }
+    }
+}
+
+func pumpkinPatch(_ c: Canvas, seed: Int32) {
+    spookySky(c, top: rgb(0x1A0B2E), bottom: rgb(0x3B1C4A), moonX: CGFloat(W) * 0.7, moonY: 520, seed: seed)
+    c.draw { ctx in
+        let ground = CGMutablePath(); ground.move(to: CGPoint(x: 0, y: CGFloat(H) * 0.62))
+        ground.addQuadCurve(to: CGPoint(x: CGFloat(W), y: CGFloat(H) * 0.58), control: CGPoint(x: CGFloat(W) * 0.5, y: CGFloat(H) * 0.52))
+        ground.addLine(to: CGPoint(x: CGFloat(W), y: CGFloat(H))); ground.addLine(to: CGPoint(x: 0, y: CGFloat(H))); ground.closeSubpath()
+        ctx.addPath(ground); ctx.setFillColor(cg(rgb(0x14200F))); ctx.fillPath()
+        ctx.setStrokeColor(cg(rgb(0x2E4A1E))); ctx.setLineWidth(8)                // curly vines
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<10 {
+            let x = CGFloat(r.range(0, Double(W))), y = CGFloat(r.range(Double(H) * 0.66, Double(H) * 0.98))
+            ctx.move(to: CGPoint(x: x - 120, y: y)); ctx.addCurve(to: CGPoint(x: x + 120, y: y + 10), control1: CGPoint(x: x - 40, y: y - 60), control2: CGPoint(x: x + 40, y: y + 60))
+        }
+        ctx.strokePath()
+        let spots: [(CGFloat, CGFloat, CGFloat, Bool)] = [(0.22, 0.72, 260, true), (0.72, 0.75, 220, false), (0.48, 0.86, 320, true),
+                                                          (0.12, 0.94, 240, false), (0.86, 0.92, 280, true), (0.55, 0.66, 150, false)]
+        for (fx, fy, w, face) in spots.sorted(by: { $0.1 < $1.1 }) { pumpkin(ctx, CGFloat(W) * fx, CGFloat(H) * fy, w, face: face) }
+    }
+}
+
+func hauntedHouse(_ c: Canvas, seed: Int32) {
+    spookySky(c, top: rgb(0x0B1030), bottom: rgb(0x2A2350), moonX: CGFloat(W) * 0.3, moonY: 480, seed: seed)
+    c.draw { ctx in
+        let ink = cg(rgb(0x07070D))
+        let hill = CGMutablePath(); hill.move(to: CGPoint(x: 0, y: CGFloat(H) * 0.7))
+        hill.addQuadCurve(to: CGPoint(x: CGFloat(W), y: CGFloat(H) * 0.66), control: CGPoint(x: CGFloat(W) * 0.6, y: CGFloat(H) * 0.5))
+        hill.addLine(to: CGPoint(x: CGFloat(W), y: CGFloat(H))); hill.addLine(to: CGPoint(x: 0, y: CGFloat(H))); hill.closeSubpath()
+        ctx.addPath(hill); ctx.setFillColor(ink); ctx.fillPath()
+        let bx = CGFloat(W) * 0.42, by = CGFloat(H) * 0.6                       // the house sits on the hill top
+        let house = CGMutablePath()
+        house.addRect(CGRect(x: bx, y: by - 360, width: 420, height: 380))        // main block
+        house.move(to: CGPoint(x: bx - 30, y: by - 360)); house.addLine(to: CGPoint(x: bx + 210, y: by - 560)); house.addLine(to: CGPoint(x: bx + 450, y: by - 360)); house.closeSubpath()
+        house.addRect(CGRect(x: bx + 300, y: by - 640, width: 120, height: 300))  // tower
+        house.move(to: CGPoint(x: bx + 285, y: by - 640)); house.addLine(to: CGPoint(x: bx + 360, y: by - 820)); house.addLine(to: CGPoint(x: bx + 435, y: by - 640)); house.closeSubpath()
+        ctx.addPath(house); ctx.setFillColor(ink); ctx.fillPath()
+        ctx.saveGState(); ctx.setShadow(offset: .zero, blur: 25, color: cg(rgb(0xFFC94A)))
+        ctx.setFillColor(cg(rgb(0xFFC94A)))
+        for (x, y) in [(40.0, -300.0), (150, -300), (260, -300), (40, -170), (260, -170), (335, -560)] { ctx.fill(CGRect(x: bx + x, y: by + y, width: 50, height: 70)) }
+        ctx.restoreGState()
+        func branch(_ x: CGFloat, _ y: CGFloat, _ a: CGFloat, _ len: CGFloat, _ w: CGFloat, _ d: Int) {         // bare trees
+            let x2 = x + cos(a) * len, y2 = y + sin(a) * len
+            ctx.setStrokeColor(ink); ctx.setLineWidth(w); ctx.setLineCap(.round)
+            ctx.move(to: CGPoint(x: x, y: y)); ctx.addLine(to: CGPoint(x: x2, y: y2)); ctx.strokePath()
+            if d > 0 { branch(x2, y2, a - 0.45, len * 0.72, w * 0.7, d - 1); branch(x2, y2, a + 0.4, len * 0.7, w * 0.7, d - 1) }
+        }
+        branch(120, CGFloat(H) * 0.74, -.pi / 2 - 0.1, 260, 34, 6)
+        branch(CGFloat(W) - 60, CGFloat(H) * 0.72, -.pi / 2 + 0.15, 220, 28, 6)
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<9 { bat(ctx, CGFloat(r.range(80, Double(W) - 80)), CGFloat(r.range(250, Double(H) * 0.4)), CGFloat(r.range(25, 55)), ink) }
+    }
+}
+
+func purpleFog(_ c: Canvas, seed: Int32) {
+    let k: Float = 1 / 420
+    c.shade { x, y in
+        let fx = Float(x) * k, fy = Float(y) * k
+        let n = fbm(fx + 2 * fbm(fx, fy, seed), fy * 0.6 + 2 * fbm(fx + 5, fy, seed &+ 1), seed &+ 2, 6)
+        let t = Float(y) / Float(H)
+        return add(mix(rgb(0x120621), rgb(0x2C0F45), t), scale(rgb(0x9B5CFF), smooth(0.45, 0.85, n) * (0.25 + 0.55 * t)))
+    }
+    c.draw { ctx in
+        glow(ctx, CGFloat(W) * 0.75, 380, 260, rgb(0xE9D8FF), 0.5)
+        ctx.setFillColor(cg(rgb(0xF2E9FF))); ctx.fillEllipse(in: CGRect(x: CGFloat(W) * 0.75 - 90, y: 290, width: 180, height: 180))
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<26 { bat(ctx, CGFloat(r.range(40, Double(W) - 40)), CGFloat(r.range(150, Double(H) - 200)), CGFloat(r.range(18, 60)), cg(rgb(0x0A0410), 0.9)) }
+    }
+}
+
+/// A leaf at (x, y), size s, turned by a: pointed oval with a stem and a centre vein.
+func leaf(_ ctx: CGContext, _ x: CGFloat, _ y: CGFloat, _ s: CGFloat, _ a: CGFloat, _ color: RGB) {
+    ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a)
+    let p = CGMutablePath()
+    p.move(to: CGPoint(x: 0, y: -s))
+    p.addQuadCurve(to: CGPoint(x: 0, y: s * 0.7), control: CGPoint(x: s * 0.9, y: -s * 0.1))
+    p.addQuadCurve(to: CGPoint(x: 0, y: -s), control: CGPoint(x: -s * 0.9, y: -s * 0.1))
+    ctx.setShadow(offset: CGSize(width: 4, height: 6), blur: 8, color: cg((0, 0, 0), 0.3))
+    ctx.addPath(p); ctx.setFillColor(cg(color)); ctx.fillPath()
+    ctx.setShadow(offset: .zero, blur: 0, color: nil)
+    ctx.setStrokeColor(cg(scale(color, 0.6))); ctx.setLineWidth(s * 0.06); ctx.setLineCap(.round)
+    ctx.move(to: CGPoint(x: 0, y: s * 0.95)); ctx.addLine(to: CGPoint(x: 0, y: -s * 0.8))             // stem and vein
+    for k in [-0.4, 0.0, 0.35] as [CGFloat] {                                                          // side veins
+        ctx.move(to: CGPoint(x: 0, y: s * k)); ctx.addLine(to: CGPoint(x: s * 0.35, y: s * (k - 0.25)))
+        ctx.move(to: CGPoint(x: 0, y: s * k)); ctx.addLine(to: CGPoint(x: -s * 0.35, y: s * (k - 0.25)))
+    }
+    ctx.strokePath()
+    ctx.restoreGState()
+}
+
+func autumnLeaves(_ c: Canvas, seed: Int32) {
+    c.shade { x, y in
+        let t = Float(y) / Float(H)
+        return add(mix(rgb(0xE8A04A), rgb(0x7A2E12), t), scale((0.3, 0.15, 0.05), fbm(Float(x) / 240, Float(y) / 240, seed, 4) * 0.4))
+    }
+    c.draw { ctx in
+        var r = Rand(s: UInt64(seed))
+        let colors = [rgb(0xD9381E), rgb(0xF2A116), rgb(0xE8691C), rgb(0xB5281A), rgb(0xF5C542)]
+        for i in 0..<70 {
+            leaf(ctx, CGFloat(r.range(0, Double(W))), CGFloat(r.range(0, Double(H))), CGFloat(r.range(28, 90)), CGFloat(r.range(0, 6.28)), colors[i % colors.count])
+        }
+    }
+}
+
+func cornfieldSunset(_ c: Canvas, seed: Int32) {
+    let horizon = Float(H) * 0.55
+    c.shade { x, y in
+        let t = Float(y) / horizon
+        if Float(y) < horizon { return t < 0.5 ? mix(rgb(0x4A2A6E), rgb(0xE0567A), t * 2) : mix(rgb(0xE0567A), rgb(0xFFB347), (t - 0.5) * 2) }
+        return mix(rgb(0x3A1E10), rgb(0x1A0E08), (Float(y) - horizon) / (Float(H) - horizon))
+    }
+    c.draw { ctx in
+        glow(ctx, CGFloat(W) * 0.5, CGFloat(horizon) - 40, 380, rgb(0xFFE08A), 0.6)
+        ctx.setFillColor(cg(rgb(0xFFE6A0))); ctx.fillEllipse(in: CGRect(x: CGFloat(W) * 0.5 - 140, y: CGFloat(horizon) - 180, width: 280, height: 280))
+        var r = Rand(s: UInt64(seed))
+        for row in 0..<4 {                                                        // rows of corn, nearer rows taller and darker
+            let base = CGFloat(horizon) + CGFloat(row) * 260 + 120, tall = 260 + CGFloat(row) * 140
+            let col = cg(mix(rgb(0x3A2410), rgb(0x120A04), Float(row) / 3))
+            var x: CGFloat = -40
+            while x < CGFloat(W) + 40 {
+                ctx.setStrokeColor(col); ctx.setLineWidth(10 + CGFloat(row) * 4); ctx.setLineCap(.round)
+                ctx.move(to: CGPoint(x: x, y: base)); ctx.addLine(to: CGPoint(x: x + 10, y: base - tall)); ctx.strokePath()
+                for k in 0..<3 {
+                    let ly = base - tall * (0.3 + 0.2 * CGFloat(k)), dir: CGFloat = k % 2 == 0 ? 1 : -1
+                    ctx.move(to: CGPoint(x: x + 5, y: ly)); ctx.addQuadCurve(to: CGPoint(x: x + dir * 90, y: ly + 40), control: CGPoint(x: x + dir * 60, y: ly - 40))
+                    ctx.setLineWidth(6 + CGFloat(row) * 2); ctx.strokePath()
+                }
+                x += CGFloat(r.range(70, 110))
+            }
+        }
+    }
+}
+
+func harvestTable(_ c: Canvas, seed: Int32) {
+    c.shade { x, y in                                                             // red and cream plaid tablecloth
+        let a = (x / 90) % 2 == 0, b = (y / 90) % 2 == 0, thin = x % 90 < 8 || y % 90 < 8
+        var col = a && b ? rgb(0xB0302A) : (a || b ? rgb(0xC9605A) : rgb(0xEFE2CF))
+        if thin { col = scale(col, 0.82) }
+        return scale(col, 0.92 + 0.08 * fbm(Float(x) / 5, Float(y) / 5, seed, 2))
+    }
+    c.draw { ctx in
+        var r = Rand(s: UInt64(seed))
+        func corn(_ x: CGFloat, _ y: CGFloat, _ a: CGFloat) {
+            ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a)
+            ctx.setShadow(offset: CGSize(width: 6, height: 10), blur: 14, color: cg((0, 0, 0), 0.35))
+            ctx.setFillColor(cg(rgb(0x7FA34A)))
+            for s in [-1.0, 1.0] as [CGFloat] { let p = CGMutablePath(); p.move(to: CGPoint(x: 0, y: 150)); p.addQuadCurve(to: CGPoint(x: s * 40, y: -160), control: CGPoint(x: s * 110, y: 40)); p.addQuadCurve(to: CGPoint(x: 0, y: 150), control: CGPoint(x: s * 10, y: 0)); ctx.addPath(p); ctx.fillPath() }
+            ctx.setFillColor(cg(rgb(0xF2C230))); ctx.fillEllipse(in: CGRect(x: -38, y: -170, width: 76, height: 300))
+            ctx.setShadow(offset: .zero, blur: 0, color: nil)
+            ctx.setFillColor(cg(rgb(0xD9A21E)))
+            for row in 0..<12 { for k in -1...1 { ctx.fillEllipse(in: CGRect(x: CGFloat(k) * 20 - 6, y: -150 + CGFloat(row) * 22, width: 12, height: 14)) } }
+            ctx.restoreGState()
+        }
+        func pie(_ x: CGFloat, _ y: CGFloat) {
+            ctx.saveGState(); ctx.setShadow(offset: CGSize(width: 8, height: 12), blur: 18, color: cg((0, 0, 0), 0.4))
+            ctx.setFillColor(cg(rgb(0xD9A066))); ctx.fillEllipse(in: CGRect(x: x - 220, y: y - 220, width: 440, height: 440))
+            ctx.restoreGState()
+            ctx.setFillColor(cg(rgb(0xC7642A))); ctx.fillEllipse(in: CGRect(x: x - 185, y: y - 185, width: 370, height: 370))
+            ctx.saveGState(); ctx.addEllipse(in: CGRect(x: x - 185, y: y - 185, width: 370, height: 370)); ctx.clip()
+            ctx.setStrokeColor(cg(rgb(0xE8B87A))); ctx.setLineWidth(26)
+            for k in stride(from: -180.0, through: 180, by: 72) {
+                ctx.move(to: CGPoint(x: x + k, y: y - 200)); ctx.addLine(to: CGPoint(x: x + k, y: y + 200))
+                ctx.move(to: CGPoint(x: x - 200, y: y + k)); ctx.addLine(to: CGPoint(x: x + 200, y: y + k))
+            }
+            ctx.strokePath(); ctx.restoreGState()
+        }
+        pie(CGFloat(W) * 0.55, CGFloat(H) * 0.5)
+        pumpkin(ctx, CGFloat(W) * 0.25, CGFloat(H) * 0.3, 300, face: false)
+        pumpkin(ctx, CGFloat(W) * 0.8, CGFloat(H) * 0.82, 260, face: false)
+        corn(CGFloat(W) * 0.82, CGFloat(H) * 0.25, 0.6); corn(CGFloat(W) * 0.2, CGFloat(H) * 0.75, -0.5)
+        let colors = [rgb(0xD9381E), rgb(0xF2A116), rgb(0xE8691C)]
+        for i in 0..<16 { leaf(ctx, CGFloat(r.range(0, Double(W))), CGFloat(r.range(0, Double(H))), CGFloat(r.range(30, 60)), CGFloat(r.range(0, 6.28)), colors[i % 3]) }
+    }
+}
+
+/// Falling snow dots, a few big and soft.
+func snowfall(_ c: Canvas, seed: Int32, count: Int) {
+    c.draw { ctx in
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<count {
+            let x = CGFloat(r.range(0, Double(W))), y = CGFloat(r.range(0, Double(H))), s = CGFloat(r.range(2, 9))
+            ctx.setFillColor(cg((1, 1, 1), CGFloat(r.range(0.5, 0.95)))); ctx.fillEllipse(in: CGRect(x: x - s, y: y - s, width: 2 * s, height: 2 * s))
+        }
+    }
+}
+
+func snowyVillage(_ c: Canvas, seed: Int32) {
+    c.shade { x, y in
+        let t = Float(y) / Float(H)
+        return mix(rgb(0x0A1430), rgb(0x2A4A7A), t)
+    }
+    stars(c, seed: UInt64(seed), count: 400, bright: 3)
+    c.draw { ctx in
+        let snowTop = CGFloat(H) * 0.7
+        func house(_ x: CGFloat, _ w: CGFloat, _ h: CGFloat, _ wall: RGB) {
+            ctx.setFillColor(cg(wall)); ctx.fill(CGRect(x: x, y: snowTop - h, width: w, height: h + 20))
+            let roof = CGMutablePath(); roof.move(to: CGPoint(x: x - 30, y: snowTop - h)); roof.addLine(to: CGPoint(x: x + w / 2, y: snowTop - h - w * 0.55)); roof.addLine(to: CGPoint(x: x + w + 30, y: snowTop - h)); roof.closeSubpath()
+            ctx.addPath(roof); ctx.setFillColor(cg((0.96, 0.97, 1))); ctx.fillPath()
+            ctx.saveGState(); ctx.setShadow(offset: .zero, blur: 20, color: cg(rgb(0xFFC94A)))
+            ctx.setFillColor(cg(rgb(0xFFD36A)))
+            ctx.fill(CGRect(x: x + w * 0.18, y: snowTop - h * 0.7, width: w * 0.22, height: h * 0.25))
+            ctx.fill(CGRect(x: x + w * 0.6, y: snowTop - h * 0.7, width: w * 0.22, height: h * 0.25))
+            ctx.restoreGState()
+            ctx.setFillColor(cg(scale(wall, 0.55))); ctx.fill(CGRect(x: x + w * 0.4, y: snowTop - h * 0.4, width: w * 0.2, height: h * 0.4))
+        }
+        func pine(_ x: CGFloat, _ base: CGFloat, _ s: CGFloat) {
+            ctx.setFillColor(cg(rgb(0x5A3A1E))); ctx.fill(CGRect(x: x - s * 0.08, y: base - s * 0.25, width: s * 0.16, height: s * 0.25))
+            for k in 0..<3 {
+                let w = s * (0.9 - 0.25 * CGFloat(k)), y = base - s * 0.2 - CGFloat(k) * s * 0.35
+                let p = CGMutablePath(); p.move(to: CGPoint(x: x - w / 2, y: y)); p.addLine(to: CGPoint(x: x, y: y - s * 0.55)); p.addLine(to: CGPoint(x: x + w / 2, y: y)); p.closeSubpath()
+                ctx.addPath(p); ctx.setFillColor(cg(rgb(0x1E5A3A))); ctx.fillPath()
+                ctx.setStrokeColor(cg((0.95, 0.97, 1))); ctx.setLineWidth(s * 0.05)
+                ctx.move(to: CGPoint(x: x - w * 0.42, y: y - 4)); ctx.addLine(to: CGPoint(x: x + w * 0.42, y: y - 4)); ctx.strokePath()
+            }
+        }
+        house(140, 260, 220, rgb(0xB5483A)); house(560, 300, 260, rgb(0x3A6EA5)); house(930, 220, 200, rgb(0x6B8E3A))
+        for (x, s) in [(60.0, 300.0), (480, 260), (880, 240), (1110, 320)] { pine(CGFloat(x), snowTop + 20, CGFloat(s)) }
+        let snow = CGMutablePath(); snow.move(to: CGPoint(x: 0, y: snowTop))
+        snow.addQuadCurve(to: CGPoint(x: CGFloat(W), y: snowTop + 30), control: CGPoint(x: CGFloat(W) * 0.5, y: snowTop - 50))
+        snow.addLine(to: CGPoint(x: CGFloat(W), y: CGFloat(H))); snow.addLine(to: CGPoint(x: 0, y: CGFloat(H))); snow.closeSubpath()
+        ctx.addPath(snow); ctx.setFillColor(cg(rgb(0xE8EEF8))); ctx.fillPath()
+    }
+    snowfall(c, seed: seed &+ 1, count: 600)
+}
+
+func christmasLights(_ c: Canvas, seed: Int32) {
+    c.shade { x, y in add(rgb(0x0A0E1A), scale((0.05, 0.06, 0.1), fbm(Float(x) / 200, Float(y) / 200, seed, 4))) }
+    c.draw { ctx in
+        let colors = [rgb(0xFF3B3B), rgb(0x3BD16F), rgb(0x3B8BFF), rgb(0xFFD23F), rgb(0xFF8A2B)]
+        var i = 0
+        for row in 0..<6 {                                                         // sagging wires across the screen
+            let y0 = CGFloat(220 + row * 400), sag = CGFloat(140)
+            ctx.setStrokeColor(cg(rgb(0x1E2A1E))); ctx.setLineWidth(6)
+            ctx.move(to: CGPoint(x: -20, y: y0)); ctx.addQuadCurve(to: CGPoint(x: CGFloat(W) + 20, y: y0), control: CGPoint(x: CGFloat(W) / 2, y: y0 + sag * 2)); ctx.strokePath()
+            for k in 1..<10 {
+                let t = CGFloat(k) / 10, x = -20 + t * (CGFloat(W) + 40), y = y0 + 4 * sag * t * (1 - t)
+                let col = colors[i % colors.count]; i += 1
+                glow(ctx, x, y + 40, 90, col, 0.55)
+                ctx.setFillColor(cg(rgb(0x3A3A3A))); ctx.fill(CGRect(x: x - 9, y: y, width: 18, height: 16))
+                ctx.setFillColor(cg(col)); ctx.fillEllipse(in: CGRect(x: x - 16, y: y + 14, width: 32, height: 50))
+                ctx.setFillColor(cg((1, 1, 1), 0.6)); ctx.fillEllipse(in: CGRect(x: x - 8, y: y + 22, width: 8, height: 14))
+            }
+        }
+    }
+}
+
+func snowflakes(_ c: Canvas, seed: Int32) {
+    c.shade { x, y in
+        let t = Float(y) / Float(H)
+        return add(mix(rgb(0x6FA8E8), rgb(0x1E4C9A), t), scale((0.2, 0.25, 0.3), fbm(Float(x) / 300, Float(y) / 300, seed, 4) * 0.3))
+    }
+    c.draw { ctx in
+        var r = Rand(s: UInt64(seed))
+        for _ in 0..<40 {
+            let x = CGFloat(r.range(0, Double(W))), y = CGFloat(r.range(0, Double(H))), s = CGFloat(r.range(30, 120)), a = CGFloat(r.range(0, 1))
+            ctx.saveGState(); ctx.translateBy(x: x, y: y); ctx.rotate(by: a)
+            ctx.setStrokeColor(cg((1, 1, 1), CGFloat(r.range(0.6, 0.95)))); ctx.setLineWidth(s * 0.06); ctx.setLineCap(.round)
+            for k in 0..<6 {
+                ctx.saveGState(); ctx.rotate(by: CGFloat(k) * .pi / 3)
+                ctx.move(to: .zero); ctx.addLine(to: CGPoint(x: 0, y: -s))
+                for f in [0.45, 0.7] as [CGFloat] {
+                    ctx.move(to: CGPoint(x: 0, y: -s * f)); ctx.addLine(to: CGPoint(x: -s * 0.22, y: -s * (f + 0.18)))
+                    ctx.move(to: CGPoint(x: 0, y: -s * f)); ctx.addLine(to: CGPoint(x: s * 0.22, y: -s * (f + 0.18)))
+                }
+                ctx.strokePath(); ctx.restoreGState()
+            }
+            ctx.restoreGState()
+        }
+    }
+    snowfall(c, seed: seed &+ 7, count: 300)
+}
+
 // MARK: - catalogue
 
 let all: [(String, (Canvas) -> Void)] = [
@@ -780,6 +1116,15 @@ let all: [(String, (Canvas) -> Void)] = [
     ("stage-lights", { stage($0, seed: 31) }),
     ("white-wood", { wood($0, dark: rgb(0xB9B3AA), light: rgb(0xF4F1EC), seed: 34, weathered: true) }),
     ("instruments", { instruments($0, seed: 35) }),
+    ("halloween-pumpkin-patch", { pumpkinPatch($0, seed: 40) }),
+    ("halloween-haunted-house", { hauntedHouse($0, seed: 41) }),
+    ("halloween-purple-fog", { purpleFog($0, seed: 42) }),
+    ("thanksgiving-autumn-leaves", { autumnLeaves($0, seed: 43) }),
+    ("thanksgiving-cornfield-sunset", { cornfieldSunset($0, seed: 44) }),
+    ("thanksgiving-harvest-table", { harvestTable($0, seed: 45) }),
+    ("christmas-snowy-village", { snowyVillage($0, seed: 46) }),
+    ("christmas-lights", { christmasLights($0, seed: 47) }),
+    ("christmas-snowflakes", { snowflakes($0, seed: 48) }),
 ]
 
 let args = Array(CommandLine.arguments.dropFirst())

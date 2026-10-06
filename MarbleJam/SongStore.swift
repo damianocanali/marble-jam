@@ -51,12 +51,24 @@ final class SongStore {
         return (try? save(s)) != nil
     }
 
+    /// `base`, or "<base> copy", "<base> copy 2", ... whichever is free.
+    private func uniqueName(_ base: String, startWithCopy: Bool) -> String {
+        let names = Set(all().map(\.name))
+        if !startWithCopy && !names.contains(base) { return base }
+        var name = "\(base) copy", k = 2
+        while names.contains(name) { name = "\(base) copy \(k)"; k += 1 }
+        return name
+    }
+
     func duplicate(_ id: UUID) -> Song? {
         guard let s = song(id) else { return nil }
-        let names = Set(all().map(\.name))
-        var name = "\(s.name) copy", k = 2
-        while names.contains(name) { name = "\(s.name) copy \(k)"; k += 1 }
-        return try? save(Song(name: name, course: s.course, instrument: s.instrument))
+        return try? save(Song(name: uniqueName(s.name, startWithCopy: true), course: s.course, instrument: s.instrument))
+    }
+
+    /// Saves a ready-made song (from a holiday shelf) as the player's own.
+    func addCopy(of template: Song) -> Song {
+        let s = Song(name: uniqueName(template.name, startWithCopy: false), course: template.course, instrument: template.instrument)
+        return (try? save(s)) ?? s
     }
 
     func delete(_ id: UUID) { try? FileManager.default.removeItem(at: url(id)) }

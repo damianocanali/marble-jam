@@ -7,7 +7,16 @@ struct RootView: View {
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
     @AppStorage("background.v1") private var backgroundID = ""   // "" = night sky
-    private var background: BackgroundOption? { BackgroundLibrary.bundled.first { $0.id == backgroundID } }
+    @AppStorage("season.preview") private var seasonPreview = ""        // DEBUG builds only (see MenuView); "" = by date
+    private var season: Season? {
+        #if DEBUG
+        Seasons.current(on: Date(), preview: seasonPreview)
+        #else
+        Seasons.current(on: Date(), preview: "")
+        #endif
+    }
+    private var backgrounds: [BackgroundOption] { BackgroundLibrary.available(BackgroundLibrary.bundled, season: season?.id) }
+    private var background: BackgroundOption? { BackgroundLibrary.resolve(BackgroundLibrary.bundled, chosenID: backgroundID, season: season?.id) }
 
     init() {
         let s = SongStore(folder: SongStore.appFolder())
@@ -19,10 +28,10 @@ struct RootView: View {
         ZStack {
             switch screen {
             case .menu:
-                MenuView(background: background, backgroundID: $backgroundID, onCreate: { screen = .library })
+                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library })
                     .transition(.opacity)
             case .library:
-                LibraryView(store: store, background: background, onOpen: { model.open($0); screen = .play }, onBack: { screen = .menu })
+                LibraryView(store: store, background: background, season: season, onOpen: { model.open($0); screen = .play }, onBack: { screen = .menu })
                     .transition(.opacity)
             case .play:
                 ContentView(model: model, background: background, onMenu: { model.stop(); model.save(); screen = .library })

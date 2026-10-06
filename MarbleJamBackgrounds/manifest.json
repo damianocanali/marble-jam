@@ -159,5 +159,77 @@
     "luminance" : 0.60899999999999999,
     "name" : "Instruments",
     "thumb" : "bg-23-thumb.jpg"
+  },
+  {
+    "id" : "bg-24",
+    "image" : "bg-24.jpg",
+    "luminance" : 0.189,
+    "name" : "Pumpkin Patch",
+    "season" : "halloween",
+    "thumb" : "bg-24-thumb.jpg"
+  },
+  {
+    "id" : "bg-25",
+    "image" : "bg-25.jpg",
+    "luminance" : 0.114,
+    "name" : "Haunted House",
+    "season" : "halloween",
+    "thumb" : "bg-25-thumb.jpg"
+  },
+  {
+    "id" : "bg-26",
+    "image" : "bg-26.jpg",
+    "luminance" : 0.113,
+    "name" : "Purple Fog",
+    "season" : "halloween",
+    "thumb" : "bg-26-thumb.jpg"
+  },
+  {
+    "id" : "bg-27",
+    "image" : "bg-27.jpg",
+    "luminance" : 0.47799999999999998,
+    "name" : "Autumn Leaves",
+    "season" : "thanksgiving",
+    "thumb" : "bg-27-thumb.jpg"
+  },
+  {
+    "id" : "bg-28",
+    "image" : "bg-28.jpg",
+    "luminance" : 0.29499999999999998,
+    "name" : "Cornfield Sunset",
+    "season" : "thanksgiving",
+    "thumb" : "bg-28-thumb.jpg"
+  },
+  {
+    "id" : "bg-29",
+    "image" : "bg-29.jpg",
+    "luminance" : 0.47699999999999998,
+    "name" : "Harvest Table",
+    "season" : "thanksgiving",
+    "thumb" : "bg-29-thumb.jpg"
+  },
+  {
+    "id" : "bg-30",
+    "image" : "bg-30.jpg",
+    "luminance" : 0.432,
+    "name" : "Snowy Village",
+    "season" : "christmas",
+    "thumb" : "bg-30-thumb.jpg"
+  },
+  {
+    "id" : "bg-31",
+    "image" : "bg-31.jpg",
+    "luminance" : 0.13,
+    "name" : "Lights",
+    "season" : "christmas",
+    "thumb" : "bg-31-thumb.jpg"
+  },
+  {
+    "id" : "bg-32",
+    "image" : "bg-32.jpg",
+    "luminance" : 0.52100000000000002,
+    "name" : "Snowflakes",
+    "season" : "christmas",
+    "thumb" : "bg-32-thumb.jpg"
   }
 ]
