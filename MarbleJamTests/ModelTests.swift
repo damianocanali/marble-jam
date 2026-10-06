@@ -64,4 +64,76 @@ final class ModelTests: XCTestCase {
             autoreleasepool { let m = GameModel(); m.chime(0); RunLoop.current.run(until: Date() + 0.02) }
         }
     }
+
+    func testLettingGoOfAClosePadSnapsItOnTheBeat() throws {
+        let m = GameModel(); m.loadDemo()
+        let i = 5; m.selected = m.course.pads[i].id
+        var dy = 0
+        repeat { dy += 1; m.updateSelected { $0.y += 1 } } while m.beats[i] != .near && dy < 40
+        XCTAssertEqual(m.beats[i], .near)
+        XCTAssertTrue(m.finishEdit())
+        XCTAssertEqual(m.beats[i], .on)
+    }
+
+    func testLettingGoOfAPadOnTheBeatChangesNothing() {
+        let m = GameModel(); m.loadDemo()
+        m.selected = m.course.pads[5].id
+        let before = m.course
+        XCTAssertFalse(m.finishEdit())
+        XCTAssertEqual(m.course, before)
+    }
+
+    private func tempStore() -> SongStore { SongStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)) }
+
+    func testEditsSaveIntoTheOpenSong() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.addPad()
+        XCTAssertEqual(store.song(s.id)?.course.pads.count, 1)
+    }
+
+    func testOpeningASongClearsUndo() {
+        let store = tempStore(), a = store.newSong(), b = store.resetDemo(), m = GameModel(store: store)
+        m.open(a); m.addPad()
+        m.open(b); m.undo()
+        XCTAssertEqual(m.course, b.course)
+    }
+
+    func testInstrumentChangeIsSavedAndUndoable() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.setInstrument(.guitar)
+        XCTAssertEqual(store.song(s.id)?.instrument, .guitar)
+        m.undo()
+        XCTAssertEqual(m.instrument, .bells)
+        XCTAssertEqual(store.song(s.id)?.instrument, .bells)
+    }
+
+    func testRenameFromTheBuilder() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.rename(to: " Funky ")
+        XCTAssertEqual(m.song?.name, "Funky")
+        XCTAssertEqual(store.song(s.id)?.name, "Funky")
+    }
+
+    func testTappingAClosePadWithoutMovingItChangesNothing() {
+        let m = GameModel(); m.loadDemo()
+        let i = 5; m.selected = m.course.pads[i].id
+        var dy = 0
+        repeat { dy += 1; m.updateSelected { $0.y += 1 } } while m.beats[i] != .near && dy < 40
+        let before = m.course
+        m.mark()                                                   // what touch-down does
+        XCTAssertFalse(m.finishEdit())                             // released without moving
+        XCTAssertEqual(m.course, before, "a tap must not snap the pad")
+        m.undo()                                                   // the tap left no step, so undo goes back past loading the demo
+        XCTAssertTrue(m.course.pads.isEmpty, "and must not leave an empty undo step behind")
+    }
+
+    func testHeaderInfoIsNotesAndBeatsOnly() {
+        let m = GameModel()
+        XCTAssertEqual(m.info, "No notes yet")
+        m.loadDemo()
+        XCTAssertEqual(m.info, "14 notes · 14 on the beat")
+    }
 }

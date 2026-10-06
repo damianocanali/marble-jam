@@ -18,7 +18,10 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `RunScene.swift`    SpriteKit drawing and touch handling
 - `ContentView.swift` header, hint, buttons
 - `RootView.swift`    switches between the menu and the game
-- `MenuView.swift`    start screen: lettering, Play, Demo Song, Backgrounds, Store/Sign in (coming soon)
+- `MenuView.swift`    start screen: lettering, Challenges (coming soon), Create, Backgrounds, Store/Sign in (coming soon)
+- `LibraryView.swift` "My Songs": song cards with a course preview, rename/duplicate/delete
+- `Song.swift` / `SongStore.swift` each song saved as a JSON file in Documents/Songs; first-launch migration of the old course
+- `Instrument.swift` / `InstrumentSound.swift` the six instruments (bells, piano, guitar, marimba, drums, 8-bit), each note rendered once and cached
 - `AttractScene.swift` the menu's background: the demo course with marbles dropping and hitting the pads
 - `PadArt.swift`      how pads, the marble and a hit look (shared by the game and the menu)
 - `PadController.swift` tilt dial and note buttons for the selected pad

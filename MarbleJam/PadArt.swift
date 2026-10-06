@@ -43,4 +43,26 @@ enum PadArt {
             s.run(.sequence([.group([.moveBy(x: cos(a) * v, y: sin(a) * v + 40, duration: 0.5), .fadeOut(withDuration: 0.5)]), .removeFromParent()]))
         }
     }
+
+    static let beatGold = UIColor(red: 1, green: 0.85, blue: 0.35, alpha: 1)
+
+    /// A gold outline around a pad that is on the beat (pulsing) or close to it (faint).
+    static func halo(for p: Pad, onBeat: Bool) -> SKShapeNode {
+        let h = node(for: p)
+        h.fillColor = .clear; h.strokeColor = beatGold; h.lineWidth = 3
+        h.glowWidth = onBeat ? 16 : 8
+        h.zPosition = -1
+        if onBeat {
+            h.run(.repeatForever(.sequence([.fadeAlpha(to: 0.45, duration: 0.6), .fadeAlpha(to: 1, duration: 0.6)])))
+        } else {
+            h.alpha = 0.35
+        }
+        return h
+    }
+}
+
+/// Small taps felt when a pad lands on the beat.
+enum Haptics {
+    static func onBeat() { UIImpactFeedbackGenerator(style: .light).impactOccurred() }
+    static func snapped() { UIImpactFeedbackGenerator(style: .medium).impactOccurred() }
 }

@@ -5,6 +5,8 @@ struct ContentView: View {
     @ObservedObject var model: GameModel
     let background: BackgroundOption?
     let onMenu: () -> Void
+    @State private var renaming = false
+    @State private var newName = ""
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
     }()
@@ -17,16 +19,32 @@ struct ContentView: View {
     var body: some View {
         ZStack {
             SpriteView(scene: scene, options: [.allowsTransparency]).ignoresSafeArea()
+            VStack {
+                LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 150).ignoresSafeArea()
+                Spacer()
+            }
+            .allowsHitTesting(false)
             VStack(spacing: 0) { header; Spacer(); tray }
             VStack {
                 HStack {
                     Spacer()
+                    Menu {
+                        ForEach(Instrument.allCases) { i in
+                            Button { model.setInstrument(i) } label: { Label(i.title, systemImage: i.symbol) }
+                        }
+                    } label: {
+                        Image(systemName: model.instrument.symbol).font(.system(size: 16, weight: .heavy)).frame(width: 40, height: 40)
+                    }
+                    .menuStyle(.button).buttonStyle(Chip())
+                    .accessibilityLabel("Instrument: \(model.instrument.title)")
+                    .disabled(model.playing)
                     Button(action: onMenu) {
                         Image(systemName: "house.fill").font(.system(size: 16, weight: .heavy))
                             .frame(width: 40, height: 40)
                     }
                     .buttonStyle(Chip())
-                    .accessibilityLabel("Menu")
+                    .accessibilityLabel("My Songs")
                 }
                 Spacer()
             }
@@ -44,27 +62,37 @@ struct ContentView: View {
         }
         .background { Backdrop(option: background) }
         .onAppear { scene.model = model }
+        .alert("Rename song", isPresented: $renaming) {
+            TextField("Name", text: $newName)
+            Button("Save") { model.rename(to: newName) }
+            Button("Cancel", role: .cancel) {}
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
             Image("Title").resizable().scaledToFit().frame(height: 54)    // the lettering from art/Text.PNG
-                .accessibilityLabel("Marble Jam")
-            Text(model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
+                .accessibilityLabel("Marble Jam").allowsHitTesting(false)
+            HStack(spacing: 4) {
+                Button { newName = model.song?.name ?? ""; renaming = true } label: {
+                    Text(model.song?.name ?? "Song").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(ink).lineLimit(1)
+                }
+                .layoutPriority(1)                                         // the name keeps its room; the counts give way
+                .accessibilityHint("Rename")
+                Text("· " + model.info).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted).monospacedDigit()
+                    .lineLimit(1).allowsHitTesting(false)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.trailing, 52)
         .padding(.horizontal, 16).padding(.top, 8).padding(.bottom, 24)
-        .background(LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom).ignoresSafeArea())
-        .allowsHitTesting(false)
     }
 
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move. Turn the dial to tilt. ♭ ♯ change the note." : "Drag to move. ♭ ♯ change the note."
+            return p.kind == .bar ? "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on." : "Drag to move. ♭ ♯ change the note."
         }
-        return "The dotted line is where the marble will go. Gold rings are beats: put pads there."
+        return "The dotted line is where the marble will go. Pads glow gold when they hit on the beat."
     }
 
     private var tray: some View {
@@ -85,10 +113,7 @@ struct ContentView: View {
                 }
             }
             .buttonStyle(Chip()).disabled(model.playing)
-            HStack(spacing: 8) {
-                Button("Demo") { model.loadDemo() }.buttonStyle(Chip()).disabled(model.playing)
-                Button(model.playing ? "Stop ■" : "Drop ▶") { model.toggleDrop() }.buttonStyle(Chip(primary: true, stop: model.playing))
-            }
+            Button(model.playing ? "Stop ■" : "Drop ▶") { model.toggleDrop() }.buttonStyle(Chip(primary: true, stop: model.playing))
         }
         .padding(.horizontal, 12).padding(.top, 26).padding(.bottom, 10)
         .frame(maxWidth: .infinity)

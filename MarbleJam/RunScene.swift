@@ -17,6 +17,7 @@ final class RunScene: SKScene {
 
     private enum Drag { case move(dx: Double, dy: Double), tilt, hopper, pan(startY: CGFloat, camY: Double, moved: Bool) }
     private var drag: Drag?
+    private var lastBeats: [UUID: Engine.BeatState] = [:]      // to feel the moment a dragged pad lands on the beat
 
     private var base: Double { max(0.01, Double(size.width) / Rules.width) }
     private var viewHeight: Double { Double(size.height) / base }
@@ -91,9 +92,13 @@ final class RunScene: SKScene {
             let node = PadArt.node(for: p)
             node.alpha = (live.contains(i) || m.playing) ? 1 : 0.4
             padLayer.addChild(node); padNodes.append(node)
+            let beat = i < m.beats.count ? m.beats[i] : .unused
+            if !m.playing && (beat == .on || beat == .near) { padLayer.addChild(PadArt.halo(for: p, onBeat: beat == .on)) }
+            if drag != nil, beat == .on, let was = lastBeats[p.id], was != .on { Haptics.onBeat() }
+            lastBeats[p.id] = beat
 
-            let label = SKLabelNode(text: Notes.name(p))
-            label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = color(p); label.yScale = -1
+            let label = SKLabelNode(text: Notes.label(p, instrument: m.instrument))
+            label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? PadArt.beatGold : color(p); label.yScale = -1
             label.verticalAlignmentMode = .center
             let off = p.kind == .bar ? 30.0 : Notes.bumperRadius(p.note) + 22
             label.position = CGPoint(x: p.x - sin(p.angle) * off, y: p.y + cos(p.angle) * off)
@@ -198,7 +203,11 @@ final class RunScene: SKScene {
 
     private func endDrag() {
         guard let m = model, let d = drag else { return }
-        if case let .pan(_, _, moved) = d { if !moved { m.selected = nil; seenVersion = -1 } } else { m.save() }
+        switch d {
+        case let .pan(_, _, moved): if !moved { m.selected = nil; seenVersion = -1 }
+        case .hopper: m.save()                                                     // moving the hopper never snaps the selected pad
+        case .move, .tilt: if m.finishEdit() { Haptics.snapped() }
+        }
         drag = nil
     }
 }

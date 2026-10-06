@@ -63,6 +63,10 @@ enum Notes {
     static let hues = [190.0, 262, 322, 22, 44, 140, 0]
     static func midi(_ p: Pad) -> Int { (p.kind == .bar ? 60 : 48) + 12 * (p.note / 7) + major[p.note % 7] }
     static func name(_ p: Pad) -> String { names[p.note % 7] + String((p.kind == .bar ? 4 : 3) + p.note / 7) }
+    /// What a pad's label says: the note, or the drum piece when the song plays drums.
+    static func label(_ p: Pad, instrument: Instrument) -> String {
+        instrument == .drums ? Drum.piece(midi: midi(p), bar: p.kind == .bar).label : name(p)
+    }
     static func barLength(_ n: Int) -> Double { 210 - 10 * Double(n) }
     static func bumperRadius(_ n: Int) -> Double { 46 - 4 * Double(n) }
     static func hue(_ p: Pad) -> Double { hues[p.note % 7] / 360 }
@@ -113,6 +117,53 @@ enum Engine {
     static func isOnBeat(_ t: Double) -> Bool {
         let half = Rules.beat / 2
         return abs(t / half - (t / half).rounded()) * half < 0.04
+    }
+
+    /// How far a time is from the nearest half beat, in seconds.
+    static func beatOffset(_ t: Double) -> Double {
+        let g = Rules.beat / 2
+        return abs(t - (t / g).rounded() * g)
+    }
+
+    /// Within this of a half beat, a pad counts as "close": it glows faintly and snaps on when let go.
+    static let nearBeat = 0.08
+
+    enum BeatState: Equatable { case on, near, off, unused }
+
+    /// For each pad: on the beat (every hit is), close (every hit is near), off, or never hit.
+    static func beatStates(_ run: Run, padCount: Int) -> [BeatState] {
+        var times = [[Double]](repeating: [], count: padCount)
+        for h in run.hits where h.pad < padCount { times[h.pad].append(h.time) }
+        return times.map { ts in
+            if ts.isEmpty { return .unused }
+            if ts.allSatisfy(isOnBeat) { return .on }
+            if ts.allSatisfy({ beatOffset($0) <= nearBeat }) { return .near }
+            return .off
+        }
+    }
+
+    /// Slides a pad that is close to the beat along the marble's way in, so it is hit exactly on the beat.
+    /// Nil when the pad is far off, already on, or the move would change what happens before it.
+    static func snapToBeat(_ c: Course, pad i: Int) -> Course? {
+        guard c.pads.indices.contains(i) else { return nil }
+        let original = simulate(c)
+        guard let first = original.hits.first(where: { $0.pad == i }), !isOnBeat(first.time), beatOffset(first.time) <= nearBeat else { return nil }
+        let g = Rules.beat / 2, target = (first.time / g).rounded() * g
+        let before = original.hits.prefix { $0.pad != i }
+        var free = c; free.pads.remove(at: i)
+        let way = simulate(free)                                   // the marble's path as if this pad weren't there
+        var trial = c
+        for _ in 0..<4 {                                           // a few corrections: moving the pad shifts the contact point a little
+            guard let h = simulate(trial).hits.first(where: { $0.pad == i }) else { return nil }
+            if isOnBeat(h.time) && abs(h.time - target) < 0.02 { break }
+            let p = way.position(at: target), q = way.position(at: h.time)
+            let moved = Rules.clampPad(x: trial.pads[i].x + p.x - q.x, y: trial.pads[i].y + p.y - q.y)
+            trial.pads[i].x = moved.x; trial.pads[i].y = moved.y
+        }
+        let result = simulate(trial)
+        guard beatStates(result, padCount: trial.pads.count)[i] == .on else { return nil }
+        let same = result.hits.count >= before.count && zip(before, result.hits).allSatisfy { $0.pad == $1.pad && abs($0.time - $1.time) < 1e-6 }
+        return same ? trial : nil
     }
 
     /// The helper that makes this a composer: puts the next pad exactly where the marble is on the beat.

@@ -19,7 +19,7 @@ struct PadController: View {
                     Spacer().frame(width: 10)
                 }
                 Button("♭") { model.stepNote(-1) }.buttonStyle(Chip())
-                Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
+                Text(Notes.label(p, instrument: model.instrument)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
                 Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
             }
         }
@@ -40,13 +40,13 @@ struct PadController: View {
             if !dialMarked { dialMarked = true; model.mark() }
             model.setAngle(Rules.barAngle(dx: v.location.x - size / 2, dy: v.location.y - size / 2))
         })
-        .onChange(of: dialing) { _, down in if !down && dialMarked { dialMarked = false; model.save() } }
+        .onChange(of: dialing) { _, down in if !down && dialMarked { dialMarked = false; if model.finishEdit() { Haptics.snapped() } } }
         .accessibilityLabel("Tilt")
     }
 
     /// 5° per tap; repeats while held.
     private func spin(_ icon: String, _ dir: Double) -> some View {
-        HoldButton(onBegin: { model.mark() }, onEnd: { model.save() }, onTick: { n in
+        HoldButton(onBegin: { model.mark() }, onEnd: { if model.finishEdit() { Haptics.snapped() } }, onTick: { n in
             if n == 0 || (n >= 9 && n % 3 == 0) { model.rotate(by: dir * Rules.rotateStep) }
         }) {
             Image(systemName: icon).font(.system(size: 15, weight: .heavy)).foregroundStyle(ink)

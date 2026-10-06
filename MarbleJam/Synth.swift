@@ -1,8 +1,8 @@
 import AVFoundation
 
-/// A small bell/pluck synth. Notes are scheduled on the audio clock, so sound and picture stay together.
+/// A small synth that plays pre-rendered notes (see InstrumentSound.swift) on the audio clock, so sound and picture stay together.
 final class Synth {
-    private struct Voice { let freq, gain, start, dur: Double; let bar: Bool }
+    private struct Voice { let samples: [Float]; let gain, start: Double }
     private let engine = AVAudioEngine()
     private var source: AVAudioSourceNode!
     private var voices: [Voice] = []
@@ -22,18 +22,15 @@ final class Synth {
             self.lock.lock()
             let t0 = self.clock
             self.clock += Double(frameCount) / self.sampleRate
-            self.voices.removeAll { t0 > $0.start + $0.dur }
+            self.voices.removeAll { t0 > $0.start + Double($0.samples.count) / self.sampleRate }
             let vs = self.voices
             self.lock.unlock()
             for f in 0..<Int(frameCount) {
                 let t = t0 + Double(f) / self.sampleRate
                 var s = 0.0
                 for v in vs {
-                    let u = t - v.start
-                    if u < 0 || u > v.dur { continue }
-                    let env = min(1, u / 0.008) * exp(-u * (v.bar ? 4.2 : 8.5)) * v.gain      // soft attack, no click
-                    let w = 2 * Double.pi * v.freq * u
-                    s += env * (sin(w) + (v.bar ? 0.28 : 0.5) * sin(2 * w) + (v.bar ? 0.1 : 0.22) * sin(3 * w))
+                    let i = Int((t - v.start) * self.sampleRate)
+                    if i >= 0 && i < v.samples.count { s += Double(v.samples[i]) * v.gain * 1.3 }
                 }
                 let out = Float(tanh(s * 0.6))
                 for b in buffers { b.mData?.assumingMemoryBound(to: Float.self)[f] = out }
@@ -55,8 +52,20 @@ final class Synth {
     /// Current time on the audio clock, in seconds.
     var now: Double { lock.lock(); defer { lock.unlock() }; return clock }
 
-    func play(midi: Int, bar: Bool, gain: Double, at time: Double) {
-        let v = Voice(freq: 440 * pow(2, Double(midi - 69) / 12), gain: gain, start: time, dur: bar ? 1.5 : 0.7, bar: bar)
-        lock.lock(); voices.append(v); lock.unlock()
+    private var cache: [String: [Float]] = [:]           // one rendered note per instrument/pitch/kind; used from the main thread only
+
+    /// Renders notes ahead of time so playback never waits for them.
+    func prepare(_ notes: [(midi: Int, bar: Bool)], instrument: Instrument) {
+        for n in notes {
+            let key = "\(instrument.rawValue)-\(n.midi)-\(n.bar)"
+            if cache[key] == nil { cache[key] = instrument.samples(midi: n.midi, bar: n.bar, sampleRate: sampleRate) }
+        }
+    }
+
+    func play(midi: Int, bar: Bool, gain: Double, at time: Double, instrument: Instrument = .bells) {
+        let key = "\(instrument.rawValue)-\(midi)-\(bar)"
+        let samples = cache[key] ?? instrument.samples(midi: midi, bar: bar, sampleRate: sampleRate)
+        cache[key] = samples
+        lock.lock(); voices.append(Voice(samples: samples, gain: gain, start: time)); lock.unlock()
     }
 }
