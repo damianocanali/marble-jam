@@ -71,10 +71,11 @@ final class SongStore {
         defaults.set(true, forKey: "songs.migrated.v1")
     }
 
-    /// A fresh "Twinkle Twinkle", replacing any song with that name.
+    /// A fresh "Twinkle Twinkle", replacing the built-in one (never a player's song, whatever its name).
     @discardableResult func resetDemo() -> Song {
-        all().filter { $0.name == Self.demoName }.forEach { delete($0.id) }
-        let s = Song(name: Self.demoName, course: Engine.demo())
+        all().filter(\.isDemo).forEach { delete($0.id) }
+        var s = Song(name: Self.demoName, course: Engine.demo())
+        s.isDemo = true
         return (try? save(s)) ?? s
     }
 }

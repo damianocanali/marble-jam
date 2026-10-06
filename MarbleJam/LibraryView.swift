@@ -11,6 +11,7 @@ struct LibraryView: View {
     @State private var renaming: Song?
     @State private var newName = ""
     @State private var deleting: Song?
+    @State private var confirmingReset = false
 
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 14)]
@@ -48,7 +49,7 @@ struct LibraryView: View {
                         }
                     }
                     .padding(16)
-                    Button("Reset Twinkle Twinkle") { store.resetDemo(); reload() }
+                    Button("Reset Twinkle Twinkle") { confirmingReset = true }
                         .font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(ink.opacity(0.6))
                         .padding(.bottom, 24)
                 }
@@ -65,6 +66,10 @@ struct LibraryView: View {
             Button("Delete", role: .destructive) { if let d = deleting { store.delete(d.id) }; reload() }
             Button("Cancel", role: .cancel) {}
         } message: { Text("This can't be undone.") }
+        .alert("Reset Twinkle Twinkle?", isPresented: $confirmingReset) {
+            Button("Reset", role: .destructive) { store.resetDemo(); reload() }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Your changes to it will be lost.") }
     }
 
     private func reload() { songs = store.all() }

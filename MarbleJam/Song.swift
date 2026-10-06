@@ -8,12 +8,13 @@ struct Song: Codable, Identifiable, Equatable {
     var modified = Date()
     var instrument: Instrument = .bells
     var course: Course
+    var isDemo = false                     // the built-in Twinkle Twinkle: "Reset" replaces only this one
 
     init(name: String, course: Course, instrument: Instrument = .bells) {
         self.name = name; self.course = course; self.instrument = instrument
     }
 
-    private enum CodingKeys: String, CodingKey { case id, name, created, modified, instrument, course }
+    private enum CodingKeys: String, CodingKey { case id, name, created, modified, instrument, course, isDemo }
 
     /// Older files have no instrument: they play with bells.
     init(from decoder: Decoder) throws {
@@ -24,5 +25,6 @@ struct Song: Codable, Identifiable, Equatable {
         modified = try c.decode(Date.self, forKey: .modified)
         instrument = try c.decodeIfPresent(Instrument.self, forKey: .instrument) ?? .bells
         course = try c.decode(Course.self, forKey: .course)
+        isDemo = try c.decodeIfPresent(Bool.self, forKey: .isDemo) ?? false
     }
 }

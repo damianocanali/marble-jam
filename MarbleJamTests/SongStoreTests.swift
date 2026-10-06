@@ -87,4 +87,14 @@ final class SongStoreTests: XCTestCase {
         let demo = Engine.demo()                                               // pads get new ids each time: compare what matters
         XCTAssertEqual(fresh.course.pads.map { [$0.x, $0.y, $0.angle, Double($0.note)] }, demo.pads.map { [$0.x, $0.y, $0.angle, Double($0.note)] })
     }
+
+    func testResetDemoNeverTouchesTheUsersOwnSongWithTheSameName() throws {
+        let s = store()
+        s.resetDemo()
+        var mine = s.newSong(); mine.name = "Twinkle Twinkle"; mine.course.pads = [Pad(kind: .bar, x: 300, y: 300, note: 3)]
+        mine = try s.save(mine)
+        s.resetDemo()
+        XCTAssertEqual(s.song(mine.id)?.course.pads.count, 1, "the player's song survives")
+        XCTAssertEqual(s.all().filter { $0.isDemo }.count, 1, "exactly one demo")
+    }
 }
