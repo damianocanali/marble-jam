@@ -63,6 +63,10 @@ enum Notes {
     static let hues = [190.0, 262, 322, 22, 44, 140, 0]
     static func midi(_ p: Pad) -> Int { (p.kind == .bar ? 60 : 48) + 12 * (p.note / 7) + major[p.note % 7] }
     static func name(_ p: Pad) -> String { names[p.note % 7] + String((p.kind == .bar ? 4 : 3) + p.note / 7) }
+    /// What a pad's label says: the note, or the drum piece when the song plays drums.
+    static func label(_ p: Pad, instrument: Instrument) -> String {
+        instrument == .drums ? Drum.piece(midi: midi(p), bar: p.kind == .bar).label : name(p)
+    }
     static func barLength(_ n: Int) -> Double { 210 - 10 * Double(n) }
     static func bumperRadius(_ n: Int) -> Double { 46 - 4 * Double(n) }
     static func hue(_ p: Pad) -> Double { hues[p.note % 7] / 360 }
