@@ -97,7 +97,7 @@ final class RunScene: SKScene {
             if drag != nil, beat == .on, let was = lastBeats[p.id], was != .on { Haptics.onBeat() }
             lastBeats[p.id] = beat
 
-            let label = SKLabelNode(text: Notes.name(p))
+            let label = SKLabelNode(text: Notes.label(p, instrument: m.instrument))
             label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? PadArt.beatGold : color(p); label.yScale = -1
             label.verticalAlignmentMode = .center
             let off = p.kind == .bar ? 30.0 : Notes.bumperRadius(p.note) + 22

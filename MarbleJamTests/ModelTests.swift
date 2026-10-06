@@ -82,4 +82,38 @@ final class ModelTests: XCTestCase {
         XCTAssertFalse(m.finishEdit())
         XCTAssertEqual(m.course, before)
     }
+
+    private func tempStore() -> SongStore { SongStore(folder: FileManager.default.temporaryDirectory.appendingPathComponent(UUID().uuidString)) }
+
+    func testEditsSaveIntoTheOpenSong() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.addPad()
+        XCTAssertEqual(store.song(s.id)?.course.pads.count, 1)
+    }
+
+    func testOpeningASongClearsUndo() {
+        let store = tempStore(), a = store.newSong(), b = store.resetDemo(), m = GameModel(store: store)
+        m.open(a); m.addPad()
+        m.open(b); m.undo()
+        XCTAssertEqual(m.course, b.course)
+    }
+
+    func testInstrumentChangeIsSavedAndUndoable() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.setInstrument(.guitar)
+        XCTAssertEqual(store.song(s.id)?.instrument, .guitar)
+        m.undo()
+        XCTAssertEqual(m.instrument, .bells)
+        XCTAssertEqual(store.song(s.id)?.instrument, .bells)
+    }
+
+    func testRenameFromTheBuilder() {
+        let store = tempStore(), s = store.newSong(), m = GameModel(store: store)
+        m.open(s)
+        m.rename(to: " Funky ")
+        XCTAssertEqual(m.song?.name, "Funky")
+        XCTAssertEqual(store.song(s.id)?.name, "Funky")
+    }
 }

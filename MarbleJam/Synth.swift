@@ -54,6 +54,14 @@ final class Synth {
 
     private var cache: [String: [Float]] = [:]           // one rendered note per instrument/pitch/kind; used from the main thread only
 
+    /// Renders notes ahead of time so playback never waits for them.
+    func prepare(_ notes: [(midi: Int, bar: Bool)], instrument: Instrument) {
+        for n in notes {
+            let key = "\(instrument.rawValue)-\(n.midi)-\(n.bar)"
+            if cache[key] == nil { cache[key] = instrument.samples(midi: n.midi, bar: n.bar, sampleRate: sampleRate) }
+        }
+    }
+
     func play(midi: Int, bar: Bool, gain: Double, at time: Double, instrument: Instrument = .bells) {
         let key = "\(instrument.rawValue)-\(midi)-\(bar)"
         let samples = cache[key] ?? instrument.samples(midi: midi, bar: bar, sampleRate: sampleRate)

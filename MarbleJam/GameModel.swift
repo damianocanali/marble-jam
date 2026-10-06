@@ -12,25 +12,35 @@ final class GameModel: ObservableObject {
     private(set) var version = 0            // the scene redraws when this changes
     var focusY: Double?                     // the scene scrolls here once, then clears it
 
-    private var undoStack: [Course] = []
+    @Published private(set) var instrument: Instrument = .bells
+    private(set) var song: Song?
+    private let store: SongStore?
+    private struct Snapshot { let course: Course; let instrument: Instrument }
+    private var undoStack: [Snapshot] = []
     private let synth = Synth()
     private var t0 = 0.0
     private var scheduled = 0
-    private static let key = "course.v1"
     private let nextNotes = [7, 9, 11, 12, 11, 9, 8, 7]     // what "+ Pad" hands out: a gentle up-and-down
 
-    init() {
-        if let d = UserDefaults.standard.data(forKey: Self.key), let c = try? JSONDecoder().decode(Course.self, from: d), !c.pads.isEmpty {
-            course = c
-        } else {
-            course = Engine.demo()
-        }
+    init(store: SongStore? = nil) {
+        self.store = store
+        refresh()
+    }
+
+    /// Opens a song in the builder. Undo starts fresh for each visit.
+    func open(_ s: Song) {
+        song = s; course = s.course; instrument = s.instrument
+        undoStack = []; selected = nil; playing = false; celebration = nil; focusY = 0
         refresh()
     }
 
     private func refresh() { run = Engine.simulate(course); beats = Engine.beatStates(run, padCount: course.pads.count); version += 1 }
-    func save() { if let d = try? JSONEncoder().encode(course) { UserDefaults.standard.set(d, forKey: Self.key) } }
-    func mark() { undoStack.append(course); if undoStack.count > 40 { undoStack.removeFirst() } }
+    func save() {
+        guard let store, var s = song else { return }
+        s.course = course; s.instrument = instrument
+        do { song = try store.save(s) } catch { toast = "Couldn't save your song" }
+    }
+    func mark() { undoStack.append(Snapshot(course: course, instrument: instrument)); if undoStack.count > 40 { undoStack.removeFirst() } }
 
     var selectedPad: Pad? { course.pads.first { $0.id == selected } }
     var maxY: Double { (course.pads.map(\.y) + [course.dropY]).max() ?? 0 }
@@ -84,11 +94,25 @@ final class GameModel: ObservableObject {
         guard let p = selectedPad else { return }
         mark()
         updateSelected { $0.note = max(0, min(Notes.maxNote(p.kind), $0.note + d)) }
-        if let q = selectedPad { synth.start(); synth.play(midi: Notes.midi(q), bar: q.kind == .bar, gain: 0.25, at: synth.now) }
+        if let q = selectedPad { synth.start(); synth.play(midi: Notes.midi(q), bar: q.kind == .bar, gain: 0.25, at: synth.now, instrument: instrument) }
         save()
     }
     func deleteSelected() { guard selected != nil else { return }; mark(); course.pads.removeAll { $0.id == selected }; selected = nil; refresh(); save() }
-    func undo() { guard let c = undoStack.popLast() else { return }; course = c; selected = nil; refresh(); save() }
+    func undo() {
+        guard let u = undoStack.popLast() else { return }
+        course = u.course; instrument = u.instrument; selected = nil; refresh(); save()
+    }
+
+    func setInstrument(_ i: Instrument) {
+        guard i != instrument else { return }
+        mark(); instrument = i; refresh(); save()
+        synth.start(); synth.play(midi: 67, bar: true, gain: 0.3, at: synth.now, instrument: i)
+    }
+
+    func rename(to name: String) {
+        guard let store, let s = song, store.rename(s.id, to: name) else { return }
+        song = store.song(s.id)
+    }
     func clear() { mark(); course.pads = []; selected = nil; focusY = 0; refresh(); save(); toast = "Cleared. Undo brings it back." }
     func loadDemo() { mark(); course = Engine.demo(); selected = nil; focusY = 0; refresh(); save() }
 
@@ -97,6 +121,7 @@ final class GameModel: ObservableObject {
         celebration = nil
         synth.start(); refresh()
         guard !run.hits.isEmpty else { toast = "Nothing in the way yet. Add a pad first."; return }
+        synth.prepare(course.pads.map { (Notes.midi($0), $0.kind == .bar) }, instrument: instrument)   // render every note before the clock starts
         selected = nil; scheduled = 0; t0 = synth.now + 0.08; playing = true; version += 1
     }
     func stop() { playing = false; version += 1 }
@@ -118,7 +143,7 @@ final class GameModel: ObservableObject {
         let t = synth.now - t0
         while scheduled < run.hits.count, run.hits[scheduled].time < t + 0.15 {
             let h = run.hits[scheduled], p = course.pads[h.pad]
-            synth.play(midi: Notes.midi(p), bar: p.kind == .bar, gain: min(0.36, 0.14 + h.speed / 3600), at: t0 + h.time)
+            synth.play(midi: Notes.midi(p), bar: p.kind == .bar, gain: min(0.36, 0.14 + h.speed / 3600), at: t0 + h.time, instrument: instrument)
             scheduled += 1
         }
         return t

@@ -19,7 +19,7 @@ struct PadController: View {
                     Spacer().frame(width: 10)
                 }
                 Button("♭") { model.stepNote(-1) }.buttonStyle(Chip())
-                Text(Notes.name(p)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
+                Text(Notes.label(p, instrument: model.instrument)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
                 Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
             }
         }
