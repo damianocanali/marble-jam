@@ -79,6 +79,20 @@ enum Seasons {
         return nil
     }
 
+    private static var shelves: [String: [Song]] = [:]
+    private static let shelfLock = NSLock()
+
+    /// The season's ready-made songs as templates (not saved). Laying them out takes a moment, so each season is built once.
+    static func shelf(for season: Season) -> [Song] {
+        shelfLock.lock(); let cached = shelves[season.id]; shelfLock.unlock()
+        if let cached { return cached }
+        let built = season.songs.map { Song(name: $0.name, course: $0.course(), instrument: $0.instrument) }
+        shelfLock.lock(); defer { shelfLock.unlock() }
+        if let raced = shelves[season.id] { return raced }
+        shelves[season.id] = built
+        return built
+    }
+
     /// The live season, unless a DEBUG preview overrides it: "" = by date, "off" = none, otherwise a season id.
     static func current(on date: Date, preview: String, calendar: Calendar = .current) -> Season? {
         switch preview {

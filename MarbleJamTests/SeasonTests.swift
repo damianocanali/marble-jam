@@ -65,4 +65,11 @@ final class SeasonTests: XCTestCase {
         XCTAssertEqual(Seasons.thanksgiving(year: 2029, calendar: cal), day(2029, 11, 22, hour: 0))   // Nov 1 2029 is a Thursday
         XCTAssertEqual(Seasons.thanksgiving(year: 2030, calendar: cal), day(2030, 11, 28, hour: 0))   // Nov 1 2030 is a Friday
     }
+
+    func testTheShelfIsBuiltOnceAndRemembered() {
+        let christmas = Seasons.all[2]
+        let first = Seasons.shelf(for: christmas), again = Seasons.shelf(for: christmas)
+        XCTAssertEqual(first.map(\.name), christmas.songs.map(\.name))
+        XCTAssertEqual(first.map(\.id), again.map(\.id), "the second call reuses the first build")
+    }
 }

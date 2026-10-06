@@ -73,9 +73,7 @@ struct LibraryView: View {
         .onAppear(perform: reload)
         .task(id: season?.id) {
             guard let season else { shelf = []; return }
-            shelf = await Task.detached(priority: .userInitiated) {
-                season.songs.map { Song(name: $0.name, course: $0.course(), instrument: $0.instrument) }
-            }.value
+            shelf = await Task.detached(priority: .userInitiated) { Seasons.shelf(for: season) }.value
         }
         .alert("Rename song", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $newName)
