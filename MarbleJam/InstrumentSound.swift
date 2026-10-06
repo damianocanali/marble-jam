@@ -69,9 +69,14 @@ extension Instrument {
         case .chip:
             out = render(bar ? 0.6 : 0.4, sr) { u in min(1, u / 0.003) * exp(-u * 5) * (sin(2 * .pi * f * u) >= 0 ? 0.5 : -0.5) }
         }
-        let peak = out.map(abs).max() ?? 0
+        let fade = min(out.count, Int(0.04 * sr))                                    // 40 ms release so notes end without a click
+        let ended = out.enumerated().map { i, v -> Double in
+            let left = out.count - 1 - i
+            return left < fade ? v * pow(Double(left) / Double(fade), 3) : v
+        }
+        let peak = ended.map(abs).max() ?? 0
         let k = peak > 0 ? 0.9 / peak : 0
-        return out.map { Float($0 * k) }
+        return ended.map { Float($0 * k) }
     }
 
     private func render(_ seconds: Double, _ sr: Double, _ sample: (Double) -> Double) -> [Double] {

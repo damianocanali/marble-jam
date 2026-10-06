@@ -28,4 +28,14 @@ final class InstrumentTests: XCTestCase {
         XCTAssertEqual(Notes.label(tom, instrument: .drums), "Tom")
         XCTAssertEqual(Notes.label(kick, instrument: .piano), Notes.name(kick))
     }
+
+    func testNotesFadeOutInsteadOfClicking() {
+        for inst in Instrument.allCases {
+            for (midi, bar) in [(48, false), (84, true), (60, true)] {
+                let s = inst.samples(midi: midi, bar: bar, sampleRate: 44100)
+                let tail = s.suffix(220).map(abs).max() ?? 0                      // the last 5 ms
+                XCTAssertLessThan(tail, 0.01, "\(inst) \(midi) ends with a click")
+            }
+        }
+    }
 }
