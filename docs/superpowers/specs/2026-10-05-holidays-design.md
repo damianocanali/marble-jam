@@ -41,13 +41,16 @@ multiples of 0.5; `note` is the bar note index 0…14 = C4…C6 on the white key
 
 - `SongRecipe.course() -> Course` lays the melody out with `Engine.smartAdd`, exactly like the Twinkle demo.
   Every recipe must place every note on the beat (enforced by tests).
-- Melodies are the opening phrase (about 12–16 notes) of public-domain tunes. Minor-key tunes are arranged in A minor
+- Melodies are the opening phrase (about 11–17 notes) of public-domain tunes; hymn openings checked against the
+  hymnary.org incipits (KREMSER 55653 45432 31556, ST. GEORGE'S WINDSOR 33531 23335 31233, SIMPLE GIFTS 55112 31345 55321).
+  Rhythms are simplified to half-beat steps. Gounod's Marionette, Danse Macabre and Over the River were dropped because
+  their melodies couldn't be checked against a source. Minor-key tunes are arranged in A minor
   (white keys only); chromatic notes are simplified to the nearest white key. The arrangements are our own.
 
 | Season | Songs (composer, year) | Instrument |
 |---|---|---|
-| 🎃 Halloween | Funeral March of a Marionette (Gounod, 1872), In the Hall of the Mountain King (Grieg, 1875), Danse Macabre (Saint-Saëns, 1874) | 8-bit, marimba, 8-bit |
-| 🦃 Thanksgiving | Over the River and Through the Wood (trad., 1844), We Gather Together (Dutch hymn, 1597 / tune 1626), Come, Ye Thankful People, Come (Elvey, 1858) | guitar |
+| 🎃 Halloween | In the Hall of the Mountain King (Grieg, 1875), Toccata and Fugue in D minor (Bach, c. 1704), Funeral March (Chopin, 1839) | 8-bit, piano, marimba |
+| 🦃 Thanksgiving | We Gather Together (Dutch, 1626 / Kremser 1877), Come, Ye Thankful People, Come (Elvey, 1858), Simple Gifts (Brackett, 1848) | guitar |
 | 🎄 Christmas | Jingle Bells (Pierpont, 1857), Deck the Halls (Welsh trad.), We Wish You a Merry Christmas (English trad.), Silent Night (Gruber, 1818) | bells |
 
 ## 3. Holiday backgrounds
