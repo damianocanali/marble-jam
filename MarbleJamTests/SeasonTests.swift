@@ -51,4 +51,18 @@ final class SeasonTests: XCTestCase {
             }
         }
     }
+
+    func testSeasonsUseGregorianDatesWhateverThePhonesCalendar() {
+        for id in [Calendar.Identifier.hebrew, .islamicUmmAlQura, .persian] {
+            var other = Calendar(identifier: id); other.timeZone = TimeZone(identifier: "UTC")!
+            XCTAssertEqual(Seasons.active(on: day(2026, 12, 15), calendar: other)?.id, "christmas", "\(id)")
+            XCTAssertEqual(Seasons.active(on: day(2026, 11, 26), calendar: other)?.id, "thanksgiving", "\(id)")
+            XCTAssertNil(Seasons.active(on: day(2027, 7, 4), calendar: other), "\(id)")
+        }
+    }
+
+    func testThanksgivingWhenNovemberStartsOnThursdayOrFriday() {
+        XCTAssertEqual(Seasons.thanksgiving(year: 2029, calendar: cal), day(2029, 11, 22, hour: 0))   // Nov 1 2029 is a Thursday
+        XCTAssertEqual(Seasons.thanksgiving(year: 2030, calendar: cal), day(2030, 11, 28, hour: 0))   // Nov 1 2030 is a Friday
+    }
 }

@@ -65,7 +65,10 @@ enum Seasons {
     ]
 
     /// The season whose window contains `date` (windows starting this year or, for ones crossing New Year, last year).
-    static func active(on date: Date, calendar: Calendar) -> Season? {
+    /// Holiday dates are Gregorian whatever calendar the phone shows; only its time zone is used.
+    static func active(on date: Date, calendar phone: Calendar) -> Season? {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = phone.timeZone
         let year = calendar.component(.year, from: date), today = calendar.startOfDay(for: date)
         for s in all {
             for y in [year - 1, year] {
