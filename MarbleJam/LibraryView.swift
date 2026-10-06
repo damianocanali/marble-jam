@@ -4,6 +4,7 @@ import SwiftUI
 struct LibraryView: View {
     let store: SongStore
     let background: BackgroundOption?
+    let season: Season?
     let onOpen: (Song) -> Void
     let onBack: () -> Void
 
@@ -12,6 +13,7 @@ struct LibraryView: View {
     @State private var newName = ""
     @State private var deleting: Song?
     @State private var confirmingReset = false
+    @State private var shelf: [Song] = []                      // the live holiday's ready-made songs (templates, not saved)
 
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let columns = [GridItem(.adaptive(minimum: 150), spacing: 14)]
@@ -27,7 +29,7 @@ struct LibraryView: View {
                 Button("+ New") { onOpen(store.newSong()) }.buttonStyle(Chip(primary: true))
             }
             .padding(.horizontal, 16).padding(.vertical, 8)
-            if songs.isEmpty {
+            if songs.isEmpty && season == nil {
                 Spacer()
                 VStack(spacing: 14) {
                     Text("No songs yet").font(.system(size: 18, weight: .bold, design: .rounded)).foregroundStyle(ink)
@@ -36,6 +38,18 @@ struct LibraryView: View {
                 Spacer()
             } else {
                 ScrollView {
+                    if let season {
+                        sectionTitle("\(season.emoji) \(season.title)")
+                        LazyVGrid(columns: columns, spacing: 14) {
+                            ForEach(shelf) { t in
+                                SongCard(song: t).onTapGesture { onOpen(store.addCopy(of: t)) }
+                                    .accessibilityAddTraits(.isButton).accessibilityHint("Adds your own copy")
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        if shelf.isEmpty { ProgressView().padding() }
+                        sectionTitle("Your songs")
+                    }
                     LazyVGrid(columns: columns, spacing: 14) {
                         ForEach(songs) { s in
                             SongCard(song: s)
@@ -57,6 +71,12 @@ struct LibraryView: View {
         }
         .background { Backdrop(option: background) }
         .onAppear(perform: reload)
+        .task(id: season?.id) {
+            guard let season else { shelf = []; return }
+            shelf = await Task.detached(priority: .userInitiated) {
+                season.songs.map { Song(name: $0.name, course: $0.course(), instrument: $0.instrument) }
+            }.value
+        }
         .alert("Rename song", isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
             TextField("Name", text: $newName)
             Button("Save") { if let r = renaming { store.rename(r.id, to: newName) }; reload() }
@@ -73,6 +93,11 @@ struct LibraryView: View {
     }
 
     private func reload() { songs = store.all() }
+
+    private func sectionTitle(_ t: String) -> some View {
+        Text(t).font(.system(size: 17, weight: .heavy, design: .rounded)).foregroundStyle(ink)
+            .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 16).padding(.top, 12)
+    }
 }
 
 /// A song as a card: a little drawing of the course, its name, notes and stars.
