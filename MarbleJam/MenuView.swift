@@ -5,8 +5,7 @@ import SwiftUI
 struct MenuView: View {
     let background: BackgroundOption?
     @Binding var backgroundID: String
-    let onPlay: () -> Void
-    let onDemo: () -> Void
+    let onCreate: () -> Void
     @State private var toast: String?
     @State private var picking = false
     @State private var attract: AttractScene = { let s = AttractScene(); s.scaleMode = .resizeFill; return s }()
@@ -31,8 +30,8 @@ struct MenuView: View {
                 Spacer()
             }
             VStack(spacing: 12) {                                                // centred on the screen, all the same size
-                menuButton("Play ▶", primary: true, action: onPlay)
-                menuButton("Demo Song", action: onDemo)
+                menuButton("Challenges") { toast = "Challenges are coming soon" }
+                menuButton("Create", primary: true, action: onCreate)
                 if !BackgroundLibrary.bundled.isEmpty { menuButton("Backgrounds") { picking = true } }
                 menuButton("Store") { toast = "Store is coming soon" }
                 menuButton("Sign in") { toast = "Sign in is coming soon" }
