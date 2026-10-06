@@ -72,4 +72,10 @@ final class SeasonTests: XCTestCase {
         XCTAssertEqual(first.map(\.name), christmas.songs.map(\.name))
         XCTAssertEqual(first.map(\.id), again.map(\.id), "the second call reuses the first build")
     }
+
+    func testHolidaySongsAreComplete() {
+        for s in Seasons.all { for r in s.songs where !["We Gather Together", "Simple Gifts"].contains(r.name) {   // those two wait for their scores
+            XCTAssertGreaterThanOrEqual(r.melody.count, 25, "\(r.name) is only its opening phrase")
+        } }
+    }
 }

@@ -25,6 +25,9 @@ targets:
         TARGETED_DEVICE_FAMILY: "1,2"
         MARKETING_VERSION: "0.1"
         CURRENT_PROJECT_VERSION: "1"
+      configs:
+        Debug:
+          SWIFT_OPTIMIZATION_LEVEL: "-O"          # laying out songs and rendering notes is ~30x slower unoptimised; nobody steps through this code
   MarbleJamTests:
     type: bundle.unit-test
     platform: iOS

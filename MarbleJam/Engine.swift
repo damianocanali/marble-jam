@@ -169,7 +169,8 @@ enum Engine {
     /// The helper that makes this a composer: puts the next pad exactly where the marble is on the beat.
     static func smartAdd(_ c: inout Course, beats: Double, note: Int) -> Bool {
         let s = simulate(c, maxTime: 90, below: 2600)
-        let tl = s.hits.last?.time ?? 0, ts = tl + beats * Rules.beat
+        let g = Rules.beat / 2, tl = s.hits.last?.time ?? 0
+        let ts = ((tl + beats * Rules.beat) / g).rounded() * g             // aim at the beat itself, so small errors never add up over a long song
         if ts > s.duration - 0.05 { return false }
         let p = s.position(at: ts), a0 = s.position(at: ts - 0.012), b0 = s.position(at: ts + 0.012)
         let vx = (b0.x - a0.x) / 0.024, vy = (b0.y - a0.y) / 0.024, sp = (vx * vx + vy * vy).squareRoot()
@@ -195,12 +196,13 @@ enum Engine {
         return true
     }
 
-    /// "Twinkle, Twinkle" (first line), built with the same helper: [beats since the last note, note].
-    static func demo() -> Course {
+    /// "Twinkle, Twinkle", the whole song: [beats since the last note, note]. Built with the same helper as everything else.
+    static let twinkle: [(beats: Double, note: Int)] = [(1, 7), (1, 7), (1, 11), (1, 11), (1, 12), (1, 12), (1, 11), (2, 10), (1, 10), (1, 9), (1, 9), (1, 8), (1, 8), (1, 7), (2, 11), (1, 11), (1, 10), (1, 10), (1, 9), (1, 9), (1, 8), (2, 11), (1, 11), (1, 10), (1, 10), (1, 9), (1, 9), (1, 8), (2, 7), (1, 7), (1, 11), (1, 11), (1, 12), (1, 12), (1, 11), (2, 10), (1, 10), (1, 9), (1, 9), (1, 8), (1, 8), (1, 7)]
+
+    /// The demo course; `firstNotes` keeps it short (the menu's background plays the first line).
+    static func demo(firstNotes: Int = .max) -> Course {
         var c = Course()
-        for (g, n) in [(1.0, 7), (1, 7), (1, 11), (1, 11), (1, 12), (1, 12), (1, 11), (2, 10), (1, 10), (1, 9), (1, 9), (1, 8), (1, 8), (1, 7)] {
-            _ = smartAdd(&c, beats: g, note: n)
-        }
+        for m in twinkle.prefix(firstNotes) { _ = smartAdd(&c, beats: m.beats, note: m.note) }
         return c
     }
 }

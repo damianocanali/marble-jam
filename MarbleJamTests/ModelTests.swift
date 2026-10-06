@@ -134,6 +134,6 @@ final class ModelTests: XCTestCase {
         let m = GameModel()
         XCTAssertEqual(m.info, "No notes yet")
         m.loadDemo()
-        XCTAssertEqual(m.info, "14 notes · 14 on the beat")
+        XCTAssertEqual(m.info, "42 notes · 42 on the beat")
     }
 }
