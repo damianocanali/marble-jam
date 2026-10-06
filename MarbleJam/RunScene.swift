@@ -203,7 +203,11 @@ final class RunScene: SKScene {
 
     private func endDrag() {
         guard let m = model, let d = drag else { return }
-        if case let .pan(_, _, moved) = d { if !moved { m.selected = nil; seenVersion = -1 } } else if m.finishEdit() { Haptics.snapped() }
+        switch d {
+        case let .pan(_, _, moved): if !moved { m.selected = nil; seenVersion = -1 }
+        case .hopper: m.save()                                                     // moving the hopper never snaps the selected pad
+        case .move, .tilt: if m.finishEdit() { Haptics.snapped() }
+        }
         drag = nil
     }
 }

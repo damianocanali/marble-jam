@@ -116,4 +116,17 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(m.song?.name, "Funky")
         XCTAssertEqual(store.song(s.id)?.name, "Funky")
     }
+
+    func testTappingAClosePadWithoutMovingItChangesNothing() {
+        let m = GameModel(); m.loadDemo()
+        let i = 5; m.selected = m.course.pads[i].id
+        var dy = 0
+        repeat { dy += 1; m.updateSelected { $0.y += 1 } } while m.beats[i] != .near && dy < 40
+        let before = m.course
+        m.mark()                                                   // what touch-down does
+        XCTAssertFalse(m.finishEdit())                             // released without moving
+        XCTAssertEqual(m.course, before, "a tap must not snap the pad")
+        m.undo()                                                   // the tap left no step, so undo goes back past loading the demo
+        XCTAssertTrue(m.course.pads.isEmpty, "and must not leave an empty undo step behind")
+    }
 }

@@ -52,7 +52,9 @@ final class GameModel: ObservableObject {
     func setDrop(x: Double) { course.dropX = x; refresh() }
 
     /// After a drag, a tilt or a rotate: a selected pad that is close to the beat slides onto it. Saves either way.
+    /// If nothing changed since the touch began (a plain tap), the undo step is dropped and nothing snaps.
     @discardableResult func finishEdit() -> Bool {
+        if let top = undoStack.last, top.course == course, top.instrument == instrument { undoStack.removeLast(); return false }
         defer { save() }
         guard let i = course.pads.firstIndex(where: { $0.id == selected }), beats.indices.contains(i), beats[i] == .near,
               let snapped = Engine.snapToBeat(course, pad: i) else { return false }
