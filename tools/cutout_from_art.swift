@@ -3,10 +3,12 @@
 // shadows on it become see-through black, so they still read as shadows on dark screens. White inside the art (a ghost,
 // a beard, the middle of a wreath) is not connected to the edges through background, so it stays.
 // Run from the repo root:
-//   swift tools/cutout_from_art.swift <input> <output.png> [x y width height] [lightest] [holes]
+//   swift tools/cutout_from_art.swift <input> <output.png> [x y width height] [lightest] [holes] [tint]
 //   optional crop in source pixels (top-left origin); `lightest` (default 150) is the darkest grey still treated as background:
 //   raise it (e.g. 225) for art with pale parts that touch the page, like a ghost, so only near-white is removed.
 //   `holes` (default 0): enclosed patches of pure white smaller than this many pixels are cleared too (gaps between letters).
+//   `tint` (default 28): how colourful a light pixel may be and still count as page; raise it (e.g. 90) when the page has
+//   faint coloured doodles on it.
 import CoreGraphics
 import Foundation
 import ImageIO
@@ -15,6 +17,7 @@ import UniformTypeIdentifiers
 let a = CommandLine.arguments
 let lightest = a.count >= 8 ? Int(a[7])! : 150
 let holes = a.count >= 9 ? Int(a[8])! : 0
+let tint = a.count >= 10 ? Int(a[9])! : 28
 let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: a[1]) as CFURL, nil)!
 var img = CGImageSourceCreateImageAtIndex(src, 0, nil)!
 if a.count >= 7, let x = Int(a[3]), let y = Int(a[4]), let w = Int(a[5]), let h = Int(a[6]) {
@@ -30,7 +33,7 @@ func lum(_ i: Int) -> Int { (Int(p[i * 4]) * 3 + Int(p[i * 4 + 1]) * 6 + Int(p[i
 /// Light and colourless: the white page or a soft grey shadow on it.
 func backgroundLike(_ i: Int) -> Bool {
     let mx = Int(max(p[i * 4], p[i * 4 + 1], p[i * 4 + 2])), mn = Int(min(p[i * 4], p[i * 4 + 1], p[i * 4 + 2]))
-    return lum(i) >= lightest && mx - mn <= 28
+    return lum(i) >= lightest && mx - mn <= tint
 }
 
 // 1. flood from every edge pixel through background-like pixels

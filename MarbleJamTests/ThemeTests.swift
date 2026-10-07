@@ -26,4 +26,8 @@ final class AppIconTests: XCTestCase {
         XCTAssertNil(AppIcons.name(for: "halloween", available: ["AppIcon-christmas"]))
         XCTAssertNil(AppIcons.name(for: nil, available: ["AppIcon-christmas"]))
     }
+
+    func testEveryHolidayIconIsBundled() {
+        for season in Seasons.all { XCTAssertTrue(AppIcons.available.contains("AppIcon-\(season.id)"), season.id) }
+    }
 }

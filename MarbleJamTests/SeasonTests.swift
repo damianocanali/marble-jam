@@ -84,6 +84,6 @@ final class SeasonTests: XCTestCase {
         let byID = Dictionary(uniqueKeysWithValues: Seasons.all.map { ($0.id, $0) })
         XCTAssertNotNil(UIImage(named: byID["halloween"]!.titleArt), "Halloween artwork")
         XCTAssertNotNil(UIImage(named: byID["christmas"]!.titleArt), "Christmas artwork")
-        XCTAssertNil(UIImage(named: byID["thanksgiving"]!.titleArt), "no Thanksgiving artwork yet: the menu keeps the normal title")
+        XCTAssertNotNil(UIImage(named: byID["thanksgiving"]!.titleArt), "Thanksgiving artwork")
     }
 }

@@ -32,7 +32,9 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `MarbleJamTests/`   unit tests for the rules, the controller commands and the star rating
 - `Assets.xcassets`   app icon (made from `art/Logo.JPG`, kept out of git, with `tools/icon_from_logo.swift`) and menu logo (made from `art/MarbleJam.png`)
 - `Title` image (game header): made from `art/Text.PNG` by `tools/title_from_art.swift` (command at its top)
-- `art/seasons/<holiday>/` holiday title artwork: `source.jpg` (yours) → `title.png` via `tools/cutout_from_art.swift` (removes the white page; see its header for the options) → `SeasonTitle-<holiday>` image
+- `art/seasons/<holiday>/` your holiday artwork:
+  - `source.jpg` → `title.png` (menu title) via `tools/cutout_from_art.swift` (removes the white page; Halloween: `0 0 1024 1024 225 4000`, Christmas: defaults) or, for art that keeps its page, `tools/card_from_art.swift` (Thanksgiving: `70 150 884 760 56`) → `SeasonTitle-<holiday>` image
+  - `icon-source.jpg` → `icon.png` via `tools/icon_from_tile.swift` (Halloween `158 110 702 FFFFFF`, Thanksgiving `168 112 744 F8F5E6`, Christmas `62 66 904 FFFFFF`) → `AppIcon-<holiday>` icon set
 - `Theme.swift`      holiday colours for buttons, panels, accents and the marble (pads keep their note colours)
 - `AppIcons.swift`   holiday app icons, switched automatically. To add one: make an `AppIcon-<holiday>` app icon set in `Assets.xcassets` (1024 px, no transparency; `tools/icon_from_art.swift` prepares it) and add its name to `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` in `project.yml`
 - `art/`              the logo, drawn by `swift tools/make_logo.swift`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Then `tools/icon_from_art.swift` (command at its top) updates the icon and menu logo
