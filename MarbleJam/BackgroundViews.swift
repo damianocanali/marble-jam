@@ -30,6 +30,7 @@ struct BackgroundPicker: View {
     let options: [BackgroundOption]
     @Binding var selectedID: String          // BackgroundLibrary.nightID or "" (never chose) mean the night sky
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.theme) private var theme
 
     private let columns = [GridItem(.adaptive(minimum: 96), spacing: 12)]
 
@@ -63,10 +64,10 @@ struct BackgroundPicker: View {
                 .frame(height: 180)
                 .frame(maxWidth: .infinity)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected(id) ? Color.cyan : Color.white.opacity(0.2), lineWidth: isSelected(id) ? 4 : 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(isSelected(id) ? theme.accent.color : Color.white.opacity(0.2), lineWidth: isSelected(id) ? 4 : 1))
                 .overlay(alignment: .topTrailing) {
                     if isSelected(id) {
-                        Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(.cyan, .white).padding(6)
+                        Image(systemName: "checkmark.circle.fill").font(.title2).foregroundStyle(theme.accent.color, .white).padding(6)
                     }
                 }
         }

@@ -6,6 +6,7 @@ struct RootView: View {
     @State private var store: SongStore
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
+    @Environment(\.scenePhase) private var phase
     @AppStorage("background.v1") private var backgroundID = ""   // "" = night sky
     @AppStorage("season.preview") private var seasonPreview = ""        // DEBUG builds only (see MenuView); "" = by date
     private var season: Season? {
@@ -40,6 +41,9 @@ struct RootView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: screen)
         .preferredColorScheme(.dark)
+        .environment(\.theme, Theme.forSeason(season?.id))
+        .onChange(of: phase) { _, p in if p == .active { AppIcons.update(for: season?.id) } }   // holiday icon on when it starts, off when it ends
+        .onChange(of: season?.id) { _, id in AppIcons.update(for: id) }
         .task { store.migrateIfNeeded(defaults: .standard) }
     }
 }

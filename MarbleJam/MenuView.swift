@@ -13,6 +13,7 @@ struct MenuView: View {
     @State private var picking = false
     @State private var attract: AttractScene = { let s = AttractScene(); s.scaleMode = .resizeFill; return s }()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.theme) private var theme
 
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
 
@@ -74,7 +75,8 @@ struct MenuView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .onAppear { attract.animated = !reduceMotion }
+        .onAppear { attract.animated = !reduceMotion; attract.marbleGlow = theme.marbleGlow.uiColor }
+        .onChange(of: theme) { _, t in attract.marbleGlow = t.marbleGlow.uiColor }
         .onChange(of: reduceMotion) { _, still in attract.animated = !still }
         .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID) }
     }

@@ -20,10 +20,10 @@ enum PadArt {
         return node
     }
 
-    static func marble() -> SKShapeNode {
+    static func marble(glow: UIColor = Theme.standard.marbleGlow.uiColor) -> SKShapeNode {
         let m = SKShapeNode(circleOfRadius: Rules.radius)
         m.fillColor = .white
-        m.strokeColor = UIColor(red: 0.62, green: 0.83, blue: 1, alpha: 1)
+        m.strokeColor = glow
         m.glowWidth = 8
         m.zPosition = 10
         return m
