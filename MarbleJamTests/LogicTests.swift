@@ -50,4 +50,9 @@ final class LogicTests: XCTestCase {
     func testPickerChoosesHeadline() {
         XCTAssertEqual(Celebration.make(onBeat: 10, total: 10) { $0.last! }.headline, "Superstar!")
     }
+
+    func testTwinkleIsTheWholeSong() {
+        XCTAssertEqual(Engine.simulate(Engine.demo()).hits.count, 42)
+        XCTAssertEqual(Engine.simulate(Engine.demo(firstNotes: 14)).hits.count, 14)         // the menu's background plays the first line
+    }
 }

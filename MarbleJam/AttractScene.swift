@@ -37,7 +37,7 @@ final class AttractScene: SKScene {
         addChild(world)
         world.addChild(padLayer); world.addChild(fxLayer)
         DispatchQueue.global(qos: .userInitiated).async {                     // building the demo takes a moment
-            let c = Engine.demo(), r = Engine.simulate(c)
+            let c = Engine.demo(firstNotes: 14), r = Engine.simulate(c)
             DispatchQueue.main.async { [weak self] in self?.show(c, r) }
         }
     }

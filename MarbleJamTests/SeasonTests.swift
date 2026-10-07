@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 @testable import MarbleJam
 
@@ -71,5 +72,18 @@ final class SeasonTests: XCTestCase {
         let first = Seasons.shelf(for: christmas), again = Seasons.shelf(for: christmas)
         XCTAssertEqual(first.map(\.name), christmas.songs.map(\.name))
         XCTAssertEqual(first.map(\.id), again.map(\.id), "the second call reuses the first build")
+    }
+
+    func testHolidaySongsAreComplete() {
+        for s in Seasons.all { for r in s.songs where !["We Gather Together", "Simple Gifts"].contains(r.name) {   // those two wait for their scores
+            XCTAssertGreaterThanOrEqual(r.melody.count, 25, "\(r.name) is only its opening phrase")
+        } }
+    }
+
+    func testHolidayTitleArtIsBundledWhereItExists() {
+        let byID = Dictionary(uniqueKeysWithValues: Seasons.all.map { ($0.id, $0) })
+        XCTAssertNotNil(UIImage(named: byID["halloween"]!.titleArt), "Halloween artwork")
+        XCTAssertNotNil(UIImage(named: byID["christmas"]!.titleArt), "Christmas artwork")
+        XCTAssertNil(UIImage(named: byID["thanksgiving"]!.titleArt), "no Thanksgiving artwork yet: the menu keeps the normal title")
     }
 }
