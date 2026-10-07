@@ -21,6 +21,9 @@ struct Season: Identifiable {
     let emoji: String
     let banner: String
     let songs: [SongRecipe]
+    /// Asset name of this holiday's title artwork (made from art/seasons/<id>/source.jpg by tools/cutout_from_art.swift).
+    /// The menu uses it when the app has it; otherwise the normal lettering and the banner text.
+    var titleArt: String { "SeasonTitle-\(id)" }
     /// The window that starts in `year`: first day and last day (both included).
     let window: (_ year: Int, _ calendar: Calendar) -> (first: Date, last: Date)
 }

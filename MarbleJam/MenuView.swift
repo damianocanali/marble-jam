@@ -25,12 +25,19 @@ struct MenuView: View {
             SpriteView(scene: attract, options: [.allowsTransparency]).ignoresSafeArea().allowsHitTesting(false)
                 .accessibilityHidden(true)
             VStack {
-                Image("Title").resizable().scaledToFit().frame(maxWidth: 300)
-                    .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
-                    .padding(.top, 24)
-                    .accessibilityLabel("Marble Jam")
-                    .accessibilityAddTraits(.isHeader)
-                if let season {
+                if let season, let art = UIImage(named: season.titleArt) {      // the holiday's own artwork replaces title and banner
+                    Image(uiImage: art).resizable().scaledToFit().frame(maxWidth: 320, maxHeight: 235)   // clear of the centred buttons
+                        .padding(.top, 8)
+                        .accessibilityLabel("Marble Jam. \(season.banner)")
+                        .accessibilityAddTraits(.isHeader)
+                } else {
+                    Image("Title").resizable().scaledToFit().frame(maxWidth: 300)
+                        .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
+                        .padding(.top, 24)
+                        .accessibilityLabel("Marble Jam")
+                        .accessibilityAddTraits(.isHeader)
+                }
+                if let season, UIImage(named: season.titleArt) == nil {
                     Text(season.banner)
                         .font(.system(size: 16, weight: .heavy, design: .rounded)).foregroundStyle(.white)
                         .padding(.horizontal, 16).padding(.vertical, 8)
