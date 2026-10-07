@@ -6,6 +6,8 @@ final class RunScene: SKScene {
 
     private let world = SKNode(), guideLayer = SKNode(), padLayer = SKNode(), fxLayer = SKNode()
     private let marble = PadArt.marble()
+    /// The marble's outline and glow: the holiday tint, or ice blue.
+    var marbleGlow: UIColor = Theme.standard.marbleGlow.uiColor { didSet { marble.strokeColor = marbleGlow } }
     private var padNodes: [SKShapeNode] = []
     private var seenVersion = -1
     private var camY = 0.0                      // world y at the top of the screen; placed under the header once the size is known

@@ -3,6 +3,7 @@ import SwiftUI
 /// Shown while a pad is selected: a dial to tilt bars and ♭/♯ for the note. Moving is done by dragging the pad.
 struct PadController: View {
     @ObservedObject var model: GameModel
+    @Environment(\.theme) private var theme
     @GestureState private var dialing = false     // resets on its own if the gesture is cancelled
     @State private var dialMarked = false
 
@@ -31,7 +32,7 @@ struct PadController: View {
         let size = 56.0
         return ZStack {
             Circle().fill(panel).overlay(Circle().stroke(Color.white.opacity(0.18)))
-            Capsule().fill(Color.cyan).frame(width: size * 0.7, height: 5).rotationEffect(.radians(angle))
+            Capsule().fill(theme.accent.color).frame(width: size * 0.7, height: 5).rotationEffect(.radians(angle))
             Circle().fill(.white).frame(width: 8, height: 8)
         }
         .frame(width: size, height: size)

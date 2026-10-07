@@ -5,6 +5,7 @@ struct ContentView: View {
     @ObservedObject var model: GameModel
     let background: BackgroundOption?
     let onMenu: () -> Void
+    @Environment(\.theme) private var theme
     @State private var renaming = false
     @State private var newName = ""
     @State private var scene: RunScene = {
@@ -61,7 +62,7 @@ struct ContentView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .onAppear { scene.model = model }
+        .onAppear { scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor }
         .alert("Rename song", isPresented: $renaming) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }
@@ -126,18 +127,19 @@ struct Chip: ButtonStyle {
     var primary = false
     var stop = false
     @Environment(\.isEnabled) private var enabled
+    @Environment(\.theme) private var theme
 
     init(primary: Bool = false, stop: Bool = false) { self.primary = primary; self.stop = stop }
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: primary ? 16 : 14.5, weight: .heavy, design: .rounded))
-            .foregroundStyle(primary ? Color(red: 0.02, green: 0.06, blue: 0.11) : Color(red: 0.95, green: 0.96, blue: 1))
+            .foregroundStyle(primary ? (stop ? Color(red: 0.02, green: 0.06, blue: 0.11) : theme.primaryText.color) : Color(red: 0.95, green: 0.96, blue: 1))
             .padding(.horizontal, primary ? 22 : 13).frame(minHeight: 44)
             .background {
-                if primary { RoundedRectangle(cornerRadius: 14).fill(stop ? Color.pink : Color.cyan) }
-                else { RoundedRectangle(cornerRadius: 14).fill(Color(red: 0.055, green: 0.07, blue: 0.15).opacity(0.9))
-                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.18))) }
+                if primary { RoundedRectangle(cornerRadius: 14).fill(stop ? Color.pink : theme.primary.color) }
+                else { RoundedRectangle(cornerRadius: 14).fill(theme.chipFill.color.opacity(0.9))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(theme.chipStroke.color.opacity(theme.chipStrokeOpacity))) }
             }
             .opacity(enabled ? (configuration.isPressed ? 0.7 : 1) : 0.4)
     }
