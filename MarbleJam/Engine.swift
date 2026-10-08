@@ -4,6 +4,7 @@ import Foundation
 enum Rules {
     static let width = 720.0, gravity = 1800.0, radius = 14.0, thickness = 14.0
     static let barBounce = 0.45, bumperBounce = 0.9, step = 1.0 / 240.0, beat = 0.5
+    static let rampLength = 320.0, rampLengths = 160.0...560.0, rampBend = 0.0, rampBends = -0.8...0.8
     static let rotateStep = 5 * Double.pi / 180
 
     /// Keeps a pad inside the world, the same limits as dragging.
@@ -20,13 +21,25 @@ enum Rules {
 }
 
 struct Pad: Codable, Identifiable, Equatable {
-    enum Kind: String, Codable { case bar, bumper }
+    enum Kind: String, Codable { case bar, bumper, ramp }
     var id = UUID()
     var kind: Kind
     var x: Double
     var y: Double
-    var angle: Double = 0          // radians, bars only
-    var note: Int                  // size step: bars 0...14 (C4...C6), bumpers 0...7 (C3...C4)
+    var angle: Double = 0          // radians, bars and ramps
+    var note: Int                  // bars and ramps 0...14 (C4...C6; a bar's size is its note), bumpers 0...7 (C3...C4)
+    var length: Double? = nil      // ramps: end-to-end length (default Rules.rampLength)
+    var bend: Double? = nil        // ramps: -0.8...0.8, positive sags into a dip, negative arches into a hump
+
+    /// Points along a ramp's centre line, first end to last (17 points: 16 short segments).
+    func rampPoints(segments n: Int = 16) -> [(x: Double, y: Double)] {
+        let L = length ?? Rules.rampLength, b = bend ?? Rules.rampBend, c = cos(angle), s = sin(angle)
+        return (0...n).map { k in
+            let t = Double(k) / Double(n)
+            let lx = (t - 0.5) * L, ly = 4 * t * (1 - t) * b * L * 0.3          // a parabola: 0 at both ends, deepest in the middle
+            return (x + lx * c - ly * s, y + lx * s + ly * c)
+        }
+    }
 
     /// End points of the bar's centre line (x0, y0, x1, y1).
     var ends: (Double, Double, Double, Double) {
@@ -61,8 +74,8 @@ enum Notes {
     static let major = [0, 2, 4, 5, 7, 9, 11]
     static let names = ["C", "D", "E", "F", "G", "A", "B"]
     static let hues = [190.0, 262, 322, 22, 44, 140, 0]
-    static func midi(_ p: Pad) -> Int { (p.kind == .bar ? 60 : 48) + 12 * (p.note / 7) + major[p.note % 7] }
-    static func name(_ p: Pad) -> String { names[p.note % 7] + String((p.kind == .bar ? 4 : 3) + p.note / 7) }
+    static func midi(_ p: Pad) -> Int { (p.kind == .bumper ? 48 : 60) + 12 * (p.note / 7) + major[p.note % 7] }
+    static func name(_ p: Pad) -> String { names[p.note % 7] + String((p.kind == .bumper ? 3 : 4) + p.note / 7) }
     /// What a pad's label says: the note, or the drum piece when the song plays drums.
     static func label(_ p: Pad, instrument: Instrument) -> String {
         instrument == .drums ? Drum.piece(midi: midi(p), bar: p.kind == .bar).label : name(p)
@@ -70,19 +83,25 @@ enum Notes {
     static func barLength(_ n: Int) -> Double { 210 - 10 * Double(n) }
     static func bumperRadius(_ n: Int) -> Double { 46 - 4 * Double(n) }
     static func hue(_ p: Pad) -> Double { hues[p.note % 7] / 360 }
-    static func maxNote(_ k: Pad.Kind) -> Int { k == .bar ? 14 : 7 }
+    static func maxNote(_ k: Pad.Kind) -> Int { k == .bumper ? 7 : 14 }
 }
 
 enum Engine {
     /// Drops the marble and follows it with fixed steps. The preview and the performance both use this, so they always agree.
     static func simulate(_ c: Course, maxTime: Double = 120, below: Double = 500) -> Run {
-        struct Geo { let ax, ay, bx, by, r, e: Double }
-        let geo: [Geo] = c.pads.map { p in
-            if p.kind == .bar { let e = p.ends; return Geo(ax: e.0, ay: e.1, bx: e.2, by: e.3, r: Rules.thickness / 2, e: Rules.barBounce) }
-            return Geo(ax: p.x, ay: p.y, bx: p.x, by: p.y, r: Notes.bumperRadius(p.note), e: Rules.bumperBounce)
+        struct Geo { let ax, ay, bx, by, r, e: Double; let pad: Int; let rolls: Bool }
+        let geo: [Geo] = c.pads.enumerated().flatMap { j, p -> [Geo] in
+            switch p.kind {
+            case .bar: let e = p.ends; return [Geo(ax: e.0, ay: e.1, bx: e.2, by: e.3, r: Rules.thickness / 2, e: Rules.barBounce, pad: j, rolls: false)]
+            case .bumper: return [Geo(ax: p.x, ay: p.y, bx: p.x, by: p.y, r: Notes.bumperRadius(p.note), e: Rules.bumperBounce, pad: j, rolls: false)]
+            case .ramp:                                                      // short segments that don't bounce: the marble slides along them
+                let pts = p.rampPoints()
+                return zip(pts, pts.dropFirst()).map { a, b in Geo(ax: a.x, ay: a.y, bx: b.x, by: b.y, r: Rules.thickness / 2, e: 0, pad: j, rolls: true) }
+            }
         }
         let low = (c.pads.map(\.y) + [c.dropY]).max()! + below
-        var last = [Double](repeating: -1, count: geo.count)
+        var last = [Double](repeating: -1, count: c.pads.count)              // last note time per pad
+        var touch = [Double](repeating: -1, count: c.pads.count)             // last contact time per pad (ramps: rolling keeps touching)
         var x = c.dropX, y = c.dropY, vx = 0.0, vy = 0.0, t = 0.0, calm = 0.0, i = 0
         var run = Run()
         let h = Rules.step, R = Rules.radius, W = Rules.width
@@ -103,8 +122,10 @@ enum Engine {
                 let vn = vx * dx + vy * dy
                 if vn < 0 {
                     vx -= (1 + g.e) * vn * dx; vy -= (1 + g.e) * vn * dy
-                    if -vn > 60 && t - last[j] > 0.08 { run.hits.append(Hit(time: t, x: qx + dx * g.r, y: qy + dy * g.r, pad: j, speed: -vn)); last[j] = t }
+                    let landed = g.rolls ? t - touch[g.pad] > 0.1 : t - last[g.pad] > 0.08      // a ramp plays once per landing, not while rolling
+                    if -vn > 60 && landed { run.hits.append(Hit(time: t, x: qx + dx * g.r, y: qy + dy * g.r, pad: g.pad, speed: -vn)); last[g.pad] = t }
                 }
+                touch[g.pad] = t
                 x = qx + dx * rr; y = qy + dy * rr
             }
             if y > low { break }
