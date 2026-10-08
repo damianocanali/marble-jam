@@ -51,7 +51,12 @@ final class GameModel: ObservableObject {
     func mark() { undoStack.append(Snapshot(course: course, instrument: instrument, tray: trayLeft, placed: placed)); if undoStack.count > 40 { undoStack.removeFirst() } }
 
     var selectedPad: Pad? { course.pads.first { $0.id == selected } }
-    var maxY: Double { (course.pads.map(\.y) + [course.dropY]).max() ?? 0 }
+    /// The lowest point that matters: the lowest piece, or a challenge's cup (so the player can scroll down to it).
+    var maxY: Double {
+        var ys = course.pads.map(\.y) + [course.dropY]
+        if case let .target(_, y)? = challenge?.goal { ys.append(y + 120) }
+        return ys.max() ?? 0
+    }
 
     func updateSelected(_ change: (inout Pad) -> Void) {
         guard let i = course.pads.firstIndex(where: { $0.id == selected }), !isLocked(course.pads[i].id) else { return }

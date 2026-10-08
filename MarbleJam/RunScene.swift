@@ -84,6 +84,16 @@ final class RunScene: SKScene {
             }
         }
 
+        if case let .target(cx, cy)? = m.challenge?.goal {                       // the cup: a glowing ring with a dot
+            let r = Challenge.cupRadius
+            let glow = SKShapeNode(circleOfRadius: r); glow.position = CGPoint(x: cx, y: cy)
+            glow.strokeColor = PadArt.beatGold; glow.lineWidth = 4; glow.glowWidth = 10; glow.fillColor = PadArt.beatGold.withAlphaComponent(0.15)
+            glow.run(.repeatForever(.sequence([.scale(to: 1.12, duration: 0.7), .scale(to: 1, duration: 0.7)])))
+            guideLayer.addChild(glow)
+            let dot = SKShapeNode(circleOfRadius: 5); dot.position = glow.position; dot.fillColor = PadArt.beatGold; dot.strokeColor = .clear
+            guideLayer.addChild(dot)
+        }
+
         let hop = CGMutablePath(), dx = m.course.dropX, dy = m.course.dropY          // the hopper the marble drops from
         hop.move(to: CGPoint(x: dx - 26, y: dy - 44)); hop.addLine(to: CGPoint(x: dx + 26, y: dy - 44))
         hop.addLine(to: CGPoint(x: dx + 9, y: dy - 22)); hop.addLine(to: CGPoint(x: dx - 9, y: dy - 22)); hop.closeSubpath()
@@ -106,6 +116,7 @@ final class RunScene: SKScene {
             let mid = p.kind == .ramp ? { let pts = p.rampPoints(); return pts[pts.count / 2] }() : (x: p.x, y: p.y)          // a ramp's label sits under its middle
             label.position = CGPoint(x: mid.x - sin(p.angle) * off, y: mid.y + cos(p.angle) * off)
             label.alpha = node.alpha
+            if m.isLocked(p.id) { label.text = "🔒 " + (label.text ?? "") }      // locked puzzle pieces
             padLayer.addChild(label)
 
             if p.id == m.selected && !m.playing {                                  // selection ring and the tilt handle

@@ -118,6 +118,13 @@ final class ChallengeModelTests: XCTestCase {
         XCTAssertNotNil(m.nextChallenge, "level 2 opens")
     }
 
+    func testTheCupIsWithinScrollReach() {
+        let m = GameModel(), c = Challenges.all.first { if case .target = $0.goal { true } else { false } }!
+        m.open(challenge: c, progress: progress())
+        guard case let .target(_, y) = c.goal else { return XCTFail() }
+        XCTAssertGreaterThan(m.maxY, y)
+    }
+
     func testFinishingUnsolvedGivesAHintNotASticker() {
         let m = GameModel(), c = level("w1-1"), p = progress()
         m.open(challenge: c, progress: p)

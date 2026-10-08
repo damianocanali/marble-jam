@@ -2,10 +2,11 @@ import SwiftUI
 
 /// Menu → My Songs → builder. Owns the song store and the one GameModel.
 struct RootView: View {
-    enum Screen { case menu, library, play }
+    enum Screen { case menu, library, play, challenges }
     @State private var store: SongStore
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
+    @State private var progress = ChallengeProgress()
     @Environment(\.scenePhase) private var phase
     @AppStorage("background.v1") private var backgroundID = ""   // "" = night sky
     @AppStorage("season.preview") private var seasonPreview = ""        // DEBUG builds only (see MenuView); "" = by date
@@ -29,13 +30,17 @@ struct RootView: View {
         ZStack {
             switch screen {
             case .menu:
-                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library })
+                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library }, onChallenges: { screen = .challenges })
                     .transition(.opacity)
             case .library:
                 LibraryView(store: store, background: background, season: season, onOpen: { model.open($0); screen = .play }, onBack: { screen = .menu })
                     .transition(.opacity)
             case .play:
-                ContentView(model: model, background: background, onMenu: { model.stop(); model.save(); screen = .library })
+                ContentView(model: model, background: background, progress: progress, onMenu: { model.stop(); model.save(); screen = model.challenge == nil ? .library : .challenges })
+                    .transition(.opacity)
+            case .challenges:
+                ChallengesView(progress: progress, background: background, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
+                               onBack: { screen = .menu })
                     .transition(.opacity)
             }
         }
