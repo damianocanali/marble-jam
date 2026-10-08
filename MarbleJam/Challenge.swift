@@ -140,17 +140,31 @@ enum Challenges {
         }
         // the cup sits on the solution's path just after its last piece, somewhere the start course alone doesn't reach
         let run = Engine.simulate(solution), tl = run.hits.last?.time ?? 0, without = Engine.simulate(start)
-        let spots = [0.4, 0.55, 0.3, 0.7, 0.85, 1.0].map { run.position(at: min(tl + $0, run.duration - 0.05)) }
-        guard let cup = spots.first(where: { !Challenge.passes(without, x: $0.x, y: $0.y) }) else {
+        let spots = [0.4, 0.55, 0.3, 0.7, 0.85, 1.0, 0.2, 1.2].map { run.position(at: min(tl + $0, run.duration - 0.05)) }
+        guard let cup = spots.first(where: { (70...650).contains($0.x) && !Challenge.passes(without, x: $0.x, y: $0.y) }) else {
             preconditionFailure("challenge w\(w)-\(n): every cup spot is reachable without pieces")
         }
-        let real = solution.pads.suffix(pieces.count).map(hint(for:))
-        let spares = (pieces.contains(.ramp) ? [Pad.Kind.bar, .ramp] : [.bar, .bar]).enumerated().map { k, kind in
-            Pad(kind: kind, x: k == 0 ? 160 : Rules.width - 160, y: cup.y - 220, note: 5 + k, length: kind == .ramp ? Rules.rampLength : nil,
-                bend: kind == .ramp ? Rules.rampBend : nil)
+        // Tray pieces first appear at hint spots; move the spots until no set of untouched pieces lands the marble in the cup.
+        for attempt in 0..<12 {
+            let lift = Double(attempt) * 90, side: Double = attempt % 2 == 0 ? 1 : -1
+            let real = solution.pads.suffix(pieces.count).map { p -> Pad in
+                var h = hint(for: p); h.y -= lift; h.x = min(Rules.width - 60, max(60, h.x + side * Double(attempt) * 25)); return h
+            }
+            let spares = (pieces.contains(.ramp) ? [Pad.Kind.bar, .ramp] : [.bar, .bar]).enumerated().map { k, kind in
+                Pad(kind: kind, x: k == 0 ? 160 : Rules.width - 160, y: cup.y - 220 - lift, note: 5 + k, length: kind == .ramp ? Rules.rampLength : nil,
+                    bend: kind == .ramp ? Rules.rampBend : nil)
+            }
+            let tray = real + spares
+            let c = Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .target(x: cup.x, y: cup.y), instrument: r.instrument,
+                              solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: tray, par: pieces.count, notes: [])
+            let freebie = (1..<(1 << tray.count)).contains { mask in
+                var course = start
+                for (k, p) in tray.enumerated() where mask & (1 << k) != 0 { course.pads.append(p) }
+                return Challenge.passes(Engine.simulate(course), x: cup.x, y: cup.y)
+            }
+            if !freebie { return c }
         }
-        return Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .target(x: cup.x, y: cup.y), instrument: r.instrument,
-                         solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: real + spares, par: pieces.count, notes: [])
+        preconditionFailure("challenge w\(w)-\(n): tray pieces win without being moved")
     }
 }
 

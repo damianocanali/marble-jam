@@ -62,7 +62,7 @@ final class GameModel: ObservableObject {
         guard let i = course.pads.firstIndex(where: { $0.id == selected }), !isLocked(course.pads[i].id) else { return }
         change(&course.pads[i]); refresh()
     }
-    func setDrop(x: Double) { course.dropX = x; refresh() }
+    func setDrop(x: Double) { guard challenge == nil else { return }; course.dropX = x; refresh() }   // the hopper is part of a puzzle
 
     /// After a drag, a tilt or a rotate: a selected pad that is close to the beat slides onto it. Saves either way.
     /// If nothing changed since the touch began (a plain tap), the undo step is dropped and nothing snaps.
@@ -129,6 +129,7 @@ final class GameModel: ObservableObject {
 
     /// Longer/bigger (-1) or shorter/smaller (+1): size is the note.
     func stepNote(_ d: Int) {
+        guard canChangeNote else { return }
         guard let p = selectedPad else { return }
         mark()
         updateSelected { $0.note = max(0, min(Notes.maxNote(p.kind), $0.note + d)) }
@@ -136,7 +137,7 @@ final class GameModel: ObservableObject {
         save()
     }
     func deleteSelected() {
-        guard let id = selected, !isLocked(id), let i = course.pads.firstIndex(where: { $0.id == id }) else { return }
+        guard let id = selected, !isLocked(id), challenge == nil || placed.contains(id), let i = course.pads.firstIndex(where: { $0.id == id }) else { return }
         mark()
         let pad = course.pads.remove(at: i)
         if placed.remove(id) != nil { trayLeft.append(pad) }                 // a tray piece goes back to the tray
@@ -185,6 +186,17 @@ final class GameModel: ObservableObject {
     }
 
     func isLocked(_ id: UUID) -> Bool { challenge?.locked.contains(id) ?? false }
+    /// A tray piece the player has put on the course (it can go back to the tray).
+    func isPlaced(_ id: UUID) -> Bool { placed.contains(id) }
+
+    /// Notes can change outside challenges and in target levels; in melody and fix levels the tune is fixed.
+    var canChangeNote: Bool {
+        if let id = selected, isLocked(id) { return false }
+        switch challenge?.goal {
+        case nil, .target?: return true
+        case .melody?, .fix?: return false
+        }
+    }
 
     /// Puts a tray piece on the course at its hint spot and selects it.
     func placeFromTray(_ i: Int) {

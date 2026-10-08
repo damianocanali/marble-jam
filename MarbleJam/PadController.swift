@@ -11,7 +11,7 @@ struct PadController: View {
     private let panel = Color(red: 0.055, green: 0.07, blue: 0.15).opacity(0.9)
 
     var body: some View {
-        if let p = model.selectedPad {
+        if let p = model.selectedPad, !model.isLocked(p.id) {
           VStack(spacing: 8) {
             if p.kind == .ramp {
                 HStack(spacing: 8) {
@@ -32,9 +32,9 @@ struct PadController: View {
                     spin("arrow.clockwise", 1)
                     Spacer().frame(width: 10)
                 }
-                Button("♭") { model.stepNote(-1) }.buttonStyle(Chip())
+                if model.canChangeNote { Button("♭") { model.stepNote(-1) }.buttonStyle(Chip()) }
                 Text(Notes.label(p, instrument: model.instrument)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
-                Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
+                if model.canChangeNote { Button("♯") { model.stepNote(1) }.buttonStyle(Chip()) }
             }
           }
         }

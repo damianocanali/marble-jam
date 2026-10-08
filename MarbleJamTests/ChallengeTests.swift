@@ -21,7 +21,7 @@ final class ChallengeTests: XCTestCase {
         for c in Challenges.all {
             XCTAssertEqual(c.stars(for: c.solution, placed: c.par), 3, "\(c.id) \(c.title): solution")
             let start = c.stars(for: c.start, placed: 0)
-            if case .fix = c.goal { XCTAssertLessThan(start, 3, "\(c.id): already fixed") } else { XCTAssertEqual(start, 0, "\(c.id): already solved") }
+            XCTAssertEqual(start, 0, "\(c.id): no free stars at the start")
         }
     }
 
@@ -34,6 +34,24 @@ final class ChallengeTests: XCTestCase {
             case .fix: XCTAssertTrue(c.tray.isEmpty, c.id)
             case .target: XCTAssertEqual(c.tray.count, c.par + 2, "\(c.id): two spare pieces")
             }
+        }
+    }
+
+    func testTrayPiecesLeftAtTheirHintSpotsNeverWin() {
+        for c in Challenges.all {
+            guard case .target = c.goal else { continue }
+            for mask in 1..<(1 << c.tray.count) {
+                var course = c.start
+                for (k, p) in c.tray.enumerated() where mask & (1 << k) != 0 { course.pads.append(p) }
+                XCTAssertEqual(c.stars(for: course, placed: mask.nonzeroBitCount), 0, "\(c.id): tapping tray pieces \(mask) wins")
+            }
+        }
+    }
+
+    func testCupsAreWellInsideTheScreen() {
+        for c in Challenges.all {
+            guard case let .target(x, _) = c.goal else { continue }
+            XCTAssertTrue((70...650).contains(x), "\(c.id): cup at x \(Int(x))")
         }
     }
 
@@ -123,6 +141,42 @@ final class ChallengeModelTests: XCTestCase {
         m.open(challenge: c, progress: progress())
         guard case let .target(_, y) = c.goal else { return XCTFail() }
         XCTAssertGreaterThan(m.maxY, y)
+    }
+
+    func testTheHopperCantBeMovedInAChallenge() {
+        let m = GameModel(), c = level("w3-2")
+        m.open(challenge: c, progress: progress())
+        m.setDrop(x: c.start.dropX + 150)
+        XCTAssertEqual(m.course.dropX, c.start.dropX)
+    }
+
+    func testFixPadsCantBeDeleted() {
+        let m = GameModel(), c = level("w2-1")
+        m.open(challenge: c, progress: progress())
+        let loose = c.start.pads.first { !c.locked.contains($0.id) }!
+        m.selected = loose.id
+        m.deleteSelected()
+        XCTAssertTrue(m.course.pads.contains { $0.id == loose.id })
+    }
+
+    func testNotesCantChangeInMelodyOrFixLevels() {
+        let m = GameModel(), c = level("w1-2")
+        m.open(challenge: c, progress: progress())
+        m.placeFromTray(0)
+        let note = m.selectedPad!.note
+        m.stepNote(1)
+        XCTAssertEqual(m.selectedPad!.note, note)
+        XCTAssertFalse(m.canChangeNote)
+    }
+
+    func testLockedPadsLeaveNoEmptyUndoSteps() {
+        let m = GameModel(), c = level("w1-2")
+        m.open(challenge: c, progress: progress())
+        m.placeFromTray(0)                                                   // one real step
+        m.selected = c.start.pads[0].id
+        m.stepNote(1); m.stepNote(1)                                         // refused: no steps
+        m.undo()
+        XCTAssertEqual(m.trayLeft.count, c.tray.count, "undo took back the placement, not an empty step")
     }
 
     func testFinishingUnsolvedGivesAHintNotASticker() {

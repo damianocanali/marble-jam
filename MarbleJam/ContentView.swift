@@ -41,12 +41,13 @@ struct ContentView: View {
                     .menuStyle(.button).buttonStyle(Chip())
                     .accessibilityLabel("Instrument: \(model.instrument.title)")
                     .disabled(model.playing)
+                    .opacity(model.challenge == nil ? 1 : 0).allowsHitTesting(model.challenge == nil)      // a challenge plays its own instrument
                     Button(action: onMenu) {
                         Image(systemName: "house.fill").font(.system(size: 16, weight: .heavy))
                             .frame(width: 40, height: 40)
                     }
                     .buttonStyle(Chip())
-                    .accessibilityLabel("My Songs")
+                    .accessibilityLabel(model.challenge == nil ? "My Songs" : "Challenges")
                 }
                 Spacer()
             }
@@ -137,13 +138,14 @@ struct ContentView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(Array(model.trayLeft.enumerated()), id: \.element.id) { i, p in
-                        Button(trayLabel(p)) { model.placeFromTray(i) }.accessibilityLabel("Place \(trayLabel(p))")
+                        Button(trayLabel(p)) { model.placeFromTray(i) }
+                            .accessibilityLabel(model.challenge.map { if case .melody = $0.goal { "Place note \(Notes.label(p, instrument: model.instrument))" } else { "Place \(trayLabel(p))" } } ?? "")
                     }
                     if model.trayLeft.isEmpty { Text("Tray empty").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted) }
                 }
             }
             Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
-            if let id = model.selected, !model.isLocked(id) {
+            if let id = model.selected, model.isPlaced(id) {
                 Button { model.deleteSelected() } label: { Image(systemName: "tray.and.arrow.down") }.accessibilityLabel("Back to tray")
             } else {
                 Button { model.resetChallenge() } label: { Image(systemName: "arrow.counterclockwise") }.accessibilityLabel("Reset level")

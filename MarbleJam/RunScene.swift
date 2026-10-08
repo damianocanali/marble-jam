@@ -129,7 +129,7 @@ final class RunScene: SKScene {
                 let ring = SKShapeNode(path: ringPath.copy(dashingWithPhase: 0, lengths: [5, 5]))
                 ring.position = node.position; ring.strokeColor = .white; ring.lineWidth = 2
                 padLayer.addChild(ring)
-                if let e = p.tiltHandle {
+                if let e = p.tiltHandle, !m.isLocked(p.id) {
                     let handle = SKShapeNode(circleOfRadius: 13)
                     handle.position = CGPoint(x: e.x, y: e.y); handle.fillColor = .white; handle.strokeColor = .clear; handle.zPosition = 5
                     padLayer.addChild(handle)
@@ -183,8 +183,8 @@ final class RunScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let m = model, !m.playing, let t = touches.first else { return }
         let loc = t.location(in: world), x = Double(loc.x), y = Double(loc.y)
-        if let s = m.selectedPad, let e = s.tiltHandle, hypot(x - e.x, y - e.y) < 30 { m.mark(); drag = .tilt; return }
-        if hypot(x - m.course.dropX, y - (m.course.dropY - 30)) < 46 { m.mark(); drag = .hopper; return }
+        if let s = m.selectedPad, !m.isLocked(s.id), let e = s.tiltHandle, hypot(x - e.x, y - e.y) < 30 { m.mark(); drag = .tilt; return }
+        if m.challenge == nil, hypot(x - m.course.dropX, y - (m.course.dropY - 30)) < 46 { m.mark(); drag = .hopper; return }
         if let i = pick(x, y, m.course.pads) {
             let p = m.course.pads[i]
             m.selected = p.id; m.mark(); drag = .move(dx: p.x - x, dy: p.y - y)
