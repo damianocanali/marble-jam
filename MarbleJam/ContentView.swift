@@ -91,7 +91,11 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on." : "Drag to move. ♭ ♯ change the note."
+            switch p.kind {
+            case .bar: return "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on."
+            case .ramp: return "The marble rolls along a ramp. Tilt, stretch and bend it; it plays its note when the marble lands."
+            case .bumper: return "Drag to move. ♭ ♯ change the note."
+            }
         }
         return "The dotted line is where the marble will go. Pads glow gold when they hit on the beat."
     }
@@ -103,15 +107,9 @@ struct ContentView: View {
             if model.selectedPad != nil, !model.playing {
                 PadController(model: model)
             }
-            HStack(spacing: 8) {
-                Button("+ Pad") { model.addPad() }
-                Button("+ Bumper") { model.addBumper() }
-                Button("Undo") { model.undo() }
-                if model.selectedPad != nil {
-                    Button("Delete") { model.deleteSelected() }
-                } else {
-                    Button("Clear") { model.clear() }
-                }
+            ViewThatFits(in: .horizontal) {                                       // narrow phones (iPhone SE): drop the "+ "
+                pieceRow(plus: true)
+                pieceRow(plus: false)
             }
             .buttonStyle(Chip()).disabled(model.playing)
             Button(model.playing ? "Stop ■" : "Drop ▶") { model.toggleDrop() }.buttonStyle(Chip(primary: true, stop: model.playing))
@@ -119,6 +117,20 @@ struct ContentView: View {
         .padding(.horizontal, 12).padding(.top, 26).padding(.bottom, 10)
         .frame(maxWidth: .infinity)
         .background(LinearGradient(colors: [night.opacity(0), night.opacity(0.94)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.34)).ignoresSafeArea())
+    }
+
+    private func pieceRow(plus: Bool) -> some View {
+        HStack(spacing: 8) {
+            Button(plus ? "+ Pad" : "Pad") { model.addPad() }.accessibilityLabel("Add pad")
+            Button(plus ? "+ Bumper" : "Bumper") { model.addBumper() }.accessibilityLabel("Add bumper")
+            Button(plus ? "+ Ramp" : "Ramp") { model.addRamp() }.accessibilityLabel("Add ramp")
+            Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
+            if model.selectedPad != nil {
+                Button { model.deleteSelected() } label: { Image(systemName: "trash") }.accessibilityLabel("Delete")
+            } else {
+                Button { model.clear() } label: { Image(systemName: "xmark.bin") }.accessibilityLabel("Clear")
+            }
+        }
     }
 }
 
@@ -134,6 +146,7 @@ struct Chip: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: primary ? 16 : 14.5, weight: .heavy, design: .rounded))
+            .lineLimit(1)
             .foregroundStyle(primary ? (stop ? Color(red: 0.02, green: 0.06, blue: 0.11) : theme.primaryText.color) : Color(red: 0.95, green: 0.96, blue: 1))
             .padding(.horizontal, primary ? 22 : 13).frame(minHeight: 44)
             .background {

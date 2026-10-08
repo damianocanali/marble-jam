@@ -154,10 +154,12 @@ struct CoursePreview: View {
             func pt(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: fit.screenX(x), y: fit.screenY(y)) }
             for p in course.pads {
                 let color = Color(hue: Notes.hue(p), saturation: 0.82, brightness: 1)
-                if p.kind == .bar {
-                    let e = p.ends
-                    var path = Path(); path.move(to: pt(e.0, e.1)); path.addLine(to: pt(e.2, e.3))
-                    ctx.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: max(2, Rules.thickness * fit.scale), lineCap: .round))
+                if p.kind != .bumper {
+                    var path = Path()
+                    if p.kind == .bar { let e = p.ends; path.move(to: pt(e.0, e.1)); path.addLine(to: pt(e.2, e.3)) } else {
+                        let pts = p.rampPoints(); path.move(to: pt(pts[0].x, pts[0].y)); for q in pts.dropFirst() { path.addLine(to: pt(q.x, q.y)) }
+                    }
+                    ctx.stroke(path, with: .color(color), style: StrokeStyle(lineWidth: max(2, Rules.thickness * fit.scale), lineCap: .round, lineJoin: .round))
                 } else {
                     let r = Notes.bumperRadius(p.note) * fit.scale, c = pt(p.x, p.y)
                     ctx.fill(Path(ellipseIn: CGRect(x: c.x - r, y: c.y - r, width: 2 * r, height: 2 * r)), with: .color(color))
