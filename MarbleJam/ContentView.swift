@@ -107,16 +107,9 @@ struct ContentView: View {
             if model.selectedPad != nil, !model.playing {
                 PadController(model: model)
             }
-            HStack(spacing: 8) {
-                Button("+ Pad") { model.addPad() }
-                Button("+ Bumper") { model.addBumper() }
-                Button("+ Ramp") { model.addRamp() }
-                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
-                if model.selectedPad != nil {
-                    Button { model.deleteSelected() } label: { Image(systemName: "trash") }.accessibilityLabel("Delete")
-                } else {
-                    Button { model.clear() } label: { Image(systemName: "xmark.bin") }.accessibilityLabel("Clear")
-                }
+            ViewThatFits(in: .horizontal) {                                       // narrow phones (iPhone SE): drop the "+ "
+                pieceRow(plus: true)
+                pieceRow(plus: false)
             }
             .buttonStyle(Chip()).disabled(model.playing)
             Button(model.playing ? "Stop ■" : "Drop ▶") { model.toggleDrop() }.buttonStyle(Chip(primary: true, stop: model.playing))
@@ -124,6 +117,20 @@ struct ContentView: View {
         .padding(.horizontal, 12).padding(.top, 26).padding(.bottom, 10)
         .frame(maxWidth: .infinity)
         .background(LinearGradient(colors: [night.opacity(0), night.opacity(0.94)], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.34)).ignoresSafeArea())
+    }
+
+    private func pieceRow(plus: Bool) -> some View {
+        HStack(spacing: 8) {
+            Button(plus ? "+ Pad" : "Pad") { model.addPad() }.accessibilityLabel("Add pad")
+            Button(plus ? "+ Bumper" : "Bumper") { model.addBumper() }.accessibilityLabel("Add bumper")
+            Button(plus ? "+ Ramp" : "Ramp") { model.addRamp() }.accessibilityLabel("Add ramp")
+            Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
+            if model.selectedPad != nil {
+                Button { model.deleteSelected() } label: { Image(systemName: "trash") }.accessibilityLabel("Delete")
+            } else {
+                Button { model.clear() } label: { Image(systemName: "xmark.bin") }.accessibilityLabel("Clear")
+            }
+        }
     }
 }
 
@@ -139,6 +146,7 @@ struct Chip: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(.system(size: primary ? 16 : 14.5, weight: .heavy, design: .rounded))
+            .lineLimit(1)
             .foregroundStyle(primary ? (stop ? Color(red: 0.02, green: 0.06, blue: 0.11) : theme.primaryText.color) : Color(red: 0.95, green: 0.96, blue: 1))
             .padding(.horizontal, primary ? 22 : 13).frame(minHeight: 44)
             .background {
