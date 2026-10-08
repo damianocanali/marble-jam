@@ -70,3 +70,60 @@ final class ChallengeProgressTests: XCTestCase {
         XCTAssertEqual(p.totalStars(in: all.filter { $0.world == 1 }), 10)
     }
 }
+
+@MainActor
+final class ChallengeModelTests: XCTestCase {
+    private func progress() -> ChallengeProgress {
+        let n = "test.\(UUID())"; let d = UserDefaults(suiteName: n)!; d.removePersistentDomain(forName: n); return ChallengeProgress(defaults: d)
+    }
+    private func level(_ id: String) -> Challenge { Challenges.all.first { $0.id == id }! }
+
+    func testLockedPiecesRefuseEdits() {
+        let m = GameModel(), c = level("w2-1")
+        m.open(challenge: c, progress: progress())
+        let locked = c.start.pads.first { c.locked.contains($0.id) }!
+        m.selected = locked.id
+        let before = m.course
+        m.rotate(by: 0.3); m.stepNote(1); m.deleteSelected()
+        XCTAssertEqual(m.course, before)
+        XCTAssertTrue(m.isLocked(locked.id))
+    }
+
+    func testTrayPiecesArePlacedAndGoBack() {
+        let m = GameModel(), c = level("w1-2")
+        m.open(challenge: c, progress: progress())
+        XCTAssertEqual(m.trayLeft.count, 2)
+        m.placeFromTray(0)
+        XCTAssertEqual(m.trayLeft.count, 1)
+        XCTAssertEqual(m.course.pads.count, c.start.pads.count + 1)
+        XCTAssertFalse(m.isLocked(m.selected!))
+        m.deleteSelected()
+        XCTAssertEqual(m.trayLeft.count, 2, "a deleted tray piece goes back to the tray")
+        m.placeFromTray(0); m.placeFromTray(0)
+        m.resetChallenge()
+        XCTAssertEqual(m.course, c.start); XCTAssertEqual(m.trayLeft.count, 2)
+    }
+
+    func testFinishingScoresAndSavesTheLevel() {
+        let m = GameModel(), c = level("w1-1"), p = progress()
+        m.open(challenge: c, progress: p)
+        let startIDs = Set(c.start.pads.map(\.id))
+        for spot in c.solution.pads where !startIDs.contains(spot.id) {      // place each missing note where it belongs, like a player
+            m.placeFromTray(0)
+            m.updateSelected { $0.x = spot.x; $0.y = spot.y; $0.angle = spot.angle }
+        }
+        m.start(); m.finish()
+        XCTAssertEqual(m.celebration?.stars, 3)
+        XCTAssertEqual(p.stars(c.id), 3)
+        XCTAssertNotNil(m.nextChallenge, "level 2 opens")
+    }
+
+    func testFinishingUnsolvedGivesAHintNotASticker() {
+        let m = GameModel(), c = level("w1-1"), p = progress()
+        m.open(challenge: c, progress: p)
+        m.start(); m.finish()
+        XCTAssertNil(m.celebration)
+        XCTAssertNotNil(m.toast)
+        XCTAssertEqual(p.stars(c.id), 0)
+    }
+}
