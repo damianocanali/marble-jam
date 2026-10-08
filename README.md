@@ -25,7 +25,7 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `Instrument.swift` / `InstrumentSound.swift` the six instruments (bells, piano, guitar, marimba, drums, 8-bit), each note rendered once and cached
 - `AttractScene.swift` the menu's background: the demo course with marbles dropping and hitting the pads
 - `PadArt.swift`      how pads, the marble and a hit look (shared by the game and the menu)
-- `PadController.swift` tilt dial and note buttons for the selected pad
+- `PadController.swift` tilt dial and note buttons for the selected piece; length and bend for ramps (curved tracks the marble rolls along, defined in `Engine.swift`)
 - `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
 - `Backgrounds.swift` / `BackgroundViews.swift` the background list, the picker and the tinted backdrop
 - `MarbleJamBackgrounds/` the 23 bundled backgrounds, all drawn from scratch: `tools/make_backgrounds.swift` paints them (command at its top) into `art/backgrounds-drawn/`, then `swift tools/prepare_backgrounds.swift` sizes them for the app

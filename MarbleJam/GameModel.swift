@@ -64,11 +64,11 @@ final class GameModel: ObservableObject {
 
     /// Pad controller: tilt the selected bar. Bumpers have no angle.
     func rotate(by d: Double) {
-        guard selectedPad?.kind == .bar else { return }
+        guard selectedPad.map({ $0.kind != .bumper }) == true else { return }
         updateSelected { $0.angle = Rules.clampAngle($0.angle + d) }
     }
     func setAngle(_ a: Double) {
-        guard selectedPad?.kind == .bar else { return }
+        guard selectedPad.map({ $0.kind != .bumper }) == true else { return }
         updateSelected { $0.angle = Rules.clampAngle(a) }
     }
 
@@ -89,6 +89,41 @@ final class GameModel: ObservableObject {
         course.pads.append(Pad(kind: .bumper, x: max(60, min(Rules.width - 60, p.x + 18)), y: p.y + Notes.bumperRadius(3) + Rules.radius, note: 3))
         selectNewest()
     }
+    /// A ramp where the marble will be a beat after its last note, sloping the way it is moving.
+    func addRamp() {
+        mark()
+        let s = Engine.simulate(course, maxTime: 90, below: 2600), L = Rules.rampLength, lift = Rules.radius + Rules.thickness / 2 + 1
+        var placed: Pad?
+        search: for beats in [1.0, 1.5, 2, 0.5] {
+            let t = (s.hits.last?.time ?? 0) + beats * Rules.beat
+            guard t < s.duration - 0.05 else { continue }
+            let p = s.position(at: t), q = s.position(at: t + 0.02), dir: Double = q.x >= p.x ? 1 : -1
+            for a in [0.3, 0.45, 0.2] {
+                let pad = Pad(kind: .ramp, x: p.x + dir * 0.35 * L * cos(a), y: p.y + lift + 0.35 * L * sin(a), angle: dir * a, note: 9,
+                              length: L, bend: Rules.rampBend)
+                var trial = course; trial.pads.append(pad)
+                let h = Engine.simulate(trial, maxTime: 90, below: 2600).hits, m = s.hits.count
+                let same = h.count > m && (0..<m).allSatisfy { h[$0].pad == s.hits[$0].pad && abs(h[$0].time - s.hits[$0].time) < 1e-6 }
+                if same && h[m].pad == course.pads.count { placed = pad; break search }
+            }
+        }
+        if let placed { course.pads.append(placed) } else {
+            course.pads.append(Pad(kind: .ramp, x: Rules.width / 2, y: maxY + 200, angle: 0.3, note: 9, length: L, bend: Rules.rampBend))
+            toast = "Placed below the run. Drag it under the dotted path."
+        }
+        selectNewest()
+    }
+
+    /// Ramp controls: longer/shorter (±40 points) and more dip/hump (±0.1).
+    func stepLength(_ d: Int) {
+        guard selectedPad?.kind == .ramp else { return }
+        updateSelected { $0.length = min(Rules.rampLengths.upperBound, max(Rules.rampLengths.lowerBound, ($0.length ?? Rules.rampLength) + 40 * Double(d))) }
+    }
+    func stepBend(_ d: Int) {
+        guard selectedPad?.kind == .ramp else { return }
+        updateSelected { $0.bend = min(Rules.rampBends.upperBound, max(Rules.rampBends.lowerBound, ((($0.bend ?? 0) + 0.1 * Double(d)) * 10).rounded() / 10)) }
+    }
+
     private func selectNewest() { selected = course.pads.last?.id; focusY = course.pads.last?.y; refresh(); save() }
 
     /// Longer/bigger (-1) or shorter/smaller (+1): size is the note.
@@ -96,7 +131,7 @@ final class GameModel: ObservableObject {
         guard let p = selectedPad else { return }
         mark()
         updateSelected { $0.note = max(0, min(Notes.maxNote(p.kind), $0.note + d)) }
-        if let q = selectedPad { synth.start(); synth.play(midi: Notes.midi(q), bar: q.kind == .bar, gain: 0.25, at: synth.now, instrument: instrument) }
+        if let q = selectedPad { synth.start(); synth.play(midi: Notes.midi(q), bar: q.kind != .bumper, gain: 0.25, at: synth.now, instrument: instrument) }
         save()
     }
     func deleteSelected() { guard selected != nil else { return }; mark(); course.pads.removeAll { $0.id == selected }; selected = nil; refresh(); save() }
@@ -123,7 +158,7 @@ final class GameModel: ObservableObject {
         celebration = nil
         synth.start(); refresh()
         guard !run.hits.isEmpty else { toast = "Nothing in the way yet. Add a pad first."; return }
-        synth.prepare(course.pads.map { (Notes.midi($0), $0.kind == .bar) }, instrument: instrument)   // render every note before the clock starts
+        synth.prepare(course.pads.map { (Notes.midi($0), $0.kind != .bumper) }, instrument: instrument)   // render every note before the clock starts
         selected = nil; scheduled = 0; t0 = synth.now + 0.08; playing = true; version += 1
     }
     func stop() { playing = false; version += 1 }
@@ -145,7 +180,7 @@ final class GameModel: ObservableObject {
         let t = synth.now - t0
         while scheduled < run.hits.count, run.hits[scheduled].time < t + 0.15 {
             let h = run.hits[scheduled], p = course.pads[h.pad]
-            synth.play(midi: Notes.midi(p), bar: p.kind == .bar, gain: min(0.36, 0.14 + h.speed / 3600), at: t0 + h.time, instrument: instrument)
+            synth.play(midi: Notes.midi(p), bar: p.kind != .bumper, gain: min(0.36, 0.14 + h.speed / 3600), at: t0 + h.time, instrument: instrument)
             scheduled += 1
         }
         return t

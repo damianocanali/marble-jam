@@ -91,7 +91,11 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let p = model.selectedPad {
-            return p.kind == .bar ? "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on." : "Drag to move. ♭ ♯ change the note."
+            switch p.kind {
+            case .bar: return "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on."
+            case .ramp: return "The marble rolls along a ramp. Tilt, stretch and bend it; it plays its note when the marble lands."
+            case .bumper: return "Drag to move. ♭ ♯ change the note."
+            }
         }
         return "The dotted line is where the marble will go. Pads glow gold when they hit on the beat."
     }
@@ -106,11 +110,12 @@ struct ContentView: View {
             HStack(spacing: 8) {
                 Button("+ Pad") { model.addPad() }
                 Button("+ Bumper") { model.addBumper() }
-                Button("Undo") { model.undo() }
+                Button("+ Ramp") { model.addRamp() }
+                Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
                 if model.selectedPad != nil {
-                    Button("Delete") { model.deleteSelected() }
+                    Button { model.deleteSelected() } label: { Image(systemName: "trash") }.accessibilityLabel("Delete")
                 } else {
-                    Button("Clear") { model.clear() }
+                    Button { model.clear() } label: { Image(systemName: "xmark.bin") }.accessibilityLabel("Clear")
                 }
             }
             .buttonStyle(Chip()).disabled(model.playing)

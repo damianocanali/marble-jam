@@ -8,15 +8,24 @@ enum PadArt {
     /// A glowing bar or bumper, placed and turned like the pad.
     static func node(for p: Pad) -> SKShapeNode {
         let node: SKShapeNode
-        if p.kind == .bar {
+        switch p.kind {
+        case .bar:
             let L = Notes.barLength(p.note), T = Rules.thickness
             node = SKShapeNode(rect: CGRect(x: -L / 2, y: -T / 2, width: L, height: T), cornerRadius: T / 2)
             node.zRotation = p.angle
-        } else {
+        case .bumper:
             node = SKShapeNode(circleOfRadius: Notes.bumperRadius(p.note))
+        case .ramp:                                                        // the curve drawn as a thick round-capped line around the pad's centre
+            var local = p; local.x = 0; local.y = 0; local.angle = 0
+            let path = CGMutablePath(), pts = local.rampPoints()
+            path.move(to: CGPoint(x: pts[0].x, y: pts[0].y))
+            for q in pts.dropFirst() { path.addLine(to: CGPoint(x: q.x, y: q.y)) }
+            node = SKShapeNode(path: path)
+            node.lineWidth = Rules.thickness; node.lineCap = .round; node.lineJoin = .round
+            node.zRotation = p.angle
         }
         node.position = CGPoint(x: p.x, y: p.y)
-        node.fillColor = color(p); node.strokeColor = color(p); node.glowWidth = 5
+        node.fillColor = p.kind == .ramp ? .clear : color(p); node.strokeColor = color(p); node.glowWidth = 5
         return node
     }
 
@@ -49,7 +58,7 @@ enum PadArt {
     /// A gold outline around a pad that is on the beat (pulsing) or close to it (faint).
     static func halo(for p: Pad, onBeat: Bool) -> SKShapeNode {
         let h = node(for: p)
-        h.fillColor = .clear; h.strokeColor = beatGold; h.lineWidth = 3
+        h.fillColor = .clear; h.strokeColor = beatGold; h.lineWidth = p.kind == .ramp ? Rules.thickness + 6 : 3
         h.glowWidth = onBeat ? 16 : 8
         h.zPosition = -1
         if onBeat {

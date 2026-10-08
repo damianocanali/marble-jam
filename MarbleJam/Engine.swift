@@ -31,6 +31,29 @@ struct Pad: Codable, Identifiable, Equatable {
     var length: Double? = nil      // ramps: end-to-end length (default Rules.rampLength)
     var bend: Double? = nil        // ramps: -0.8...0.8, positive sags into a dip, negative arches into a hump
 
+    /// Where the tilt handle sits: a bar's or ramp's far end (bumpers have none).
+    var tiltHandle: (x: Double, y: Double)? {
+        switch kind {
+        case .bar: let e = ends; return (e.2, e.3)
+        case .ramp: return rampPoints().last
+        case .bumper: return nil
+        }
+    }
+
+    /// Distance from a point to the piece's surface centre line (0 inside a bumper), for picking it up with a finger.
+    func distance(toX px: Double, y py: Double) -> Double {
+        func seg(_ a: (x: Double, y: Double), _ b: (x: Double, y: Double)) -> Double {
+            let ex = b.x - a.x, ey = b.y - a.y, l2 = max(ex * ex + ey * ey, 1e-9)
+            let u = max(0, min(1, ((px - a.x) * ex + (py - a.y) * ey) / l2))
+            return hypot(px - a.x - ex * u, py - a.y - ey * u)
+        }
+        switch kind {
+        case .bar: let e = ends; return seg((e.0, e.1), (e.2, e.3))
+        case .bumper: return max(0, hypot(px - x, py - y) - Notes.bumperRadius(note))
+        case .ramp: let pts = rampPoints(); return zip(pts, pts.dropFirst()).map { seg($0, $1) }.min() ?? .infinity
+        }
+    }
+
     /// Points along a ramp's centre line, first end to last (17 points: 16 short segments).
     func rampPoints(segments n: Int = 16) -> [(x: Double, y: Double)] {
         let L = length ?? Rules.rampLength, b = bend ?? Rules.rampBend, c = cos(angle), s = sin(angle)

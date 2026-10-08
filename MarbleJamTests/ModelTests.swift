@@ -136,4 +136,24 @@ final class ModelTests: XCTestCase {
         m.loadDemo()
         XCTAssertEqual(m.info, "42 notes · 42 on the beat")
     }
+
+    func testAddingARampPutsItUnderTheMarblesPath() {
+        let m = GameModel(); m.loadDemo()
+        let before = m.run.hits.count
+        m.addRamp()
+        XCTAssertEqual(m.selectedPad?.kind, .ramp)
+        XCTAssertEqual(m.run.hits.count, before + 1, "the marble lands on the new ramp")
+        XCTAssertEqual(m.run.hits.last?.pad, m.course.pads.count - 1)
+    }
+
+    func testRampLengthBendAndTiltStayInRange() {
+        let m = GameModel(); m.loadDemo(); m.addRamp()
+        for _ in 0..<40 { m.stepLength(1); m.stepBend(1); m.rotate(by: 0.2) }
+        XCTAssertEqual(m.selectedPad!.length!, Rules.rampLengths.upperBound, accuracy: 1e-9)
+        XCTAssertEqual(m.selectedPad!.bend!, Rules.rampBends.upperBound, accuracy: 1e-9)
+        XCTAssertEqual(m.selectedPad!.angle, 1.4, accuracy: 1e-9)
+        for _ in 0..<80 { m.stepLength(-1); m.stepBend(-1) }
+        XCTAssertEqual(m.selectedPad!.length!, Rules.rampLengths.lowerBound, accuracy: 1e-9)
+        XCTAssertEqual(m.selectedPad!.bend!, Rules.rampBends.lowerBound, accuracy: 1e-9)
+    }
 }

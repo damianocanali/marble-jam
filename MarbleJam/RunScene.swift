@@ -102,20 +102,25 @@ final class RunScene: SKScene {
             let label = SKLabelNode(text: Notes.label(p, instrument: m.instrument))
             label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? PadArt.beatGold : color(p); label.yScale = -1
             label.verticalAlignmentMode = .center
-            let off = p.kind == .bar ? 30.0 : Notes.bumperRadius(p.note) + 22
-            label.position = CGPoint(x: p.x - sin(p.angle) * off, y: p.y + cos(p.angle) * off)
+            let off = p.kind == .bumper ? Notes.bumperRadius(p.note) + 22 : 30.0
+            let mid = p.kind == .ramp ? p.rampPoints()[8] : (x: p.x, y: p.y)          // a ramp's label sits under its middle
+            label.position = CGPoint(x: mid.x - sin(p.angle) * off, y: mid.y + cos(p.angle) * off)
             label.alpha = node.alpha
             padLayer.addChild(label)
 
             if p.id == m.selected && !m.playing {                                  // selection ring and the tilt handle
-                let r = p.kind == .bar ? Notes.barLength(p.note) / 2 + 12 : Notes.bumperRadius(p.note) + 10
+                let r = switch p.kind {
+                case .bar: Notes.barLength(p.note) / 2 + 12
+                case .bumper: Notes.bumperRadius(p.note) + 10
+                case .ramp: (p.length ?? Rules.rampLength) / 2 + 12
+                }
                 let ringPath = CGPath(ellipseIn: CGRect(x: -r, y: -r, width: 2 * r, height: 2 * r), transform: nil)
                 let ring = SKShapeNode(path: ringPath.copy(dashingWithPhase: 0, lengths: [5, 5]))
                 ring.position = node.position; ring.strokeColor = .white; ring.lineWidth = 2
                 padLayer.addChild(ring)
-                if p.kind == .bar {
-                    let e = p.ends, handle = SKShapeNode(circleOfRadius: 13)
-                    handle.position = CGPoint(x: e.2, y: e.3); handle.fillColor = .white; handle.strokeColor = .clear; handle.zPosition = 5
+                if let e = p.tiltHandle {
+                    let handle = SKShapeNode(circleOfRadius: 13)
+                    handle.position = CGPoint(x: e.x, y: e.y); handle.fillColor = .white; handle.strokeColor = .clear; handle.zPosition = 5
                     padLayer.addChild(handle)
                 }
             }
@@ -154,11 +159,7 @@ final class RunScene: SKScene {
     private func pick(_ x: Double, _ y: Double, _ pads: [Pad]) -> Int? {
         for i in pads.indices.reversed() {
             let p = pads[i]
-            if p.kind == .bar {
-                let e = p.ends, ex = e.2 - e.0, ey = e.3 - e.1
-                let u = max(0, min(1, ((x - e.0) * ex + (y - e.1) * ey) / (ex * ex + ey * ey)))
-                if hypot(x - e.0 - ex * u, y - e.1 - ey * u) < Rules.thickness / 2 + 20 { return i }
-            } else if hypot(x - p.x, y - p.y) < Notes.bumperRadius(p.note) + 12 { return i }
+            if p.distance(toX: x, y: y) < (p.kind == .bumper ? 12 : Rules.thickness / 2 + 20) { return i }
         }
         return nil
     }
@@ -171,7 +172,7 @@ final class RunScene: SKScene {
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
         guard let m = model, !m.playing, let t = touches.first else { return }
         let loc = t.location(in: world), x = Double(loc.x), y = Double(loc.y)
-        if let s = m.selectedPad, s.kind == .bar, hypot(x - s.ends.2, y - s.ends.3) < 30 { m.mark(); drag = .tilt; return }
+        if let s = m.selectedPad, let e = s.tiltHandle, hypot(x - e.x, y - e.y) < 30 { m.mark(); drag = .tilt; return }
         if hypot(x - m.course.dropX, y - (m.course.dropY - 30)) < 46 { m.mark(); drag = .hopper; return }
         if let i = pick(x, y, m.course.pads) {
             let p = m.course.pads[i]

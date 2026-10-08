@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Shown while a pad is selected: a dial to tilt bars and ♭/♯ for the note. Moving is done by dragging the pad.
+/// Shown while a piece is selected: a dial to tilt bars and ramps, ♭/♯ for the note, and a ramp's length and bend. Moving is done by dragging.
 struct PadController: View {
     @ObservedObject var model: GameModel
     @Environment(\.theme) private var theme
@@ -12,8 +12,21 @@ struct PadController: View {
 
     var body: some View {
         if let p = model.selectedPad {
+          VStack(spacing: 8) {
+            if p.kind == .ramp {
+                HStack(spacing: 8) {
+                    Button { model.stepLength(-1) } label: { Image(systemName: "arrow.right.and.line.vertical.and.arrow.left") }.accessibilityLabel("Shorter")
+                    Text("Length").font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(ink)
+                    Button { model.stepLength(1) } label: { Image(systemName: "arrow.left.and.line.vertical.and.arrow.right") }.accessibilityLabel("Longer")
+                    Spacer().frame(width: 12)
+                    Button { model.stepBend(-1) } label: { Image(systemName: "arrow.up.right.and.arrow.down.left") }.accessibilityLabel("More hump")
+                    Text("Bend").font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(ink)
+                    Button { model.stepBend(1) } label: { Image(systemName: "arrow.down.left.and.arrow.up.right") }.accessibilityLabel("More dip")
+                }
+                .buttonStyle(Chip())
+            }
             HStack(spacing: 10) {
-                if p.kind == .bar {
+                if p.kind != .bumper {
                     spin("arrow.counterclockwise", -1)
                     dial(angle: p.angle)
                     spin("arrow.clockwise", 1)
@@ -23,6 +36,7 @@ struct PadController: View {
                 Text(Notes.label(p, instrument: model.instrument)).font(.system(size: 18, weight: .heavy, design: .rounded)).foregroundStyle(ink).frame(minWidth: 40)
                 Button("♯") { model.stepNote(1) }.buttonStyle(Chip())
             }
+          }
         }
     }
 
