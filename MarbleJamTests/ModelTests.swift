@@ -156,4 +156,15 @@ final class ModelTests: XCTestCase {
         XCTAssertEqual(m.selectedPad!.length!, Rules.rampLengths.lowerBound, accuracy: 1e-9)
         XCTAssertEqual(m.selectedPad!.bend!, Rules.rampBends.lowerBound, accuracy: 1e-9)
     }
+
+    func testRampShapeChangesCanBeUndone() {
+        let m = GameModel(); m.loadDemo(); m.addRamp()
+        let before = m.selectedPad!
+        m.stepBend(1); m.stepLength(1)
+        m.undo()
+        let id = before.id, now = m.course.pads.first { $0.id == id }!
+        XCTAssertEqual(now.length, (before.length ?? 0) + 0, "undo restored the length change")
+        m.undo()
+        XCTAssertEqual(m.course.pads.first { $0.id == id }?.bend, before.bend, "undo restored the bend change")
+    }
 }

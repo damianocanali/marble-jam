@@ -103,7 +103,7 @@ final class RunScene: SKScene {
             label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? PadArt.beatGold : color(p); label.yScale = -1
             label.verticalAlignmentMode = .center
             let off = p.kind == .bumper ? Notes.bumperRadius(p.note) + 22 : 30.0
-            let mid = p.kind == .ramp ? p.rampPoints()[8] : (x: p.x, y: p.y)          // a ramp's label sits under its middle
+            let mid = p.kind == .ramp ? { let pts = p.rampPoints(); return pts[pts.count / 2] }() : (x: p.x, y: p.y)          // a ramp's label sits under its middle
             label.position = CGPoint(x: mid.x - sin(p.angle) * off, y: mid.y + cos(p.angle) * off)
             label.alpha = node.alpha
             padLayer.addChild(label)

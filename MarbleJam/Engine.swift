@@ -101,7 +101,7 @@ enum Notes {
     static func name(_ p: Pad) -> String { names[p.note % 7] + String((p.kind == .bumper ? 3 : 4) + p.note / 7) }
     /// What a pad's label says: the note, or the drum piece when the song plays drums.
     static func label(_ p: Pad, instrument: Instrument) -> String {
-        instrument == .drums ? Drum.piece(midi: midi(p), bar: p.kind == .bar).label : name(p)
+        instrument == .drums ? Drum.piece(midi: midi(p), bar: p.kind != .bumper).label : name(p)
     }
     static func barLength(_ n: Int) -> Double { 210 - 10 * Double(n) }
     static func bumperRadius(_ n: Int) -> Double { 46 - 4 * Double(n) }
@@ -125,6 +125,11 @@ enum Engine {
         let low = (c.pads.map(\.y) + [c.dropY]).max()! + below
         var last = [Double](repeating: -1, count: c.pads.count)              // last note time per pad
         var touch = [Double](repeating: -1, count: c.pads.count)             // last contact time per pad (ramps: rolling keeps touching)
+        // Ramps: only the segment nearest the marble collides, so a joint's corner can't fling a landing marble sideways.
+        var rampSegments: [Int: Range<Int>] = [:]
+        for (j, g) in geo.enumerated() where g.rolls { rampSegments[g.pad] = (rampSegments[g.pad]?.lowerBound ?? j)..<(j + 1) }
+        var nearest = [Int](repeating: -1, count: c.pads.count)
+        var rolling = 0.0                                                    // seconds of unbroken contact with ramps
         var x = c.dropX, y = c.dropY, vx = 0.0, vy = 0.0, t = 0.0, calm = 0.0, i = 0
         var run = Run()
         let h = Rules.step, R = Rules.radius, W = Rules.width
@@ -133,7 +138,18 @@ enum Engine {
             i += 1
             vy += Rules.gravity * h; x += vx * h; y += vy * h; t += h
             if x < R { x = R; if vx < 0 { vx *= -0.6 } } else if x > W - R { x = W - R; if vx > 0 { vx *= -0.6 } }
+            for (pad, r) in rampSegments {
+                var best = Double.infinity
+                for j in r {
+                    let g = geo[j], ex = g.bx - g.ax, ey = g.by - g.ay, l2 = max(ex * ex + ey * ey, 1e-9)
+                    let u = max(0, min(1, ((x - g.ax) * ex + (y - g.ay) * ey) / l2))
+                    let d = hypot(x - g.ax - ex * u, y - g.ay - ey * u)
+                    if d < best { best = d; nearest[pad] = j }
+                }
+            }
+            var onRamp = false
             for j in geo.indices {
+                if geo[j].rolls && nearest[geo[j].pad] != j { continue }
                 let g = geo[j], ex = g.bx - g.ax, ey = g.by - g.ay, l2 = ex * ex + ey * ey
                 let u = l2 > 0 ? max(0, min(1, ((x - g.ax) * ex + (y - g.ay) * ey) / l2)) : 0
                 let qx = g.ax + ex * u, qy = g.ay + ey * u, rr = R + g.r
@@ -149,8 +165,14 @@ enum Engine {
                     if -vn > 60 && landed { run.hits.append(Hit(time: t, x: qx + dx * g.r, y: qy + dy * g.r, pad: g.pad, speed: -vn)); last[g.pad] = t }
                 }
                 touch[g.pad] = t
+                if g.rolls { onRamp = true }
                 x = qx + dx * rr; y = qy + dy * rr
             }
+            if onRamp {                                                       // a little rolling friction, so a marble in a dip settles
+                vx *= 1 - 0.3 * h; vy *= 1 - 0.3 * h
+                rolling += h
+                if rolling > 8 { break }                                       // still rocking after 8 s: call it stopped
+            } else { rolling = 0 }
             if y > low { break }
             if vx * vx + vy * vy < 500 { calm += h; if calm > 1 { break } } else { calm = 0 }
         }

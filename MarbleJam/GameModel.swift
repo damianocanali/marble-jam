@@ -117,10 +117,12 @@ final class GameModel: ObservableObject {
     /// Ramp controls: longer/shorter (±40 points) and more dip/hump (±0.1).
     func stepLength(_ d: Int) {
         guard selectedPad?.kind == .ramp else { return }
+        mark(); defer { finishEdit() }
         updateSelected { $0.length = min(Rules.rampLengths.upperBound, max(Rules.rampLengths.lowerBound, ($0.length ?? Rules.rampLength) + 40 * Double(d))) }
     }
     func stepBend(_ d: Int) {
         guard selectedPad?.kind == .ramp else { return }
+        mark(); defer { finishEdit() }
         updateSelected { $0.bend = min(Rules.rampBends.upperBound, max(Rules.rampBends.lowerBound, ((($0.bend ?? 0) + 0.1 * Double(d)) * 10).rounded() / 10)) }
     }
 

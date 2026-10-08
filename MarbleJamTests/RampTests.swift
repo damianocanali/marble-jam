@@ -51,4 +51,27 @@ final class RampTests: XCTestCase {
         XCTAssertEqual(Notes.midi(ramp), Notes.midi(bar))
         XCTAssertEqual(Notes.name(ramp), Notes.name(bar))
     }
+
+    func testDroppingStraightDownOntoAFlatRampDoesNotThrowTheMarbleSideways() {
+        for dx in stride(from: -120.0, through: 120, by: 7) {
+            var c = Course(); c.dropX = 360 + dx; c.dropY = 60
+            c.pads = [Pad(kind: .ramp, x: 360, y: 700, angle: 0, note: 7, length: 360, bend: 0)]
+            let run = Engine.simulate(c)
+            guard let land = run.hits.first else { return XCTFail("no landing at \(dx)") }
+            let a = run.position(at: land.time + 0.1), b = run.position(at: land.time + 0.2)
+            XCTAssertLessThan(abs(b.x - a.x) / 0.1, 5, "sideways speed after landing at x offset \(dx)")
+            XCTAssertEqual(run.hits.count, 1, "one note at x offset \(dx)")
+        }
+    }
+
+    func testAMarbleInADipStopsInsteadOfRockingForever() {
+        var c = Course(); c.dropX = 370; c.dropY = 60
+        c.pads = [Pad(kind: .ramp, x: 360, y: 300, angle: 0, note: 7, length: 360, bend: 0.5)]
+        XCTAssertLessThan(Engine.simulate(c).duration, 20)
+    }
+
+    func testRampDrumLabelMatchesTheDrumThatPlays() {
+        let ramp = Pad(kind: .ramp, x: 0, y: 0, note: 0)
+        XCTAssertEqual(Notes.label(ramp, instrument: .drums), Drum.piece(midi: Notes.midi(ramp), bar: true).label)
+    }
 }
