@@ -92,26 +92,12 @@ final class GameModel: ObservableObject {
     /// A ramp where the marble will be a beat after its last note, sloping the way it is moving.
     func addRamp() {
         mark()
-        let s = Engine.simulate(course, maxTime: 90, below: 2600), L = Rules.rampLength, lift = Rules.radius + Rules.thickness / 2 + 1
-        var placed: Pad?
-        search: for beats in [1.0, 1.5, 2, 0.5] {
-            let t = (s.hits.last?.time ?? 0) + beats * Rules.beat
-            guard t < s.duration - 0.05 else { continue }
-            let p = s.position(at: t), q = s.position(at: t + 0.02), dir: Double = q.x >= p.x ? 1 : -1
-            for a in [0.3, 0.45, 0.2] {
-                let pad = Pad(kind: .ramp, x: p.x + dir * 0.35 * L * cos(a), y: p.y + lift + 0.35 * L * sin(a), angle: dir * a, note: 9,
-                              length: L, bend: Rules.rampBend)
-                var trial = course; trial.pads.append(pad)
-                let h = Engine.simulate(trial, maxTime: 90, below: 2600).hits, m = s.hits.count
-                let same = h.count > m && (0..<m).allSatisfy { h[$0].pad == s.hits[$0].pad && abs(h[$0].time - s.hits[$0].time) < 1e-6 }
-                if same && h[m].pad == course.pads.count { placed = pad; break search }
-            }
-        }
-        if let placed { course.pads.append(placed) } else {
-            course.pads.append(Pad(kind: .ramp, x: Rules.width / 2, y: maxY + 200, angle: 0.3, note: 9, length: L, bend: Rules.rampBend))
+        var c = course
+        if !Engine.rampAdd(&c, note: 9) {
+            c.pads.append(Pad(kind: .ramp, x: Rules.width / 2, y: maxY + 200, angle: 0.3, note: 9, length: Rules.rampLength, bend: Rules.rampBend))
             toast = "Placed below the run. Drag it under the dotted path."
         }
-        selectNewest()
+        course = c; selectNewest()
     }
 
     /// Ramp controls: longer/shorter (±40 points) and more dip/hump (±0.1).
