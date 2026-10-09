@@ -15,7 +15,14 @@ final class GameModel: ObservableObject {
     @Published private(set) var instrument: Instrument = .bells
     private(set) var song: Song?
     private let store: SongStore?
-    private struct Snapshot { let course: Course; let instrument: Instrument }
+    private struct Snapshot { let course: Course; let instrument: Instrument; var tray: [Pad] = []; var placed: Set<UUID> = [] }
+
+    // Challenge mode
+    @Published private(set) var challenge: Challenge?
+    @Published private(set) var trayLeft: [Pad] = []               // tray pieces not placed yet
+    private var placed: Set<UUID> = []                             // tray pieces on the course
+    private var progress: ChallengeProgress?
+    private(set) var nextChallenge: Challenge?                      // set when a finished level opens the next one
     private var undoStack: [Snapshot] = []
     private let synth = Synth()
     private var t0 = 0.0
@@ -29,6 +36,7 @@ final class GameModel: ObservableObject {
 
     /// Opens a song in the builder. Undo starts fresh for each visit.
     func open(_ s: Song) {
+        challenge = nil; trayLeft = []; placed = []; nextChallenge = nil
         song = s; course = s.course; instrument = s.instrument
         undoStack = []; selected = nil; playing = false; celebration = nil; focusY = 0
         refresh()
@@ -40,16 +48,21 @@ final class GameModel: ObservableObject {
         s.course = course; s.instrument = instrument
         do { song = try store.save(s) } catch { toast = "Couldn't save your song" }
     }
-    func mark() { undoStack.append(Snapshot(course: course, instrument: instrument)); if undoStack.count > 40 { undoStack.removeFirst() } }
+    func mark() { undoStack.append(Snapshot(course: course, instrument: instrument, tray: trayLeft, placed: placed)); if undoStack.count > 40 { undoStack.removeFirst() } }
 
     var selectedPad: Pad? { course.pads.first { $0.id == selected } }
-    var maxY: Double { (course.pads.map(\.y) + [course.dropY]).max() ?? 0 }
+    /// The lowest point that matters: the lowest piece, or a challenge's cup (so the player can scroll down to it).
+    var maxY: Double {
+        var ys = course.pads.map(\.y) + [course.dropY]
+        if case let .target(_, y)? = challenge?.goal { ys.append(y + 120) }
+        return ys.max() ?? 0
+    }
 
     func updateSelected(_ change: (inout Pad) -> Void) {
-        guard let i = course.pads.firstIndex(where: { $0.id == selected }) else { return }
+        guard let i = course.pads.firstIndex(where: { $0.id == selected }), !isLocked(course.pads[i].id) else { return }
         change(&course.pads[i]); refresh()
     }
-    func setDrop(x: Double) { course.dropX = x; refresh() }
+    func setDrop(x: Double) { guard challenge == nil else { return }; course.dropX = x; refresh() }   // the hopper is part of a puzzle
 
     /// After a drag, a tilt or a rotate: a selected pad that is close to the beat slides onto it. Saves either way.
     /// If nothing changed since the touch began (a plain tap), the undo step is dropped and nothing snaps.
@@ -92,26 +105,12 @@ final class GameModel: ObservableObject {
     /// A ramp where the marble will be a beat after its last note, sloping the way it is moving.
     func addRamp() {
         mark()
-        let s = Engine.simulate(course, maxTime: 90, below: 2600), L = Rules.rampLength, lift = Rules.radius + Rules.thickness / 2 + 1
-        var placed: Pad?
-        search: for beats in [1.0, 1.5, 2, 0.5] {
-            let t = (s.hits.last?.time ?? 0) + beats * Rules.beat
-            guard t < s.duration - 0.05 else { continue }
-            let p = s.position(at: t), q = s.position(at: t + 0.02), dir: Double = q.x >= p.x ? 1 : -1
-            for a in [0.3, 0.45, 0.2] {
-                let pad = Pad(kind: .ramp, x: p.x + dir * 0.35 * L * cos(a), y: p.y + lift + 0.35 * L * sin(a), angle: dir * a, note: 9,
-                              length: L, bend: Rules.rampBend)
-                var trial = course; trial.pads.append(pad)
-                let h = Engine.simulate(trial, maxTime: 90, below: 2600).hits, m = s.hits.count
-                let same = h.count > m && (0..<m).allSatisfy { h[$0].pad == s.hits[$0].pad && abs(h[$0].time - s.hits[$0].time) < 1e-6 }
-                if same && h[m].pad == course.pads.count { placed = pad; break search }
-            }
-        }
-        if let placed { course.pads.append(placed) } else {
-            course.pads.append(Pad(kind: .ramp, x: Rules.width / 2, y: maxY + 200, angle: 0.3, note: 9, length: L, bend: Rules.rampBend))
+        var c = course
+        if !Engine.rampAdd(&c, note: 9) {
+            c.pads.append(Pad(kind: .ramp, x: Rules.width / 2, y: maxY + 200, angle: 0.3, note: 9, length: Rules.rampLength, bend: Rules.rampBend))
             toast = "Placed below the run. Drag it under the dotted path."
         }
-        selectNewest()
+        course = c; selectNewest()
     }
 
     /// Ramp controls: longer/shorter (±40 points) and more dip/hump (±0.1).
@@ -130,16 +129,25 @@ final class GameModel: ObservableObject {
 
     /// Longer/bigger (-1) or shorter/smaller (+1): size is the note.
     func stepNote(_ d: Int) {
+        guard canChangeNote else { return }
         guard let p = selectedPad else { return }
         mark()
         updateSelected { $0.note = max(0, min(Notes.maxNote(p.kind), $0.note + d)) }
         if let q = selectedPad { synth.start(); synth.play(midi: Notes.midi(q), bar: q.kind != .bumper, gain: 0.25, at: synth.now, instrument: instrument) }
         save()
     }
-    func deleteSelected() { guard selected != nil else { return }; mark(); course.pads.removeAll { $0.id == selected }; selected = nil; refresh(); save() }
+    func deleteSelected() {
+        guard let id = selected, !isLocked(id), challenge == nil || placed.contains(id), let i = course.pads.firstIndex(where: { $0.id == id }) else { return }
+        mark()
+        let pad = course.pads.remove(at: i)
+        if placed.remove(id) != nil { trayLeft.append(pad) }                 // a tray piece goes back to the tray
+        selected = nil; refresh(); save()
+    }
     func undo() {
         guard let u = undoStack.popLast() else { return }
-        course = u.course; instrument = u.instrument; selected = nil; refresh(); save()
+        course = u.course; instrument = u.instrument; selected = nil
+        if challenge != nil { trayLeft = u.tray; placed = u.placed }
+        refresh(); save()
     }
 
     func setInstrument(_ i: Instrument) {
@@ -152,7 +160,9 @@ final class GameModel: ObservableObject {
         guard let store, let s = song, store.rename(s.id, to: name) else { return }
         song = store.song(s.id)
     }
-    func clear() { mark(); course.pads = []; selected = nil; focusY = 0; refresh(); save(); toast = "Cleared. Undo brings it back." }
+    func clear() {
+        if challenge != nil { resetChallenge(); return }
+        mark(); course.pads = []; selected = nil; focusY = 0; refresh(); save(); toast = "Cleared. Undo brings it back." }
     func loadDemo() { mark(); course = Engine.demo(); selected = nil; focusY = 0; refresh(); save() }
 
     func toggleDrop() { playing ? stop() : start() }
@@ -165,12 +175,70 @@ final class GameModel: ObservableObject {
     }
     func stop() { playing = false; version += 1 }
 
-    /// The marble reached the end by itself: stop and celebrate.
+    // MARK: challenges
+
+    /// Opens a challenge level: its start course, its tray, no song saving.
+    func open(challenge c: Challenge, progress p: ChallengeProgress) {
+        song = nil; challenge = c; progress = p; nextChallenge = nil
+        course = c.start; instrument = c.instrument; trayLeft = c.tray; placed = []
+        undoStack = []; selected = nil; playing = false; celebration = nil; focusY = 0
+        refresh()
+    }
+
+    func isLocked(_ id: UUID) -> Bool { challenge?.locked.contains(id) ?? false }
+    /// A tray piece the player has put on the course (it can go back to the tray).
+    func isPlaced(_ id: UUID) -> Bool { placed.contains(id) }
+
+    /// Notes can change outside challenges and in target levels; in melody and fix levels the tune is fixed.
+    var canChangeNote: Bool {
+        if let id = selected, isLocked(id) { return false }
+        switch challenge?.goal {
+        case nil, .target?: return true
+        case .melody?, .fix?: return false
+        }
+    }
+
+    /// Puts a tray piece on the course at its hint spot and selects it.
+    func placeFromTray(_ i: Int) {
+        guard trayLeft.indices.contains(i) else { return }
+        mark()
+        let pad = trayLeft.remove(at: i)
+        course.pads.append(pad); placed.insert(pad.id)
+        selectNewest()
+    }
+
+    func resetChallenge() {
+        guard let c = challenge else { return }
+        mark()
+        course = c.start; trayLeft = c.tray; placed = []; selected = nil; focusY = 0
+        refresh()
+    }
+
+    /// The marble reached the end by itself: stop and celebrate (in a challenge: score the level).
     func finish() {
+        if let c = challenge { finishChallenge(c); return }
         let on = run.hits.filter { Engine.isOnBeat($0.time) }.count
         stop()
         celebration = Celebration.make(onBeat: on, total: run.hits.count)
     }
+    private func finishChallenge(_ c: Challenge) {
+        let stars = c.stars(for: course, placed: placed.count)
+        stop()
+        guard stars > 0 else {
+            toast = switch c.goal {
+            case .melody: "Not yet: every note has to play, in order."
+            case .fix: "Not yet: the tune has to play all the way through."
+            case .target: "So close! The marble has to reach the cup."
+            }
+            return
+        }
+        progress?.record(c.id, stars: stars)
+        let on = run.hits.filter { Engine.isOnBeat($0.time) }.count
+        celebration = Celebration(stars: stars, headline: Celebration.headlines[stars]!.randomElement()!, notes: run.hits.count, onBeat: on)
+        if let i = Challenges.all.firstIndex(where: { $0.id == c.id }), i + 1 < Challenges.all.count, let p = progress,
+           p.isUnlocked(Challenges.all[i + 1], in: Challenges.all) { nextChallenge = Challenges.all[i + 1] }
+    }
+
     /// Rising chime for the sticker's stars (i = 0, 1, 2).
     func chime(_ i: Int) {
         synth.start()

@@ -9,6 +9,7 @@ struct MenuView: View {
     @Binding var backgroundID: String
     @AppStorage("season.preview") private var seasonPreview = ""
     let onCreate: () -> Void
+    let onChallenges: () -> Void
     @State private var toast: String?
     @State private var picking = false
     @State private var attract: AttractScene = { let s = AttractScene(); s.scaleMode = .resizeFill; return s }()
@@ -48,8 +49,8 @@ struct MenuView: View {
                 Spacer()
             }
             VStack(spacing: 12) {                                                // centred on the screen, all the same size
-                menuButton("Challenges") { toast = "Challenges are coming soon" }
-                menuButton("Create", primary: true, action: onCreate)
+                menuButton("Challenges", primary: true, action: onChallenges)
+                menuButton("Create", action: onCreate)
                 if !backgrounds.isEmpty { menuButton("Backgrounds") { picking = true } }
                 menuButton("Store") { toast = "Store is coming soon" }
                 menuButton("Sign in") { toast = "Sign in is coming soon" }

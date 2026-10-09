@@ -6,6 +6,7 @@ struct CelebrationView: View {
     let chime: (Int) -> Void
     let onPlayAgain: () -> Void
     let onDismiss: () -> Void
+    var onNext: (() -> Void)? = nil                    // challenges: go on to the next level
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
@@ -45,8 +46,12 @@ struct CelebrationView: View {
             Text("\(celebration.notes) notes · \(celebration.onBeat) on the beat")
                 .font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(.white.opacity(0.9))
             HStack(spacing: 8) {
-                Button("Keep editing", action: onDismiss).buttonStyle(Chip())
-                Button("Play again ▶", action: onPlayAgain).buttonStyle(Chip(primary: true))
+                Button(onNext == nil ? "Keep editing" : "Stay", action: onDismiss).buttonStyle(Chip())
+                if let onNext {
+                    Button("Next level ▶", action: onNext).buttonStyle(Chip(primary: true))
+                } else {
+                    Button("Play again ▶", action: onPlayAgain).buttonStyle(Chip(primary: true))
+                }
             }
             .padding(.top, 6)
         }

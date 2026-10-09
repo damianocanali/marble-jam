@@ -20,6 +20,7 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `RootView.swift`    switches between the menu and the game
 - `MenuView.swift`    start screen: lettering, Challenges (coming soon), Create, Backgrounds, Store/Sign in (coming soon)
 - `Seasons.swift`    holiday calendar (Halloween, Thanksgiving, Christmas), banners and melodies; builds run from Xcode show "Preview season" on the menu
+- `Challenge.swift` / `ChallengesView.swift` / `Songbook.swift` 30 challenge levels in 5 worlds, generated from working solutions (melody, fix, target), stars and unlocking; short public-domain tunes
 - `LibraryView.swift` "My Songs": song cards with a course preview, rename/duplicate/delete
 - `Song.swift` / `SongStore.swift` each song saved as a JSON file in Documents/Songs; first-launch migration of the old course
 - `Instrument.swift` / `InstrumentSound.swift` the six instruments (bells, piano, guitar, marimba, drums, 8-bit), each note rendered once and cached

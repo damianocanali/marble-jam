@@ -232,6 +232,27 @@ enum Engine {
         return same ? trial : nil
     }
 
+    /// Puts a ramp where the marble will be, about a beat after its last note, sloping the way the marble moves, so it lands
+    /// on it and rolls on. Earlier notes are unchanged. False if no spot works.
+    static func rampAdd(_ c: inout Course, note: Int, length: Double = Rules.rampLength) -> Bool {
+        let s = simulate(c, maxTime: 90, below: 2600), lift = Rules.radius + Rules.thickness / 2 + 1
+        for beats in [1.0, 1.5, 2, 0.5] {
+            let t = (s.hits.last?.time ?? 0) + beats * Rules.beat
+            guard t < s.duration - 0.05 else { continue }
+            let p = s.position(at: t), q = s.position(at: t + 0.02), dir: Double = q.x >= p.x ? 1 : -1
+            for a in [0.3, 0.45, 0.2] {
+                let pad = Pad(kind: .ramp, x: p.x + dir * 0.35 * length * cos(a), y: p.y + lift + 0.35 * length * sin(a), angle: dir * a, note: note,
+                              length: length, bend: Rules.rampBend)
+                guard pad.x > 60, pad.x < Rules.width - 60 else { continue }
+                var trial = c; trial.pads.append(pad)
+                let h = simulate(trial, maxTime: 90, below: 2600).hits, m = s.hits.count
+                let same = h.count > m && (0..<m).allSatisfy { h[$0].pad == s.hits[$0].pad && abs(h[$0].time - s.hits[$0].time) < 1e-6 }
+                if same && h[m].pad == c.pads.count { c = trial; return true }
+            }
+        }
+        return false
+    }
+
     /// The helper that makes this a composer: puts the next pad exactly where the marble is on the beat.
     static func smartAdd(_ c: inout Course, beats: Double, note: Int) -> Bool {
         let s = simulate(c, maxTime: 90, below: 2600)
