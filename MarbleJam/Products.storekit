@@ -1,0 +1,64 @@
+{
+  "identifier": "9F1A2B3C",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6450000001",
+      "localizations": [
+        {
+          "description": "Cat's Eye, Emerald Swirl, Amber Swirl and Bubble marbles.",
+          "displayName": "Glass Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.glass",
+      "referenceName": "Glass Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6450000002",
+      "localizations": [
+        {
+          "description": "Earth, Saturn, Moon and Sun marbles.",
+          "displayName": "Space Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.space",
+      "referenceName": "Space Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6450000003",
+      "localizations": [
+        {
+          "description": "Soccer, Basketball, Tennis and 8-Ball marbles.",
+          "displayName": "Sports Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.sports",
+      "referenceName": "Sports Pack",
+      "type": "NonConsumable"
+    }
+  ],
+  "settings": {
+    "_applicationInternalID": "6450000000",
+    "_developerTeamID": "",
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 4,
+    "minor": 0
+  }
+}

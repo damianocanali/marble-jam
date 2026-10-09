@@ -217,6 +217,14 @@ final class ChallengeProgress {
 
     func totalStars(in levels: [Challenge]) -> Int { levels.reduce(0) { $0 + stars($1.id) } }
 
+    /// Holidays whose world has a star on every level (their reward skin is earned).
+    func holidaysDone() -> Set<String> {
+        Set(Seasons.all.map(\.id).filter { id in
+            let levels = Challenges.holiday.filter { $0.season == id }
+            return !levels.isEmpty && levels.allSatisfy { stars($0.id) > 0 }
+        })
+    }
+
     /// Level 1 of World 1 is open. A level opens when the previous one has a star; a world opens when the previous world's
     /// last level has a star and the earlier worlds together have at least 10 stars per world.
     func isUnlocked(_ c: Challenge, in all: [Challenge]) -> Bool {
