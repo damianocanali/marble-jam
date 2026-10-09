@@ -7,6 +7,7 @@ struct ContentView: View {
     let progress: ChallengeProgress
     let onMenu: () -> Void
     @Environment(\.theme) private var theme
+    @Environment(\.marbleSkin) private var skin
     @State private var renaming = false
     @State private var newName = ""
     @State private var scene: RunScene = {
@@ -65,7 +66,7 @@ struct ContentView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .onAppear { scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor }
+        .onAppear { scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor; scene.skin = skin }
         .alert("Rename song", isPresented: $renaming) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }

@@ -47,6 +47,15 @@ extension Theme.RGB {
     var uiColor: UIColor { UIColor(red: r, green: g, blue: b, alpha: 1) }
 }
 
+private struct SkinKey: EnvironmentKey { static let defaultValue = Skins.classic }
+extension EnvironmentValues {
+    /// The marble skin in use.
+    var marbleSkin: Skin {
+        get { self[SkinKey.self] }
+        set { self[SkinKey.self] = newValue }
+    }
+}
+
 private struct ThemeKey: EnvironmentKey { static let defaultValue = Theme.standard }
 extension EnvironmentValues {
     var theme: Theme {

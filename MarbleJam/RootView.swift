@@ -2,11 +2,18 @@ import SwiftUI
 
 /// Menu → My Songs → builder. Owns the song store and the one GameModel.
 struct RootView: View {
-    enum Screen { case menu, library, play, challenges }
+    enum Screen { case menu, library, play, challenges, store }
     @State private var store: SongStore
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
     @State private var progress = ChallengeProgress()
+    @StateObject private var shop = Store()
+    @AppStorage("skin.v1") private var skinID = Skins.classic.id
+    /// The chosen skin while it is owned (a refunded pack falls back to Classic).
+    private var skin: Skin {
+        let s = Skins.skin(skinID)
+        return Skins.isOwned(s, stars: progress.totalStars(in: Challenges.all), holidaysDone: progress.holidaysDone(), purchased: shop.purchased) ? s : Skins.classic
+    }
     @Environment(\.scenePhase) private var phase
     @AppStorage("background.v1") private var backgroundID = ""   // "" = night sky
     @AppStorage("season.preview") private var seasonPreview = ""        // DEBUG builds only (see MenuView); "" = by date
@@ -30,13 +37,16 @@ struct RootView: View {
         ZStack {
             switch screen {
             case .menu:
-                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library }, onChallenges: { screen = .challenges })
+                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library }, onChallenges: { screen = .challenges }, onStore: { screen = .store })
                     .transition(.opacity)
             case .library:
                 LibraryView(store: store, background: background, season: season, onOpen: { model.open($0); screen = .play }, onBack: { screen = .menu })
                     .transition(.opacity)
             case .play:
                 ContentView(model: model, background: background, progress: progress, onMenu: { model.stop(); model.save(); screen = model.challenge == nil ? .library : .challenges })
+                    .transition(.opacity)
+            case .store:
+                StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
                     .transition(.opacity)
             case .challenges:
                 ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
@@ -47,6 +57,8 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.3), value: screen)
         .preferredColorScheme(.dark)
         .environment(\.theme, Theme.forSeason(season?.id))
+        .environment(\.marbleSkin, skin)
+        .task { await shop.refreshPurchases() }
         .onChange(of: phase) { _, p in if p == .active { AppIcons.update(for: season?.id) } }   // holiday icon on when it starts, off when it ends
         .onChange(of: season?.id) { _, id in AppIcons.update(for: id) }
         .task { store.migrateIfNeeded(defaults: .standard) }

@@ -9,6 +9,7 @@ final class Store: ObservableObject {
     @Published private(set) var products: [Product] = []
     @Published private(set) var purchased: Set<String> = []
     @Published private(set) var failed: String?
+    @Published private(set) var loaded = false                   // a load finished (with or without products)
     private var updates: Task<Void, Never>?
 
     init() {
@@ -25,9 +26,10 @@ final class Store: ObservableObject {
         do {
             let ids = Skins.packs.map(\.productID)
             products = try await Product.products(for: ids).sorted { ids.firstIndex(of: $0.id)! < ids.firstIndex(of: $1.id)! }
-            failed = nil
+            failed = products.isEmpty ? "The store isn't available right now." : nil
         } catch { failed = "The store isn't available right now." }
         await refreshPurchases()
+        loaded = true
     }
 
     func refreshPurchases() async {

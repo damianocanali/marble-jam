@@ -29,13 +29,22 @@ enum PadArt {
         return node
     }
 
-    static func marble(glow: UIColor = Theme.standard.marbleGlow.uiColor) -> SKShapeNode {
+    static func marble(glow: UIColor = Theme.standard.marbleGlow.uiColor, skin: Skin = Skins.classic) -> SKShapeNode {
         let m = SKShapeNode(circleOfRadius: Rules.radius)
         m.fillColor = .white
+        m.fillTexture = texture(skin)
         m.strokeColor = glow
         m.glowWidth = 8
         m.zPosition = 10
         return m
+    }
+
+    private static var textures: [String: SKTexture] = [:]
+    /// The skin as a marble texture (made once per skin).
+    static func texture(_ s: Skin) -> SKTexture {
+        if let t = textures[s.id] { return t }
+        let t = SKTexture(image: Skins.image(s, size: 64)); textures[s.id] = t
+        return t
     }
 
     /// The pad pulses and glows, and sparks fly from the point of contact.
