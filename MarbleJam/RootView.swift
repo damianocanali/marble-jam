@@ -39,7 +39,7 @@ struct RootView: View {
                 ContentView(model: model, background: background, progress: progress, onMenu: { model.stop(); model.save(); screen = model.challenge == nil ? .library : .challenges })
                     .transition(.opacity)
             case .challenges:
-                ChallengesView(progress: progress, background: background, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
+                ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
                                onBack: { screen = .menu })
                     .transition(.opacity)
             }

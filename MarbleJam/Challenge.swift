@@ -16,6 +16,7 @@ struct Challenge: Identifiable {
     let tray: [Pad]                // pieces the player can add, each first appearing at a hint spot
     let par: Int                   // target: the solution's number of pieces
     let notes: [Int]               // melody/fix: the tune's notes in order (MIDI)
+    var season: String? = nil      // holiday worlds: open only during that holiday
 
     static let cupRadius = 30.0
 
@@ -57,7 +58,37 @@ struct Challenge: Identifiable {
 
 /// The 30 levels in 5 worlds.
 enum Challenges {
-    static let worldNames = ["First Notes", "Fix It", "Bullseye", "Ramps", "Maestro"]
+    static let worldNames = ["First Notes", "Fix It", "Bullseye", "Ramps", "Maestro", "🎃 Halloween", "🦃 Thanksgiving", "🎄 Christmas"]
+
+    /// Holiday worlds (6: Halloween, 7: Thanksgiving, 8: Christmas), built from the holiday songs; shown only during the holiday.
+    static let holiday: [Challenge] = {
+        let h = Seasons.all[0].songs, t = Seasons.all[1].songs, x = Seasons.all[2].songs
+        let king = h[0], toccata = h[1], funeral = h[2], gather = t[0], comeYe = t[1], gifts = t[2]
+        let jingle = x[0], deck = x[1], wish = x[2], silent = x[3]
+        return [
+            melody(6, 1, king, notes: 16, remove: [3, 7, 11], season: "halloween"),
+            fix(6, 2, toccata, notes: 14, loose: [2, 6, 10], season: "halloween"),
+            target(6, 3, funeral, base: 5, pieces: [.bar, .bar], season: "halloween"),
+            melody(6, 4, funeral, notes: 16, remove: [4, 9, 13], season: "halloween"),
+            fix(6, 5, king, notes: 26, loose: [4, 10, 16, 22], season: "halloween"),
+            target(6, 6, toccata, base: 6, pieces: [.ramp, .bar], season: "halloween"),
+            melody(7, 1, comeYe, notes: 14, remove: [3, 8, 11], season: "thanksgiving"),
+            fix(7, 2, gather, notes: 15, loose: [3, 8, 12], season: "thanksgiving"),
+            target(7, 3, gifts, base: 5, pieces: [.bar, .bar], season: "thanksgiving"),
+            melody(7, 4, gifts, notes: 15, remove: [2, 6, 10, 13], season: "thanksgiving"),
+            fix(7, 5, comeYe, notes: 28, loose: [4, 10, 16, 22], season: "thanksgiving"),
+            target(7, 6, comeYe, base: 6, pieces: [.ramp, .bar], season: "thanksgiving"),
+            melody(8, 1, jingle, notes: 11, remove: [3, 7], season: "christmas"),
+            fix(8, 2, wish, notes: 15, loose: [3, 8, 12], season: "christmas"),
+            target(8, 3, silent, base: 5, pieces: [.bar, .bar], season: "christmas"),
+            melody(8, 4, deck, notes: 17, remove: [3, 7, 12, 15], season: "christmas"),
+            fix(8, 5, silent, notes: 20, loose: [3, 8, 13, 17], season: "christmas"),
+            target(8, 6, jingle, base: 6, pieces: [.ramp, .bar, .ramp], season: "christmas"),
+        ]
+    }()
+
+    /// Main and holiday levels together (for lookups and tests).
+    static var everything: [Challenge] { all + holiday }
 
     static let all: [Challenge] = {
         let jingle = Seasons.all[2].songs[0], deck = Seasons.all[2].songs[1], silent = Seasons.all[2].songs[3]
@@ -106,15 +137,15 @@ enum Challenges {
         return h
     }
 
-    private static func melody(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, remove: [Int]) -> Challenge {
+    private static func melody(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, remove: [Int], season: String? = nil) -> Challenge {
         let solution = r.prefix(notes).course(), cut = Set(remove)
         var start = solution; start.pads = solution.pads.enumerated().filter { !cut.contains($0.offset) }.map(\.element)
         return Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .melody, instrument: r.instrument,
                          solution: solution, start: start, locked: Set(start.pads.map(\.id)),
-                         tray: remove.map { hint(for: solution.pads[$0]) }, par: remove.count, notes: tune(solution))
+                         tray: remove.map { hint(for: solution.pads[$0]) }, par: remove.count, notes: tune(solution), season: season)
     }
 
-    private static func fix(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, loose: [Int]) -> Challenge {
+    private static func fix(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, loose: [Int], season: String? = nil) -> Challenge {
         let solution = r.prefix(notes).course()
         var start = solution
         for (k, i) in loose.enumerated() {                                   // knock each loose pad sideways, down and askew
@@ -126,10 +157,10 @@ enum Challenges {
         let looseIDs = Set(loose.map { solution.pads[$0].id })
         return Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .fix, instrument: r.instrument,
                          solution: solution, start: start, locked: Set(start.pads.map(\.id)).subtracting(looseIDs),
-                         tray: [], par: 0, notes: tune(solution))
+                         tray: [], par: 0, notes: tune(solution), season: season)
     }
 
-    private static func target(_ w: Int, _ n: Int, _ r: SongRecipe, base: Int, pieces: [Pad.Kind]) -> Challenge {
+    private static func target(_ w: Int, _ n: Int, _ r: SongRecipe, base: Int, pieces: [Pad.Kind], season: String? = nil) -> Challenge {
         let start = r.prefix(base).course()
         var solution = start
         for (k, kind) in pieces.enumerated() {                               // add each piece where the marble goes next
@@ -156,7 +187,7 @@ enum Challenges {
             }
             let tray = real + spares
             let c = Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .target(x: cup.x, y: cup.y), instrument: r.instrument,
-                              solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: tray, par: pieces.count, notes: [])
+                              solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: tray, par: pieces.count, notes: [], season: season)
             let freebie = (1..<(1 << tray.count)).contains { mask in
                 var course = start
                 for (k, p) in tray.enumerated() where mask & (1 << k) != 0 { course.pads.append(p) }
@@ -190,7 +221,7 @@ final class ChallengeProgress {
     /// last level has a star and the earlier worlds together have at least 10 stars per world.
     func isUnlocked(_ c: Challenge, in all: [Challenge]) -> Bool {
         if c.number > 1 { return stars("w\(c.world)-\(c.number - 1)") > 0 }
-        if c.world == 1 { return true }
+        if c.world == 1 || c.season != nil { return true }                    // a holiday world opens with its holiday
         let lastOfPrevious = all.filter { $0.world == c.world - 1 }.map(\.number).max() ?? 0
         return stars("w\(c.world - 1)-\(lastOfPrevious)") > 0 && totalStars(in: all.filter { $0.world < c.world }) >= 10 * (c.world - 1)
     }

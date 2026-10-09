@@ -235,8 +235,9 @@ final class GameModel: ObservableObject {
         progress?.record(c.id, stars: stars)
         let on = run.hits.filter { Engine.isOnBeat($0.time) }.count
         celebration = Celebration(stars: stars, headline: Celebration.headlines[stars]!.randomElement()!, notes: run.hits.count, onBeat: on)
-        if let i = Challenges.all.firstIndex(where: { $0.id == c.id }), i + 1 < Challenges.all.count, let p = progress,
-           p.isUnlocked(Challenges.all[i + 1], in: Challenges.all) { nextChallenge = Challenges.all[i + 1] }
+        let list = Challenges.everything
+        if let i = list.firstIndex(where: { $0.id == c.id }), i + 1 < list.count, list[i + 1].season == c.season, let p = progress,
+           p.isUnlocked(list[i + 1], in: list) { nextChallenge = list[i + 1] }
     }
 
     /// Rising chime for the sticker's stars (i = 0, 1, 2).
