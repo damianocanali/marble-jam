@@ -18,8 +18,16 @@ struct StoreView: View {
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
     private let grid = [GridItem(.adaptive(minimum: 76), spacing: 12)]
 
-    private var stars: Int { progress.totalStars(in: Challenges.all) }
-    private func owned(_ s: Skin) -> Bool { Skins.isOwned(s, stars: stars, holidaysDone: progress.holidaysDone(), purchased: store.purchased) }
+    @State private var stars = 0
+    @State private var holidaysDone: Set<String> = []
+    private func owned(_ s: Skin) -> Bool { Skins.isOwned(s, stars: stars, holidaysDone: holidaysDone, purchased: store.purchased) }
+
+    private static var images: [String: UIImage] = [:]            // drawn once per skin
+    private static func picture(_ s: Skin) -> UIImage {
+        if let i = images[s.id] { return i }
+        let i = Skins.image(s, size: 168); images[s.id] = i
+        return i
+    }
 
     var body: some View {
         VStack(spacing: 0) {
@@ -53,17 +61,25 @@ struct StoreView: View {
                         }
                     }
                     ForEach(Skins.packs) { pack in packCard(pack) }
-                    if let failed = store.failed { Text(failed).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted) }
+                    if !store.canPay {
+                        Text("Purchases are turned off on this device.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted)
+                    }
+                    ForEach([store.failed, store.message].compactMap { $0 }, id: \.self) { line in
+                        Text(line).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted)
+                    }
                 }
                 .padding(16)
             }
         }
         .background { Backdrop(option: background) }
-        .task { await store.load() }
+        .task {
+            stars = progress.mainStars(); holidaysDone = progress.holidaysDone()
+            await store.load()
+        }
         .alert("Ask a grown-up", isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } })) {
             TextField("Answer", text: $answer).keyboardType(.numberPad)
             Button("Continue") {
-                if let p = asking, ParentalGate.check(answer, against: gate) { Task { try? await store.buy(p) } } else { wrong = true }
+                if let p = asking, ParentalGate.check(answer, against: gate) { Task { await store.buy(p) } } else { wrong = true }
                 asking = nil
             }
             Button("Cancel", role: .cancel) {}
@@ -76,7 +92,7 @@ struct StoreView: View {
     private func requirement(_ s: Skin) -> String {
         switch s.unlock {
         case let .stars(n): "\(n) ★"
-        case let .holiday(id): "\(Seasons.all.first { $0.id == id }?.emoji ?? "") world"
+        case let .holiday(id): "\(Seasons.all.first { $0.id == id }?.emoji ?? "") world, in season"
         default: ""
         }
     }
@@ -90,7 +106,7 @@ struct StoreView: View {
 
     private func tile(_ s: Skin, caption: String, selected: Bool) -> some View {
         VStack(spacing: 6) {
-            Image(uiImage: Skins.image(s, size: 120)).resizable().frame(width: 56, height: 56)
+            Image(uiImage: Self.picture(s)).resizable().frame(width: 56, height: 56)
                 .shadow(color: .black.opacity(0.4), radius: 4, y: 2)
             Text(caption).font(.system(size: 11, weight: .bold, design: .rounded)).foregroundStyle(muted).lineLimit(1)
         }
@@ -107,7 +123,7 @@ struct StoreView: View {
                 Spacer()
                 if bought {
                     Label("Owned", systemImage: "checkmark.circle.fill").font(.system(size: 14, weight: .bold, design: .rounded)).foregroundStyle(theme.accent.color)
-                } else if let product {
+                } else if let product, store.canPay {
                     Button(product.displayPrice) { gate = ParentalGate.question(); answer = ""; asking = product }
                         .buttonStyle(Chip(primary: true)).accessibilityLabel("Buy \(pack.name) for \(product.displayPrice)")
                 } else if store.loaded {
@@ -118,7 +134,7 @@ struct StoreView: View {
             }
             HStack(spacing: 10) {
                 ForEach(Skins.all.filter { $0.unlock == .pack(pack.id) }) { s in
-                    Image(uiImage: Skins.image(s, size: 120)).resizable().frame(width: 52, height: 52).accessibilityLabel(s.name)
+                    Image(uiImage: Self.picture(s)).resizable().frame(width: 52, height: 52).accessibilityLabel(s.name)
                 }
             }
         }

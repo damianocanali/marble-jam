@@ -67,6 +67,7 @@ struct ContentView: View {
         }
         .background { Backdrop(option: background) }
         .onAppear { scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor; scene.skin = skin }
+        .onChange(of: skin.id) { _, _ in scene.skin = skin }
         .alert("Rename song", isPresented: $renaming) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }

@@ -80,6 +80,7 @@ struct MenuView: View {
         .background { Backdrop(option: background) }
         .onAppear { attract.animated = !reduceMotion; attract.marbleGlow = theme.marbleGlow.uiColor; attract.skin = skin }
         .onChange(of: theme) { _, t in attract.marbleGlow = t.marbleGlow.uiColor }
+        .onChange(of: skin.id) { _, _ in attract.skin = skin }
         .onChange(of: reduceMotion) { _, still in attract.animated = !still }
         .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID) }
     }

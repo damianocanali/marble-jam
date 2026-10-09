@@ -10,6 +10,8 @@ final class Store: ObservableObject {
     @Published private(set) var purchased: Set<String> = []
     @Published private(set) var failed: String?
     @Published private(set) var loaded = false                   // a load finished (with or without products)
+    @Published private(set) var message: String?                 // e.g. after Restore
+    var canPay: Bool { AppStore.canMakePayments }                 // false when Screen Time turns purchases off
     private var updates: Task<Void, Never>?
 
     init() {
@@ -37,23 +39,33 @@ final class Store: ObservableObject {
         for await result in Transaction.currentEntitlements {
             if case let .verified(t) = result, t.revocationDate == nil { owned.insert(t.productID) }
         }
+        if owned != purchased, failed == "Waiting for a grown-up to approve the purchase." { failed = nil }   // approved
         purchased = owned
     }
 
-    func buy(_ product: Product) async throws {
-        switch try await product.purchase() {
-        case let .success(.verified(t)): await t.finish(); purchased.insert(t.productID)
-        case .success(.unverified): failed = "That purchase couldn't be verified."
-        case .pending: failed = "Waiting for a grown-up to approve the purchase."
-        case .userCancelled: break
-        @unknown default: break
+    func buy(_ product: Product) async {
+        do {
+            switch try await product.purchase() {
+            case let .success(.verified(t)): await t.finish(); failed = nil; await refreshPurchases()
+            case .success(.unverified): failed = "That purchase couldn't be verified."
+            case .pending: failed = "Waiting for a grown-up to approve the purchase."
+            case .userCancelled: break
+            @unknown default: break
+            }
+        } catch {
+            failed = "The purchase didn't go through. Please try again later."
         }
     }
 
     /// "Restore Purchases": ask the App Store for everything this Apple ID has bought.
     func restore() async {
-        try? await AppStore.sync()
-        await refreshPurchases()
+        do {
+            try await AppStore.sync()
+            await refreshPurchases()
+            message = purchased.isEmpty ? "Nothing to restore for this Apple ID." : "Your purchases are restored."
+        } catch {
+            message = "Couldn't reach the App Store to restore purchases."
+        }
     }
 }
 

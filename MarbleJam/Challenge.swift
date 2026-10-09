@@ -87,6 +87,11 @@ enum Challenges {
         ]
     }()
 
+    /// Level ids without building any level (building runs the engine many times): stars can be counted from these at launch.
+    static let mainIDs: [String] = (1...5).flatMap { w in (1...6).map { "w\(w)-\($0)" } }
+    static let holidayWorlds = ["halloween": 6, "thanksgiving": 7, "christmas": 8]
+    static func holidayIDs(_ season: String) -> [String] { holidayWorlds[season].map { w in (1...6).map { "w\(w)-\($0)" } } ?? [] }
+
     /// Main and holiday levels together (for lookups and tests).
     static var everything: [Challenge] { all + holiday }
 
@@ -215,13 +220,17 @@ final class ChallengeProgress {
         if stars > (b[id] ?? 0) { b[id] = stars; defaults.set(b, forKey: key) }
     }
 
-    func totalStars(in levels: [Challenge]) -> Int { levels.reduce(0) { $0 + stars($1.id) } }
+    func totalStars(in levels: [Challenge]) -> Int { totalStars(ids: levels.map(\.id)) }
+    func totalStars(ids: [String]) -> Int { let b = best; return ids.reduce(0) { $0 + (b[$1] ?? 0) } }
+    /// Stars in the five main worlds (what star rewards count).
+    func mainStars() -> Int { totalStars(ids: Challenges.mainIDs) }
 
     /// Holidays whose world has a star on every level (their reward skin is earned).
     func holidaysDone() -> Set<String> {
-        Set(Seasons.all.map(\.id).filter { id in
-            let levels = Challenges.holiday.filter { $0.season == id }
-            return !levels.isEmpty && levels.allSatisfy { stars($0.id) > 0 }
+        let b = best
+        return Set(Seasons.all.map(\.id).filter { id in
+            let ids = Challenges.holidayIDs(id)
+            return !ids.isEmpty && ids.allSatisfy { (b[$0] ?? 0) > 0 }
         })
     }
 

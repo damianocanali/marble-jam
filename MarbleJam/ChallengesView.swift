@@ -22,9 +22,9 @@ struct ChallengesView: View {
                 Spacer()
                 Text("Challenges").font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(ink)
                 Spacer()
-                Label("\(progress.totalStars(in: Challenges.all))", systemImage: "star.fill")
+                Label("\(progress.mainStars())", systemImage: "star.fill")
                     .font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(.yellow)
-                    .frame(minWidth: 40).accessibilityLabel("\(progress.totalStars(in: Challenges.all)) stars")
+                    .frame(minWidth: 40).accessibilityLabel("\(progress.mainStars()) stars")
             }
             .padding(.horizontal, 16).padding(.vertical, 8)
             if levels.isEmpty {

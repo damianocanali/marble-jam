@@ -12,7 +12,7 @@ struct RootView: View {
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
         let s = Skins.skin(skinID)
-        return Skins.isOwned(s, stars: progress.totalStars(in: Challenges.all), holidaysDone: progress.holidaysDone(), purchased: shop.purchased) ? s : Skins.classic
+        return Skins.isOwned(s, stars: progress.mainStars(), holidaysDone: progress.holidaysDone(), purchased: shop.purchased) ? s : Skins.classic
     }
     @Environment(\.scenePhase) private var phase
     @AppStorage("background.v1") private var backgroundID = ""   // "" = night sky

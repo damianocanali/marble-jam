@@ -75,7 +75,7 @@ final class StorePurchaseTests: XCTestCase {
         XCTAssertEqual(Set(store.products.map(\.id)), Set(Skins.packs.map(\.productID)), "every pack is on sale")
         let glass = try XCTUnwrap(store.products.first { $0.id == Skins.packs[0].productID })
         XCTAssertFalse(store.purchased.contains(glass.id))
-        try await store.buy(glass)
+        await store.buy(glass)
         XCTAssertTrue(store.purchased.contains(glass.id))
         let again = Store()
         await again.refreshPurchases()

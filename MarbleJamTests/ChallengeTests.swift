@@ -99,6 +99,17 @@ final class ChallengeProgressTests: XCTestCase {
         XCTAssertEqual(p.totalStars(in: all.filter { $0.world == 1 }), 10)
     }
 
+    func testStarsCountWithoutBuildingLevels() {
+        XCTAssertEqual(Challenges.mainIDs, Challenges.all.map(\.id), "main ids listed by hand match the levels")
+        for (season, world) in Challenges.holidayWorlds {
+            XCTAssertEqual(Challenges.holidayIDs(season), Challenges.holiday.filter { $0.season == season }.map(\.id))
+            XCTAssertTrue(Challenges.holiday.filter { $0.season == season }.allSatisfy { $0.world == world })
+        }
+        let p = progress()
+        p.record("w1-1", stars: 3); p.record("w2-4", stars: 2); p.record("w6-1", stars: 3)    // a holiday level doesn't count
+        XCTAssertEqual(p.mainStars(), 5)
+    }
+
     func testAHolidayWorldOpensWithoutMainWorldStars() {
         let p = progress(), all = Challenges.everything
         let first = Challenges.holiday.first { $0.season == "christmas" && $0.number == 1 }!
