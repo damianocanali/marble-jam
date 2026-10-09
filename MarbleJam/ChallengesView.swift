@@ -4,6 +4,7 @@ import SwiftUI
 struct ChallengesView: View {
     let progress: ChallengeProgress
     let background: BackgroundOption?
+    let season: Season?                                   // the live holiday's world is shown first
     let onPlay: (Challenge) -> Void
     let onBack: () -> Void
 
@@ -21,9 +22,9 @@ struct ChallengesView: View {
                 Spacer()
                 Text("Challenges").font(.system(size: 22, weight: .heavy, design: .rounded)).foregroundStyle(ink)
                 Spacer()
-                Label("\(progress.totalStars(in: levels))", systemImage: "star.fill")
+                Label("\(progress.mainStars())", systemImage: "star.fill")
                     .font(.system(size: 15, weight: .heavy, design: .rounded)).foregroundStyle(.yellow)
-                    .frame(minWidth: 40).accessibilityLabel("\(progress.totalStars(in: levels)) stars")
+                    .frame(minWidth: 40).accessibilityLabel("\(progress.mainStars()) stars")
             }
             .padding(.horizontal, 16).padding(.vertical, 8)
             if levels.isEmpty {
@@ -31,6 +32,7 @@ struct ChallengesView: View {
             } else {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 18) {
+                        if let w = holidayWorld { world(w) }
                         ForEach(1...5, id: \.self) { w in world(w) }
                     }
                     .padding(16)
@@ -38,8 +40,10 @@ struct ChallengesView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .task { if levels.isEmpty { levels = await Task.detached(priority: .userInitiated) { Challenges.all }.value } }  // built once, off screen
+        .task { if levels.isEmpty { levels = await Task.detached(priority: .userInitiated) { Challenges.everything }.value } }  // built once, off screen
     }
+
+    private var holidayWorld: Int? { season.flatMap { s in levels.first { $0.season == s.id }?.world } }
 
     private func world(_ w: Int) -> some View {
         let inWorld = levels.filter { $0.world == w }
@@ -50,7 +54,7 @@ struct ChallengesView: View {
                 Spacer()
                 Text("\(progress.totalStars(in: inWorld)) / \(inWorld.count * 3) ★").font(.system(size: 13, weight: .bold, design: .rounded)).foregroundStyle(muted)
             }
-            if !open && w > 1 {
+            if !open && w > 1 && inWorld.first?.season == nil {
                 Text("Earn \(10 * (w - 1)) stars and finish world \(w - 1) to open.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted)
             }
             LazyVGrid(columns: columns, spacing: 10) {

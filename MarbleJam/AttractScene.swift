@@ -21,6 +21,7 @@ struct CourseFit {
 final class AttractScene: SKScene {
     var animated = true
     var marbleGlow: UIColor = Theme.standard.marbleGlow.uiColor
+    var skin: Skin = Skins.classic
 
     private struct Ball { let node: SKShapeNode; let start: TimeInterval; var hit: Int }
 
@@ -62,7 +63,7 @@ final class AttractScene: SKScene {
     override func update(_ now: TimeInterval) {
         guard animated, let c = course, !run.hits.isEmpty else { return }
         if now >= nextDrop {
-            let n = PadArt.marble(glow: marbleGlow); world.addChild(n)
+            let n = PadArt.marble(glow: marbleGlow, skin: skin); world.addChild(n)
             balls.append(Ball(node: n, start: now, hit: 0))
             nextDrop = now + dropEvery
         }

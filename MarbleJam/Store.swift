@@ -1,0 +1,83 @@
+import StoreKit
+
+/// In-app purchases (StoreKit 2): the skin packs, what has been bought, buying and restoring.
+@MainActor
+final class Store: ObservableObject {
+    /// Start of every product id. Must match the app's bundle id prefix used in App Store Connect and Products.storekit.
+    nonisolated static let productPrefix = "com.example.marblejam"
+
+    @Published private(set) var products: [Product] = []
+    @Published private(set) var purchased: Set<String> = []
+    @Published private(set) var failed: String?
+    @Published private(set) var loaded = false                   // a load finished (with or without products)
+    @Published private(set) var message: String?                 // e.g. after Restore
+    var canPay: Bool { AppStore.canMakePayments }                 // false when Screen Time turns purchases off
+    private var updates: Task<Void, Never>?
+
+    init() {
+        updates = Task { [weak self] in                                  // purchases approved later (Ask to Buy) or on another device
+            for await result in Transaction.updates {
+                if case let .verified(t) = result { await t.finish(); await self?.refreshPurchases() }
+            }
+        }
+    }
+
+    deinit { updates?.cancel() }
+
+    func load() async {
+        do {
+            let ids = Skins.packs.map(\.productID)
+            products = try await Product.products(for: ids).sorted { ids.firstIndex(of: $0.id)! < ids.firstIndex(of: $1.id)! }
+            failed = products.isEmpty ? "The store isn't available right now." : nil
+        } catch { failed = "The store isn't available right now." }
+        await refreshPurchases()
+        loaded = true
+    }
+
+    func refreshPurchases() async {
+        var owned: Set<String> = []
+        for await result in Transaction.currentEntitlements {
+            if case let .verified(t) = result, t.revocationDate == nil { owned.insert(t.productID) }
+        }
+        if owned != purchased, failed == "Waiting for a grown-up to approve the purchase." { failed = nil }   // approved
+        purchased = owned
+    }
+
+    func buy(_ product: Product) async {
+        do {
+            switch try await product.purchase() {
+            case let .success(.verified(t)): await t.finish(); failed = nil; await refreshPurchases()
+            case .success(.unverified): failed = "That purchase couldn't be verified."
+            case .pending: failed = "Waiting for a grown-up to approve the purchase."
+            case .userCancelled: break
+            @unknown default: break
+            }
+        } catch {
+            failed = "The purchase didn't go through. Please try again later."
+        }
+    }
+
+    /// "Restore Purchases": ask the App Store for everything this Apple ID has bought.
+    func restore() async {
+        do {
+            try await AppStore.sync()
+            await refreshPurchases()
+            message = purchased.isEmpty ? "Nothing to restore for this Apple ID." : "Your purchases are restored."
+        } catch {
+            message = "Couldn't reach the App Store to restore purchases."
+        }
+    }
+}
+
+/// "Ask a grown-up": a multiplication written in words, answered in digits, before any purchase.
+enum ParentalGate {
+    struct Question: Equatable { let text: String; let answer: Int }
+    private static let words = ["six", "seven", "eight", "nine"]
+
+    static func question(seed: Int = Int.random(in: 0..<10_000)) -> Question {
+        let a = 6 + seed % 4, b = 6 + (seed / 4) % 4
+        return Question(text: "What is \(words[a - 6]) times \(words[b - 6])?", answer: a * b)
+    }
+
+    static func check(_ input: String, against q: Question) -> Bool { Int(input.trimmingCharacters(in: .whitespaces)) == q.answer }
+}

@@ -18,7 +18,7 @@ final class ChallengeTests: XCTestCase {
     }
 
     func testEverySolutionEarnsThreeStarsAndNoStartDoes() {
-        for c in Challenges.all {
+        for c in Challenges.everything {
             XCTAssertEqual(c.stars(for: c.solution, placed: c.par), 3, "\(c.id) \(c.title): solution")
             let start = c.stars(for: c.start, placed: 0)
             XCTAssertEqual(start, 0, "\(c.id): no free stars at the start")
@@ -26,7 +26,7 @@ final class ChallengeTests: XCTestCase {
     }
 
     func testLockedPiecesAndTrayMatchTheSolution() {
-        for c in Challenges.all {
+        for c in Challenges.everything {
             let movable = c.start.pads.filter { !c.locked.contains($0.id) }.count
             if case .fix = c.goal { XCTAssertGreaterThan(movable, 0, "\(c.id): something to fix") } else { XCTAssertEqual(movable, 0, "\(c.id): given pieces are locked") }
             switch c.goal {
@@ -38,7 +38,7 @@ final class ChallengeTests: XCTestCase {
     }
 
     func testTrayPiecesLeftAtTheirHintSpotsNeverWin() {
-        for c in Challenges.all {
+        for c in Challenges.everything {
             guard case .target = c.goal else { continue }
             for mask in 1..<(1 << c.tray.count) {
                 var course = c.start
@@ -49,10 +49,21 @@ final class ChallengeTests: XCTestCase {
     }
 
     func testCupsAreWellInsideTheScreen() {
-        for c in Challenges.all {
+        for c in Challenges.everything {
             guard case let .target(x, _) = c.goal else { continue }
             XCTAssertTrue((70...650).contains(x), "\(c.id): cup at x \(Int(x))")
         }
+    }
+
+    func testEachHolidayHasASixLevelWorld() {
+        for season in Seasons.all {
+            let levels = Challenges.holiday.filter { $0.season == season.id }
+            XCTAssertEqual(levels.map(\.number), Array(1...6), season.id)
+            XCTAssertEqual(Set(levels.map(\.world)).count, 1, season.id)
+            XCTAssertTrue(levels.allSatisfy { $0.world > 5 }, "holiday worlds come after the main five")
+        }
+        XCTAssertEqual(Challenges.all.count, 30, "the main worlds are unchanged")
+        XCTAssertEqual(Set(Challenges.everything.map(\.id)).count, 48)
     }
 
     func testTargetScoreDependsOnPiecesUsed() {
@@ -86,6 +97,27 @@ final class ChallengeProgressTests: XCTestCase {
         for n in 1...4 { p.record("w1-\(n)", stars: 2) }                  // now 10 stars
         XCTAssertTrue(open("w2-1"))
         XCTAssertEqual(p.totalStars(in: all.filter { $0.world == 1 }), 10)
+    }
+
+    func testStarsCountWithoutBuildingLevels() {
+        XCTAssertEqual(Challenges.mainIDs, Challenges.all.map(\.id), "main ids listed by hand match the levels")
+        for (season, world) in Challenges.holidayWorlds {
+            XCTAssertEqual(Challenges.holidayIDs(season), Challenges.holiday.filter { $0.season == season }.map(\.id))
+            XCTAssertTrue(Challenges.holiday.filter { $0.season == season }.allSatisfy { $0.world == world })
+        }
+        let p = progress()
+        p.record("w1-1", stars: 3); p.record("w2-4", stars: 2); p.record("w6-1", stars: 3)    // a holiday level doesn't count
+        XCTAssertEqual(p.mainStars(), 5)
+    }
+
+    func testAHolidayWorldOpensWithoutMainWorldStars() {
+        let p = progress(), all = Challenges.everything
+        let first = Challenges.holiday.first { $0.season == "christmas" && $0.number == 1 }!
+        let second = Challenges.holiday.first { $0.season == "christmas" && $0.number == 2 }!
+        XCTAssertTrue(p.isUnlocked(first, in: all))
+        XCTAssertFalse(p.isUnlocked(second, in: all))
+        p.record(first.id, stars: 1)
+        XCTAssertTrue(p.isUnlocked(second, in: all))
     }
 }
 

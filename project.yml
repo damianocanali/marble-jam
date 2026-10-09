@@ -32,7 +32,10 @@ targets:
   MarbleJamTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [MarbleJamTests]
+    sources:
+      - MarbleJamTests
+      - path: MarbleJam/Products.storekit        # StoreKitTest loads it from the test bundle
+        buildPhase: resources
     dependencies:
       - target: MarbleJam
     settings:
@@ -45,5 +48,7 @@ schemes:
       targets:
         MarbleJam: all
         MarbleJamTests: [test]
+    run:
+      storeKitConfiguration: MarbleJam/Products.storekit   # local test store until the products exist in App Store Connect
     test:
       targets: [MarbleJamTests]

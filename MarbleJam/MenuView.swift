@@ -10,11 +10,13 @@ struct MenuView: View {
     @AppStorage("season.preview") private var seasonPreview = ""
     let onCreate: () -> Void
     let onChallenges: () -> Void
+    let onStore: () -> Void
     @State private var toast: String?
     @State private var picking = false
     @State private var attract: AttractScene = { let s = AttractScene(); s.scaleMode = .resizeFill; return s }()
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.theme) private var theme
+    @Environment(\.marbleSkin) private var skin
 
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
 
@@ -52,7 +54,7 @@ struct MenuView: View {
                 menuButton("Challenges", primary: true, action: onChallenges)
                 menuButton("Create", action: onCreate)
                 if !backgrounds.isEmpty { menuButton("Backgrounds") { picking = true } }
-                menuButton("Store") { toast = "Store is coming soon" }
+                menuButton("Store", action: onStore)
                 menuButton("Sign in") { toast = "Sign in is coming soon" }
             }
             #if DEBUG
@@ -76,8 +78,9 @@ struct MenuView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .onAppear { attract.animated = !reduceMotion; attract.marbleGlow = theme.marbleGlow.uiColor }
+        .onAppear { attract.animated = !reduceMotion; attract.marbleGlow = theme.marbleGlow.uiColor; attract.skin = skin }
         .onChange(of: theme) { _, t in attract.marbleGlow = t.marbleGlow.uiColor }
+        .onChange(of: skin.id) { _, _ in attract.skin = skin }
         .onChange(of: reduceMotion) { _, still in attract.animated = !still }
         .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID) }
     }
