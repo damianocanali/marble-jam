@@ -11,6 +11,10 @@ final class Synth {
     private(set) var sampleRate = 44100.0
 
     var isAudioSetUp: Bool { engine != nil }
+    private let audioAllowed: Bool
+    private var wallClockStart: CFTimeInterval?                  // set when sound can't start: the song is timed by a plain clock
+
+    init(audio: Bool = true) { audioAllowed = audio }
 
     private func setUpAudio() {
         let engine = AVAudioEngine()
@@ -49,14 +53,19 @@ final class Synth {
     deinit { engine?.stop() }
 
     func start() {
+        guard audioAllowed else { if wallClockStart == nil { wallClockStart = CACurrentMediaTime() }; return }
         try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
         if engine == nil { setUpAudio() }
         if let engine, !engine.isRunning { try? engine.start() }
+        if engine?.isRunning != true, wallClockStart == nil { wallClockStart = CACurrentMediaTime() }   // no sound, but the marble still plays
     }
 
     /// Current time on the audio clock, in seconds.
-    var now: Double { lock.lock(); defer { lock.unlock() }; return clock }
+    var now: Double {
+        if let w = wallClockStart { return CACurrentMediaTime() - w }
+        lock.lock(); defer { lock.unlock() }; return clock
+    }
 
     private var cache: [String: [Float]] = [:]           // one rendered note per instrument/pitch/kind; used from the main thread only
 

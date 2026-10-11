@@ -13,6 +13,9 @@ struct ContentView: View {
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
     }()
+    @State private var room = Course3D()
+    @AppStorage("renderer.3d") private var use3D = true                     // DEBUG builds can switch back to the 2D look to compare
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
@@ -21,6 +24,7 @@ struct ContentView: View {
 
     var body: some View {
         ZStack {
+            if use3D { Course3DView(room: room).ignoresSafeArea() }
             SpriteView(scene: scene, options: [.allowsTransparency]).ignoresSafeArea()
             VStack {
                 LinearGradient(colors: [night.opacity(0.92), night.opacity(0)], startPoint: .top, endPoint: .bottom)
@@ -66,8 +70,14 @@ struct ContentView: View {
             }
         }
         .background { Backdrop(option: background) }
-        .onAppear { scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor; scene.skin = skin }
-        .onChange(of: skin.id) { _, _ in scene.skin = skin }
+        .onAppear {
+            scene.model = model; scene.marbleGlow = theme.marbleGlow.uiColor; scene.skin = skin
+            room.setSkin(skin); room.reduceMotion = reduceMotion
+            room.setWall(background.flatMap { UIImage(contentsOfFile: $0.image.path) }, tint: background?.tint ?? 0)
+            scene.room = use3D ? room : nil
+        }
+        .onChange(of: skin.id) { _, _ in scene.skin = skin; room.setSkin(skin) }
+        .onChange(of: use3D) { _, on in scene.room = on ? room : nil }
         .alert("Rename song", isPresented: $renaming) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }

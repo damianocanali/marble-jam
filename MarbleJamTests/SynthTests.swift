@@ -9,4 +9,12 @@ final class SynthTests: XCTestCase {
         XCTAssertFalse(s.isAudioSetUp)
         XCTAssertEqual(s.now, 0)
     }
+
+    func testTheClockRunsEvenWithoutSound() {
+        let s = Synth(audio: false)                                        // like a phone whose audio won't start
+        s.start()
+        let a = s.now
+        Thread.sleep(forTimeInterval: 0.2)
+        XCTAssertGreaterThan(s.now - a, 0.15, "playback keeps moving on a plain clock")
+    }
 }
