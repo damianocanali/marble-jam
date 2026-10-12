@@ -232,12 +232,22 @@ enum Challenges {
     }
 }
 
-/// Best stars per level, saved on the phone, and which levels are open.
+/// The part of iCloud's key-value store that sync uses (a fake stands in for tests).
+protocol KeyValueSync: AnyObject {
+    func dictionary(forKey key: String) -> [String: Any]?
+    func string(forKey key: String) -> String?
+    func set(_ value: Any?, forKey key: String)
+}
+
+extension NSUbiquitousKeyValueStore: KeyValueSync {}
+
+/// Best stars per level, saved on the phone (and in iCloud, when there is one), and which levels are open.
 final class ChallengeProgress {
     private let defaults: UserDefaults
+    private let cloud: KeyValueSync?
     private let key = "challenges.v1"
 
-    init(defaults: UserDefaults = .standard) { self.defaults = defaults }
+    init(defaults: UserDefaults = .standard, cloud: KeyValueSync? = nil) { self.defaults = defaults; self.cloud = cloud }
 
     private var best: [String: Int] { (defaults.dictionary(forKey: key) as? [String: Int]) ?? [:] }
 
@@ -245,7 +255,19 @@ final class ChallengeProgress {
 
     func record(_ id: String, stars: Int) {
         var b = best
-        if stars > (b[id] ?? 0) { b[id] = stars; defaults.set(b, forKey: key) }
+        if stars > (b[id] ?? 0) { b[id] = stars; defaults.set(b, forKey: key); cloud?.set(b, forKey: key) }
+    }
+
+    /// Takes the best stars from either side, per level, and keeps both sides at that.
+    func pullFromCloud() {
+        guard let cloud else { return }
+        var b = best
+        for (id, value) in cloud.dictionary(forKey: key) ?? [:] {
+            guard let n = value as? Int, n > 0 else { continue }
+            b[id] = max(b[id] ?? 0, min(n, 3))
+        }
+        defaults.set(b, forKey: key)
+        if (cloud.dictionary(forKey: key) as? [String: Int]) != b { cloud.set(b, forKey: key) }
     }
 
     func totalStars(in levels: [Challenge]) -> Int { totalStars(ids: levels.map(\.id)) }

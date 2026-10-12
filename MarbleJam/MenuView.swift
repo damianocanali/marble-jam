@@ -11,6 +11,7 @@ struct MenuView: View {
     let onCreate: () -> Void
     let onChallenges: () -> Void
     let onStore: () -> Void
+    let onAccount: () -> Void
     @State private var toast: String?
     @State private var picking = false
     @State private var attract: AttractScene = { let s = AttractScene(); s.scaleMode = .resizeFill; return s }()
@@ -55,7 +56,7 @@ struct MenuView: View {
                 menuButton("Create", action: onCreate)
                 if !backgrounds.isEmpty { menuButton("Backgrounds") { picking = true } }
                 menuButton("Store", action: onStore)
-                menuButton("Sign in") { toast = "Sign in is coming soon" }
+                menuButton("Account", action: onAccount)
             }
             #if DEBUG
             VStack {                                                             // preview a holiday pack before its date (never in release builds)

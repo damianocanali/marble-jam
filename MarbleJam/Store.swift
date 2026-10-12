@@ -4,7 +4,7 @@ import StoreKit
 @MainActor
 final class Store: ObservableObject {
     /// Start of every product id. Must match the app's bundle id prefix used in App Store Connect and Products.storekit.
-    nonisolated static let productPrefix = "com.example.marblejam"
+    nonisolated static let productPrefix = "com.marblejam.app"
 
     @Published private(set) var products: [Product] = []
     @Published private(set) var purchased: Set<String> = []
