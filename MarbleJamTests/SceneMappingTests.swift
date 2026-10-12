@@ -39,4 +39,19 @@ final class SceneMappingTests: XCTestCase {
         XCTAssertEqual(mid.angles.x, play.angles.x / 2, accuracy: 1e-5)
         XCTAssertEqual(SceneMapping.blend(build, play, 0).position.y, build.position.y, accuracy: 1e-5)
     }
+
+    /// While playing, the angled camera must still show the whole width of the course at the marble's height.
+    func testPlayCameraShowsTheWholeWidth() {
+        let size = CGSize(width: 402, height: 874), camY = 600.0
+        let pose = SceneMapping.playCamera(camY: camY, viewSize: size)
+        let view = SCNView(frame: CGRect(origin: .zero, size: size)), scene = SCNScene(); view.scene = scene
+        let cam = SCNNode(); cam.camera = SCNCamera(); cam.camera!.fieldOfView = SceneMapping.fieldOfView; cam.camera!.zFar = 500
+        cam.position = pose.position; cam.eulerAngles = pose.angles
+        scene.rootNode.addChildNode(cam); view.pointOfView = cam
+        let base = Double(size.width) / Rules.width, mid = camY + Double(size.height) / base * 0.45
+        for x in [20.0, 700] {
+            let s = view.projectPoint(SceneMapping.scene(x: x, y: mid))
+            XCTAssertTrue((0...Double(size.width)).contains(Double(s.x)), "x \(x) lands at \(s.x)")
+        }
+    }
 }

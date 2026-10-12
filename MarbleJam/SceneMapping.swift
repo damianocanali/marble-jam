@@ -20,9 +20,9 @@ enum SceneMapping {
         return Pose(position: SCNVector3(0, Float(center), Float(distance)), angles: SCNVector3Zero)
     }
 
-    /// The show camera: the same spot seen from a little above and to the side, a bit closer.
-    static func playCamera(camY: Double, viewSize: CGSize, pitch: Double = -0.22, yaw: Double = 0.16) -> Pose {
-        let (center, distance) = frame(camY: camY, viewSize: viewSize), d = distance * 0.82
+    /// The show camera: the same spot seen from a little above and to the side, a step further back.
+    static func playCamera(camY: Double, viewSize: CGSize, pitch: Double = -0.16, yaw: Double = 0.07) -> Pose {
+        let (center, distance) = frame(camY: camY, viewSize: viewSize), d = distance * 1.12     // a step back, so the whole width stays in view
         let offset = (x: sin(yaw) * cos(pitch), y: -sin(pitch), z: cos(yaw) * cos(pitch))
         return Pose(position: SCNVector3(Float(d * offset.x), Float(center + d * offset.y), Float(d * offset.z)),
                     angles: SCNVector3(Float(pitch), Float(yaw), 0))

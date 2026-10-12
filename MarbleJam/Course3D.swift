@@ -40,7 +40,7 @@ final class Course3D {
         root.addChildNode(camera)
         view.pointOfView = camera
 
-        let plane = SCNPlane(width: 60, height: 60)
+        let plane = SCNPlane(width: 16, height: 34)                   // well past the view's edges at the wall's depth, angled camera included
         let m = SCNMaterial(); m.lightingModel = .physicallyBased
         m.diffuse.contents = UIColor(red: 0.11, green: 0.085, blue: 0.07, alpha: 1); m.roughness.contents = 0.95
         plane.materials = [m]
@@ -96,7 +96,7 @@ final class Course3D {
         let m = wall.geometry!.firstMaterial!
         if let image {
             m.diffuse.contents = image
-            m.multiply.contents = UIColor(white: CGFloat(max(0.25, 1 - tint)), alpha: 1)
+            m.multiply.contents = UIColor(white: CGFloat(max(0.2, 0.62 - tint * 0.5)), alpha: 1)   // darker than the 2D backdrop: the spot light adds back
         } else {
             m.diffuse.contents = UIColor(red: 0.11, green: 0.085, blue: 0.07, alpha: 1); m.multiply.contents = UIColor.white
         }
@@ -150,7 +150,7 @@ final class Course3D {
             peg.materials = [brass(tint)]
             node.geometry = peg
             node.eulerAngles.x = .pi / 2                               // the peg's round face looks at the camera
-            let wire = thinWire(length: 1.8); wire.eulerAngles.x = -.pi / 2; wire.pivot = SCNMatrix4MakeTranslation(0, -0.9, 0)
+            let wire = thinWire(length: 2.6); wire.eulerAngles.x = -.pi / 2; wire.pivot = SCNMatrix4MakeTranslation(0, -1.3, 0)
             node.addChildNode(wire)                                    // hangs straight up from the peg's centre
         case .ramp:                                                    // the curve as an extruded rail, drawn around the pad's centre
             var local = p; local.x = Rules.width / 2; local.y = 0; local.angle = 0
@@ -174,19 +174,19 @@ final class Course3D {
     /// Two thin wires from near the ends of a bar or ramp up out of the picture, like the video's hanging bars.
     private static func wires(on node: SCNNode, halfLength: Double, angle: Double) {
         for side in [-1.0, 1.0] {
-            let w = thinWire(length: 1.8)
+            let w = thinWire(length: 2.6)
             // wires hang straight up in the room, so undo the piece's own tilt for them
             w.position = SCNVector3(Float(side * halfLength), 0, 0)
             w.eulerAngles.z = Float(angle)                               // cancels the piece's tilt: the wire points straight up
-            w.pivot = SCNMatrix4MakeTranslation(0, -0.9, 0)
+            w.pivot = SCNMatrix4MakeTranslation(0, -1.3, 0)
             node.addChildNode(w)
         }
     }
 
     private static func thinWire(length: CGFloat) -> SCNNode {
-        let c = SCNCylinder(radius: 0.004, height: length)
-        let m = SCNMaterial(); m.lightingModel = .physicallyBased; m.diffuse.contents = UIColor(white: 0.1, alpha: 1); m.metalness.contents = 0.6
-        m.transparency = 0.75
+        let c = SCNCylinder(radius: 0.011, height: length); c.radialSegmentCount = 8     // a visible dark cord, like the video
+        let m = SCNMaterial(); m.lightingModel = .physicallyBased; m.diffuse.contents = UIColor(white: 0.08, alpha: 1)
+        m.metalness.contents = 0.7; m.roughness.contents = 0.35
         c.materials = [m]
         let n = SCNNode(geometry: c); n.castsShadow = true
         return n
@@ -196,7 +196,8 @@ final class Course3D {
         let cone = SCNCone(topRadius: 0.26, bottomRadius: 0.09, height: 0.22)
         let m = brass(UIColor(white: 0.9, alpha: 1)); m.emission.intensity = 0
         cone.materials = [m]
-        let n = SCNNode(geometry: cone); n.position = SceneMapping.scene(x: x, y: y - 33); n.castsShadow = true
+        let n = SCNNode(geometry: cone); n.position = SceneMapping.scene(x: x, y: y - 33)
+        n.castsShadow = false                                         // once the camera (and light) follow the marble down, its shadow was thrown huge across the wall
         return n
     }
 
@@ -220,9 +221,10 @@ final class Course3D {
         SCNTransaction.begin(); SCNTransaction.disableActions = true
         camera.position = pose.position; camera.eulerAngles = pose.angles
         let c = pose.position
-        light.position = SCNVector3(c.x + 1.6, c.y + 4.5, 5.5)       // above and in front, following the view
-        light.look(at: SCNVector3(c.x, c.y - 1, -1.2))
-        wall.position = SCNVector3(0, c.y, -1.2)                     // the wall travels with the view (the picture stays put, like the 2D backdrop)
+        light.position = SCNVector3(1.4, c.y + 6, 6)                   // high above and in front of the view, so shadows fall down-left and stay small
+        light.look(at: SCNVector3(0, c.y - 0.5, -1.2))
+        let lookY = SceneMapping.buildCamera(camY: camY, viewSize: viewSize).position.y
+        wall.position = SCNVector3(0, lookY, -1.2)                   // centred on what the camera looks at, so the angled view never reaches its edge
         marble.position = SceneMapping.scene(x: p.x, y: p.y)
         marble.opacity = marbleVisible ? 1 : 0.6
         SCNTransaction.commit()
