@@ -46,6 +46,51 @@
       "productID": "com.example.marblejam.pack.sports",
       "referenceName": "Sports Pack",
       "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6450000004",
+      "localizations": [
+        {
+          "description": "Lollipop, Gumball, Peppermint and Sprinkles marbles.",
+          "displayName": "Candy Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.candy",
+      "referenceName": "Candy Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "1.99",
+      "familyShareable": false,
+      "internalID": "6450000005",
+      "localizations": [
+        {
+          "description": "Diamond, Sapphire, Amethyst and Opal marbles.",
+          "displayName": "Gem Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.gems",
+      "referenceName": "Gem Pack",
+      "type": "NonConsumable"
+    },
+    {
+      "displayPrice": "0.99",
+      "familyShareable": false,
+      "internalID": "6450000006",
+      "localizations": [
+        {
+          "description": "Ladybug, Panda, Tiger and Frog marbles.",
+          "displayName": "Animal Pack",
+          "locale": "en_US"
+        }
+      ],
+      "productID": "com.example.marblejam.pack.animals",
+      "referenceName": "Animal Pack",
+      "type": "NonConsumable"
     }
   ],
   "settings": {

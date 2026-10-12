@@ -6,9 +6,18 @@ final class SkinTests: XCTestCase {
     func testCatalogue() {
         XCTAssertEqual(Set(Skins.all.map(\.id)).count, Skins.all.count, "unique ids")
         XCTAssertEqual(Skins.all.first?.id, Skins.classic.id, "the free classic marble comes first")
-        XCTAssertEqual(Skins.packs.map(\.id), ["glass", "space", "sports"])
+        XCTAssertEqual(Skins.packs.map(\.id), ["glass", "space", "sports", "candy", "gems", "animals"])
         for pack in Skins.packs { XCTAssertEqual(Skins.all.filter { $0.unlock == .pack(pack.id) }.count, 4, pack.id) }
         for season in Seasons.all { XCTAssertEqual(Skins.all.filter { $0.unlock == .holiday(season.id) }.count, 1, season.id) }
+    }
+
+    func testStarRewardsAreSpreadAndReachable() {
+        let needs = Skins.all.compactMap { s -> Int? in if case let .stars(n) = s.unlock { n } else { nil } }
+        XCTAssertEqual(needs, needs.sorted(), "listed in the order they're earned")
+        XCTAssertEqual(Set(needs).count, needs.count, "one reward per step")
+        XCTAssertGreaterThanOrEqual(needs.count, 8)
+        XCTAssertLessThanOrEqual(needs.first ?? 99, 5, "the first reward comes quickly")
+        XCTAssertLessThanOrEqual(needs.last ?? 99, Challenges.mainIDs.count * 3, "every reward can be earned in the main worlds")
     }
 
     func testEverySkinDraws() {
