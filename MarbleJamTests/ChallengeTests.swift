@@ -66,6 +66,54 @@ final class ChallengeTests: XCTestCase {
         XCTAssertEqual(Set(Challenges.everything.map(\.id)).count, 48)
     }
 
+    /// Easier at the start: the first levels of a world put missing pieces right beside their spot, already tilted;
+    /// the last levels put them across the screen, flat.
+    func testHintsGetHarderThroughEachWorld() {
+        for c in Challenges.everything where !c.tray.isEmpty {
+            let startIDs = Set(c.start.pads.map(\.id))
+            let real = c.solution.pads.filter { !startIDs.contains($0.id) }
+            for (hint, spot) in zip(c.tray, real) {
+                let distance = hypot(hint.x - spot.x, hint.y - spot.y)
+                switch c.hint {
+                case .near: XCTAssertLessThanOrEqual(distance, 120, "\(c.id): starts beside its spot"); XCTAssertEqual(hint.angle, spot.angle, accuracy: 1e-9)
+                case .mirrored: XCTAssertEqual(hint.angle, spot.angle, accuracy: 1e-9, "\(c.id): right tilt")
+                case .flat: XCTAssertEqual(hint.angle, 0, "\(c.id): flat")
+                }
+            }
+        }
+        for world in Set(Challenges.everything.map(\.world)) {
+            let levels = Challenges.everything.filter { $0.world == world && !$0.tray.isEmpty }.sorted { $0.number < $1.number }
+            guard let first = levels.first, let last = levels.last, first.number != last.number else { continue }
+            XCTAssertLessThanOrEqual(first.hint.rawValue, last.hint.rawValue, "world \(world) doesn't get easier")
+        }
+        XCTAssertEqual(Challenges.all.first { $0.id == "w1-1" }?.hint, .near)
+    }
+
+    func testMelodyPiecesLeftAtTheirHintsNeverWin() {
+        for c in Challenges.everything {
+            guard case .melody = c.goal else { continue }
+            var course = c.start; course.pads += c.tray
+            XCTAssertEqual(c.stars(for: course, placed: c.tray.count), 0, "\(c.id): wins without moving anything")
+        }
+    }
+
+    func testFixLevelsStartGentle() {
+        func spread(_ id: String) -> Double {
+            let c = Challenges.everything.first { $0.id == id }!
+            let moved = zip(c.start.pads, c.solution.pads).map { hypot($0.x - $1.x, $0.y - $1.y) }.filter { $0 > 0 }
+            return moved.reduce(0, +) / Double(max(1, moved.count))
+        }
+        XCTAssertLessThan(spread("w2-1"), spread("w2-6"))
+    }
+
+    func testHolidayWorldsOpenWithAShortEasyLevel() {
+        for season in Seasons.all {
+            let first = Challenges.holiday.first { $0.season == season.id && $0.number == 1 }!
+            XCTAssertLessThanOrEqual(first.tray.count, 1, season.id)
+            XCTAssertLessThanOrEqual(first.solution.pads.count, 10, season.id)
+        }
+    }
+
     func testTargetScoreDependsOnPiecesUsed() {
         let c = Challenges.all.first { if case .target = $0.goal { true } else { false } }!
         XCTAssertEqual(c.stars(for: c.solution, placed: c.par + 1), 2)

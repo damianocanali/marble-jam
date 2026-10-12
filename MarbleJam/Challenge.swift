@@ -3,6 +3,8 @@ import Foundation
 /// One challenge level. It is generated from a working solution course, so it can always be solved.
 struct Challenge: Identifiable {
     enum Goal { case melody, fix, target(x: Double, y: Double) }
+    /// How much help a tray piece gives: where it first appears. Worlds go from `.near` to `.flat`.
+    enum Hint: Int { case near, mirrored, flat }
 
     let id: String                 // "w2-5"
     let world: Int
@@ -17,6 +19,7 @@ struct Challenge: Identifiable {
     let par: Int                   // target: the solution's number of pieces
     let notes: [Int]               // melody/fix: the tune's notes in order (MIDI)
     var season: String? = nil      // holiday worlds: open only during that holiday
+    var hint: Hint = .flat
 
     static let cupRadius = 30.0
 
@@ -66,22 +69,22 @@ enum Challenges {
         let king = h[0], toccata = h[1], funeral = h[2], gather = t[0], comeYe = t[1], gifts = t[2]
         let jingle = x[0], deck = x[1], wish = x[2], silent = x[3]
         return [
-            melody(6, 1, king, notes: 16, remove: [3, 7, 11], season: "halloween"),
-            fix(6, 2, toccata, notes: 14, loose: [2, 6, 10], season: "halloween"),
-            target(6, 3, funeral, base: 5, pieces: [.bar, .bar], season: "halloween"),
-            melody(6, 4, funeral, notes: 16, remove: [4, 9, 13], season: "halloween"),
+            melody(6, 1, king, notes: 8, remove: [4], season: "halloween", hint: .near),
+            fix(6, 2, toccata, notes: 14, loose: [2, 6, 10], season: "halloween", spread: 0.6),
+            target(6, 3, funeral, base: 5, pieces: [.bar, .bar], season: "halloween", hint: .mirrored),
+            melody(6, 4, funeral, notes: 16, remove: [4, 9, 13], season: "halloween", hint: .mirrored),
             fix(6, 5, king, notes: 26, loose: [4, 10, 16, 22], season: "halloween"),
             target(6, 6, toccata, base: 6, pieces: [.ramp, .bar], season: "halloween"),
-            melody(7, 1, comeYe, notes: 14, remove: [3, 8, 11], season: "thanksgiving"),
-            fix(7, 2, gather, notes: 15, loose: [3, 8, 12], season: "thanksgiving"),
-            target(7, 3, gifts, base: 5, pieces: [.bar, .bar], season: "thanksgiving"),
-            melody(7, 4, gifts, notes: 15, remove: [2, 6, 10, 13], season: "thanksgiving"),
+            melody(7, 1, comeYe, notes: 8, remove: [4], season: "thanksgiving", hint: .near),
+            fix(7, 2, gather, notes: 15, loose: [3, 8, 12], season: "thanksgiving", spread: 0.6),
+            target(7, 3, gifts, base: 5, pieces: [.bar, .bar], season: "thanksgiving", hint: .mirrored),
+            melody(7, 4, gifts, notes: 15, remove: [2, 6, 10, 13], season: "thanksgiving", hint: .mirrored),
             fix(7, 5, comeYe, notes: 28, loose: [4, 10, 16, 22], season: "thanksgiving"),
             target(7, 6, comeYe, base: 6, pieces: [.ramp, .bar], season: "thanksgiving"),
-            melody(8, 1, jingle, notes: 11, remove: [3, 7], season: "christmas"),
-            fix(8, 2, wish, notes: 15, loose: [3, 8, 12], season: "christmas"),
-            target(8, 3, silent, base: 5, pieces: [.bar, .bar], season: "christmas"),
-            melody(8, 4, deck, notes: 17, remove: [3, 7, 12, 15], season: "christmas"),
+            melody(8, 1, jingle, notes: 8, remove: [4], season: "christmas", hint: .near),
+            fix(8, 2, wish, notes: 15, loose: [3, 8, 12], season: "christmas", spread: 0.6),
+            target(8, 3, silent, base: 5, pieces: [.bar, .bar], season: "christmas", hint: .mirrored),
+            melody(8, 4, deck, notes: 17, remove: [3, 7, 12, 15], season: "christmas", hint: .mirrored),
             fix(8, 5, silent, notes: 20, loose: [3, 8, 13, 17], season: "christmas"),
             target(8, 6, jingle, base: 6, pieces: [.ramp, .bar, .ramp], season: "christmas"),
         ]
@@ -99,28 +102,28 @@ enum Challenges {
         let jingle = Seasons.all[2].songs[0], deck = Seasons.all[2].songs[1], silent = Seasons.all[2].songs[3]
         let s = Songbook.self
         return [
-            melody(1, 1, s.twinkle, notes: 7, remove: [4]),
-            melody(1, 2, s.twinkle, notes: 14, remove: [3, 10]),
-            melody(1, 3, s.baaBaa, notes: 9, remove: [2, 6]),
-            melody(1, 4, s.rowYourBoat, notes: 10, remove: [2, 5, 8]),
+            melody(1, 1, s.twinkle, notes: 7, remove: [4], hint: .near),
+            melody(1, 2, s.twinkle, notes: 14, remove: [3, 10], hint: .near),
+            melody(1, 3, s.baaBaa, notes: 9, remove: [2, 6], hint: .mirrored),
+            melody(1, 4, s.rowYourBoat, notes: 10, remove: [2, 5, 8], hint: .mirrored),
             melody(1, 5, s.hickoryDickory, notes: 8, remove: [1, 4, 6]),
             melody(1, 6, s.odeToJoy, notes: 15, remove: [3, 7, 10, 13]),
-            fix(2, 1, s.twinkle, notes: 14, loose: [5]),
-            fix(2, 2, s.baaBaa, notes: 16, loose: [3, 10]),
-            fix(2, 3, s.popGoesTheWeasel, notes: 14, loose: [2, 7, 11]),
-            fix(2, 4, s.happyBirthday, notes: 12, loose: [3, 6, 9]),
+            fix(2, 1, s.twinkle, notes: 14, loose: [5], spread: 0.5),
+            fix(2, 2, s.baaBaa, notes: 16, loose: [3, 10], spread: 0.6),
+            fix(2, 3, s.popGoesTheWeasel, notes: 14, loose: [2, 7, 11], spread: 0.75),
+            fix(2, 4, s.happyBirthday, notes: 12, loose: [3, 6, 9], spread: 0.85),
             fix(2, 5, s.odeToJoy, notes: 30, loose: [5, 12, 18, 25]),
             fix(2, 6, jingle, notes: 20, loose: [3, 8, 13, 17]),
-            target(3, 1, s.twinkle, base: 4, pieces: [.bar]),
-            target(3, 2, s.rowYourBoat, base: 5, pieces: [.bar]),
-            target(3, 3, s.baaBaa, base: 5, pieces: [.bar, .bar]),
-            target(3, 4, s.popGoesTheWeasel, base: 6, pieces: [.bar, .bar]),
+            target(3, 1, s.twinkle, base: 4, pieces: [.bar], hint: .near),
+            target(3, 2, s.rowYourBoat, base: 5, pieces: [.bar], hint: .near),
+            target(3, 3, s.baaBaa, base: 5, pieces: [.bar, .bar], hint: .mirrored),
+            target(3, 4, s.popGoesTheWeasel, base: 6, pieces: [.bar, .bar], hint: .mirrored),
             target(3, 5, s.hickoryDickory, base: 6, pieces: [.bar, .bar, .bar]),
             target(3, 6, s.odeToJoy, base: 8, pieces: [.bar, .bar, .bar]),
-            target(4, 1, s.twinkle, base: 3, pieces: [.ramp]),
-            target(4, 2, s.rowYourBoat, base: 4, pieces: [.ramp, .bar]),
-            target(4, 3, s.baaBaa, base: 5, pieces: [.bar, .ramp]),
-            target(4, 4, s.popGoesTheWeasel, base: 4, pieces: [.ramp, .ramp]),
+            target(4, 1, s.twinkle, base: 3, pieces: [.ramp], hint: .near),
+            target(4, 2, s.rowYourBoat, base: 4, pieces: [.ramp, .bar], hint: .near),
+            target(4, 3, s.baaBaa, base: 5, pieces: [.bar, .ramp], hint: .mirrored),
+            target(4, 4, s.popGoesTheWeasel, base: 4, pieces: [.ramp, .ramp], hint: .mirrored),
             target(4, 5, s.hickoryDickory, base: 5, pieces: [.ramp, .bar, .ramp]),
             target(4, 6, s.odeToJoy, base: 6, pieces: [.bar, .ramp, .bar, .ramp]),
             melody(5, 1, s.happyBirthday, notes: 25, remove: [2, 6, 10, 14, 18, 22]),
@@ -136,28 +139,41 @@ enum Challenges {
 
     private static func tune(_ c: Course) -> [Int] { Engine.simulate(c).hits.map { Notes.midi(c.pads[$0.pad]) } }
 
-    /// Where a tray piece first appears: mirrored across the screen from its real spot, lying flat.
-    private static func hint(for p: Pad) -> Pad {
-        var h = p; h.id = UUID(); h.x = min(Rules.width - 60, max(60, Rules.width - p.x)); h.angle = 0
+    /// Where a tray piece first appears. `.near`: just beside its real spot, already tilted (slide it in).
+    /// `.mirrored`: across the screen, tilted right. `.flat`: across the screen, lying flat.
+    private static func hint(for p: Pad, _ mode: Challenge.Hint = .flat) -> Pad {
+        var h = p; h.id = UUID()
+        switch mode {
+        case .near:
+            h.x = p.x + (p.x < Rules.width / 2 ? 80 : -80)
+        case .mirrored, .flat:
+            var x = Rules.width - p.x
+            if abs(x - p.x) < 140 { x = p.x + (p.x < Rules.width / 2 ? 170 : -170) }   // near the middle, mirroring barely moves it
+            h.x = min(Rules.width - 60, max(60, x))
+            if mode == .flat { h.angle = 0 }
+        }
         return h
     }
 
-    private static func melody(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, remove: [Int], season: String? = nil) -> Challenge {
+    private static func melody(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, remove: [Int], season: String? = nil,
+                               hint mode: Challenge.Hint = .flat) -> Challenge {
         let solution = r.prefix(notes).course(), cut = Set(remove)
         var start = solution; start.pads = solution.pads.enumerated().filter { !cut.contains($0.offset) }.map(\.element)
         return Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .melody, instrument: r.instrument,
                          solution: solution, start: start, locked: Set(start.pads.map(\.id)),
-                         tray: remove.map { hint(for: solution.pads[$0]) }, par: remove.count, notes: tune(solution), season: season)
+                         tray: remove.map { hint(for: solution.pads[$0], mode) }, par: remove.count, notes: tune(solution), season: season,
+                         hint: mode)
     }
 
-    private static func fix(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, loose: [Int], season: String? = nil) -> Challenge {
+    /// `spread` scales how far the loose pads are knocked: small in the first levels.
+    private static func fix(_ w: Int, _ n: Int, _ r: SongRecipe, notes: Int, loose: [Int], season: String? = nil, spread: Double = 1) -> Challenge {
         let solution = r.prefix(notes).course()
         var start = solution
         for (k, i) in loose.enumerated() {                                   // knock each loose pad sideways, down and askew
             let side: Double = k % 2 == 0 ? 1 : -1
-            let moved = Rules.clampPad(x: start.pads[i].x + side * 70, y: start.pads[i].y + 35)
+            let moved = Rules.clampPad(x: start.pads[i].x + side * 70 * spread, y: start.pads[i].y + 35 * spread)
             start.pads[i].x = moved.x; start.pads[i].y = moved.y
-            start.pads[i].angle = Rules.clampAngle(start.pads[i].angle - side * 0.3)
+            start.pads[i].angle = Rules.clampAngle(start.pads[i].angle - side * 0.3 * spread)
         }
         let looseIDs = Set(loose.map { solution.pads[$0].id })
         return Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .fix, instrument: r.instrument,
@@ -165,7 +181,8 @@ enum Challenges {
                          tray: [], par: 0, notes: tune(solution), season: season)
     }
 
-    private static func target(_ w: Int, _ n: Int, _ r: SongRecipe, base: Int, pieces: [Pad.Kind], season: String? = nil) -> Challenge {
+    private static func target(_ w: Int, _ n: Int, _ r: SongRecipe, base: Int, pieces: [Pad.Kind], season: String? = nil,
+                               hint mode: Challenge.Hint = .flat) -> Challenge {
         let start = r.prefix(base).course()
         var solution = start
         for (k, kind) in pieces.enumerated() {                               // add each piece where the marble goes next
@@ -181,10 +198,20 @@ enum Challenges {
             preconditionFailure("challenge w\(w)-\(n): every cup spot is reachable without pieces")
         }
         // Tray pieces first appear at hint spots; move the spots until no set of untouched pieces lands the marble in the cup.
+        // `.near` hints try spots all around their real place (never more than 120 pt away); the others move up and sideways.
+        let nearOffsets: [(x: Double, y: Double)] = [(80, 0), (-80, 0), (0, -80), (0, 80), (60, -70), (-60, -70), (60, 70), (-60, 70),
+                                                     (110, 0), (-110, 0), (0, -110), (0, 110)]
         for attempt in 0..<12 {
             let lift = Double(attempt) * 90, side: Double = attempt % 2 == 0 ? 1 : -1
             let real = solution.pads.suffix(pieces.count).map { p -> Pad in
-                var h = hint(for: p); h.y -= lift; h.x = min(Rules.width - 60, max(60, h.x + side * Double(attempt) * 25)); return h
+                var h = hint(for: p, mode)
+                if mode == .near {
+                    let o = nearOffsets[attempt], spot = Rules.clampPad(x: p.x + o.x, y: p.y + o.y)
+                    h.x = spot.x; h.y = spot.y
+                } else {
+                    h.y -= lift; h.x = min(Rules.width - 60, max(60, h.x + side * Double(attempt) * 25))
+                }
+                return h
             }
             let spares = (pieces.contains(.ramp) ? [Pad.Kind.bar, .ramp] : [.bar, .bar]).enumerated().map { k, kind in
                 Pad(kind: kind, x: k == 0 ? 160 : Rules.width - 160, y: cup.y - 220 - lift, note: 5 + k, length: kind == .ramp ? Rules.rampLength : nil,
@@ -192,7 +219,8 @@ enum Challenges {
             }
             let tray = real + spares
             let c = Challenge(id: "w\(w)-\(n)", world: w, number: n, title: r.name, goal: .target(x: cup.x, y: cup.y), instrument: r.instrument,
-                              solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: tray, par: pieces.count, notes: [], season: season)
+                              solution: solution, start: start, locked: Set(start.pads.map(\.id)), tray: tray, par: pieces.count, notes: [], season: season,
+                              hint: mode)
             let freebie = (1..<(1 << tray.count)).contains { mask in
                 var course = start
                 for (k, p) in tray.enumerated() where mask & (1 << k) != 0 { course.pads.append(p) }
