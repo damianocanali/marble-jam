@@ -2,12 +2,14 @@ import SwiftUI
 
 /// Menu → My Songs → builder. Owns the song store and the one GameModel.
 struct RootView: View {
-    enum Screen { case menu, library, play, challenges, store }
+    enum Screen { case menu, library, play, challenges, store, account }
     @State private var store: SongStore
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
-    @State private var progress = ChallengeProgress()
+    @State private var progress = ChallengeProgress(cloud: NSUbiquitousKeyValueStore.default)
     @StateObject private var shop = Store()
+    @StateObject private var gameCenter = GameCenter()
+    @State private var syncTick = 0                       // bumped after iCloud brings in songs or stars, so screens re-read them
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
@@ -37,20 +39,28 @@ struct RootView: View {
         ZStack {
             switch screen {
             case .menu:
-                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library }, onChallenges: { screen = .challenges }, onStore: { screen = .store })
+                MenuView(background: background, backgrounds: backgrounds, season: season, backgroundID: $backgroundID, onCreate: { screen = .library }, onChallenges: { screen = .challenges }, onStore: { screen = .store }, onAccount: { screen = .account })
                     .transition(.opacity)
             case .library:
                 LibraryView(store: store, background: background, season: season, onOpen: { model.open($0); screen = .play }, onBack: { screen = .menu })
+                    .id(syncTick)
                     .transition(.opacity)
             case .play:
-                ContentView(model: model, background: background, progress: progress, onMenu: { model.stop(); model.save(); screen = model.challenge == nil ? .library : .challenges })
+                ContentView(model: model, background: background, progress: progress, onMenu: {
+                    model.stop(); model.save(); screen = model.challenge == nil ? .library : .challenges
+                    gameCenter.report(progress)
+                })
                     .transition(.opacity)
             case .store:
                 StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
                     .transition(.opacity)
+            case .account:
+                AccountView(gameCenter: gameCenter, store: shop, background: background, onBack: { screen = .menu })
+                    .transition(.opacity)
             case .challenges:
                 ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
                                onBack: { screen = .menu })
+                    .id(syncTick)
                     .transition(.opacity)
             }
         }
@@ -59,8 +69,43 @@ struct RootView: View {
         .environment(\.theme, Theme.forSeason(season?.id))
         .environment(\.marbleSkin, skin)
         .task { await shop.refreshPurchases() }
-        .onChange(of: phase) { _, p in if p == .active { AppIcons.update(for: season?.id) } }   // holiday icon on when it starts, off when it ends
+        .onChange(of: phase) { _, p in
+            guard p == .active else { return }
+            AppIcons.update(for: season?.id)                    // holiday icon on when it starts, off when it ends
+            syncSongs()
+        }
         .onChange(of: season?.id) { _, id in AppIcons.update(for: id) }
-        .task { store.migrateIfNeeded(defaults: .standard) }
+        .task {
+            store.migrateIfNeeded(defaults: .standard)
+            await connectCloud()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)) { _ in pullFromCloud() }
+        .onChange(of: skinID) { _, id in NSUbiquitousKeyValueStore.default.set(id, forKey: "skin.v1") }
+    }
+
+    /// iCloud: stars and the chosen marble through the key-value store, songs through the app's iCloud Drive folder.
+    /// Without iCloud (signed out, or no entitlement) all of this quietly does nothing and everything stays on the phone.
+    private func connectCloud() async {
+        gameCenter.onSignIn = { [progress, gameCenter] in gameCenter.report(progress) }
+        gameCenter.resume()
+        NSUbiquitousKeyValueStore.default.synchronize()
+        pullFromCloud()
+        let container = await Task.detached { FileManager.default.url(forUbiquityContainerIdentifier: nil) }.value   // can be slow: never on the main thread
+        if let container {
+            store.mirror = container.appendingPathComponent("Documents/Songs", isDirectory: true)
+            syncSongs()
+        }
+    }
+
+    private func pullFromCloud() {
+        progress.pullFromCloud()
+        if let id = NSUbiquitousKeyValueStore.default.string(forKey: "skin.v1"), id != skinID, Skins.all.contains(where: { $0.id == id }) { skinID = id }
+        syncTick += 1
+    }
+
+    private func syncSongs() {
+        guard store.mirror != nil, screen != .play else { return }   // never swap a song out from under the builder
+        store.syncWithMirror()
+        syncTick += 1
     }
 }

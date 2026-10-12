@@ -1,9 +1,14 @@
 import Foundation
 
 /// The player's songs, one JSON file each in a folder. Unreadable files are skipped, never fatal.
+/// With a `mirror` (the iCloud Drive folder) every change is copied there too, and `syncWithMirror` brings in other devices'.
 final class SongStore {
     static let demoName = "Twinkle Twinkle"
+    static let demoID = UUID(uuidString: "00000000-0000-4000-8000-00000000D3E0")!
     let folder: URL
+    var mirror: URL? {
+        didSet { if let mirror { try? FileManager.default.createDirectory(at: mirror, withIntermediateDirectories: true) } }
+    }
 
     init(folder: URL) {
         self.folder = folder
@@ -34,7 +39,9 @@ final class SongStore {
     @discardableResult func save(_ song: Song) throws -> Song {
         var s = song
         s.modified = Date()
-        try JSONEncoder().encode(s).write(to: url(s.id), options: .atomic)
+        let data = try JSONEncoder().encode(s)
+        try data.write(to: url(s.id), options: .atomic)
+        if let mirror { try? data.write(to: mirror.appendingPathComponent(url(s.id).lastPathComponent), options: .atomic) }
         return s
     }
 
@@ -71,7 +78,49 @@ final class SongStore {
         return (try? save(s)) ?? s
     }
 
-    func delete(_ id: UUID) { try? FileManager.default.removeItem(at: url(id)) }
+    /// Removes the song and leaves a small "deleted" marker, so a copy on another device doesn't bring it back.
+    func delete(_ id: UUID) {
+        for dir in [folder, mirror].compactMap({ $0 }) {
+            try? FileManager.default.removeItem(at: dir.appendingPathComponent("\(id.uuidString).json"))
+            try? Data().write(to: dir.appendingPathComponent("\(id.uuidString).deleted"))
+        }
+    }
+
+    /// Two-way merge with the mirror: deletions win, otherwise the more recently changed copy of each song wins.
+    /// Songs iCloud hasn't downloaded yet are asked for and picked up next time.
+    func syncWithMirror() {
+        guard let mirror else { return }
+        let fm = FileManager.default
+        func names(_ dir: URL) -> [String] { (try? fm.contentsOfDirectory(atPath: dir.path)) ?? [] }
+        for name in names(mirror) where name.hasPrefix(".") && name.hasSuffix(".icloud") {
+            try? fm.startDownloadingUbiquitousItem(at: mirror.appendingPathComponent(String(name.dropFirst().dropLast(".icloud".count))))
+        }
+        func ids(_ ext: String) -> Set<String> {
+            Set((names(folder) + names(mirror)).filter { $0.hasSuffix(".\(ext)") && !$0.hasPrefix(".") }.map { String($0.dropLast(ext.count + 1)) })
+        }
+        let deleted = ids("deleted")
+        for id in deleted {
+            for dir in [folder, mirror] {
+                try? fm.removeItem(at: dir.appendingPathComponent("\(id).json"))
+                let marker = dir.appendingPathComponent("\(id).deleted")
+                if !fm.fileExists(atPath: marker.path) { try? Data().write(to: marker) }
+            }
+        }
+        for id in ids("json").subtracting(deleted) {
+            let here = folder.appendingPathComponent("\(id).json"), there = mirror.appendingPathComponent("\(id).json")
+            func read(_ u: URL) -> (data: Data, modified: Date)? {
+                guard let d = try? Data(contentsOf: u), let s = try? JSONDecoder().decode(Song.self, from: d) else { return nil }
+                return (d, s.modified)
+            }
+            switch (read(here), read(there)) {
+            case let (a?, b?) where a.modified > b.modified: try? a.data.write(to: there, options: .atomic)
+            case let (a?, b?) where b.modified > a.modified: try? b.data.write(to: here, options: .atomic)
+            case let (a?, nil): try? a.data.write(to: there, options: .atomic)
+            case let (nil, b?): try? b.data.write(to: here, options: .atomic)
+            default: break
+            }
+        }
+    }
 
     /// Once per install: the old single course becomes "My First Song", and the demo is added.
     func migrateIfNeeded(defaults: UserDefaults) {
@@ -84,10 +133,12 @@ final class SongStore {
     }
 
     /// A fresh "Twinkle Twinkle", replacing the built-in one (never a player's song, whatever its name).
+    /// It always has the same id, so every device shares one copy instead of syncing a demo each.
     @discardableResult func resetDemo() -> Song {
-        all().filter(\.isDemo).forEach { delete($0.id) }
+        all().filter { $0.isDemo && $0.id != Self.demoID }.forEach { delete($0.id) }
+        for dir in [folder, mirror].compactMap({ $0 }) { try? FileManager.default.removeItem(at: dir.appendingPathComponent("\(Self.demoID.uuidString).deleted")) }
         var s = Song(name: Self.demoName, course: Engine.demo())
-        s.isDemo = true
+        s.id = Self.demoID; s.isDemo = true
         return (try? save(s)) ?? s
     }
 }

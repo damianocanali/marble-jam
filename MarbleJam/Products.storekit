@@ -13,7 +13,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.glass",
+      "productID": "com.marblejam.app.pack.glass",
       "referenceName": "Glass Pack",
       "type": "NonConsumable"
     },
@@ -28,7 +28,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.space",
+      "productID": "com.marblejam.app.pack.space",
       "referenceName": "Space Pack",
       "type": "NonConsumable"
     },
@@ -43,7 +43,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.sports",
+      "productID": "com.marblejam.app.pack.sports",
       "referenceName": "Sports Pack",
       "type": "NonConsumable"
     },
@@ -58,7 +58,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.candy",
+      "productID": "com.marblejam.app.pack.candy",
       "referenceName": "Candy Pack",
       "type": "NonConsumable"
     },
@@ -73,7 +73,7 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.gems",
+      "productID": "com.marblejam.app.pack.gems",
       "referenceName": "Gem Pack",
       "type": "NonConsumable"
     },
@@ -88,14 +88,14 @@
           "locale": "en_US"
         }
       ],
-      "productID": "com.example.marblejam.pack.animals",
+      "productID": "com.marblejam.app.pack.animals",
       "referenceName": "Animal Pack",
       "type": "NonConsumable"
     }
   ],
   "settings": {
     "_applicationInternalID": "6450000000",
-    "_developerTeamID": "",
+    "_developerTeamID": "G53XBRCRVU",
     "_failTransactionsEnabled": false,
     "_locale": "en_US",
     "_storefront": "USA",
