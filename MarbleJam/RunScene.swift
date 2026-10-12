@@ -1,8 +1,10 @@
 import SpriteKit
 
 /// Draws the run and handles touches. The `world` node is flipped so its children use the engine's coordinates (y down).
+/// With a 3D `room` underneath, it draws only the 2D layer (labels, guides, selection) and drives the room every frame.
 final class RunScene: SKScene {
     weak var model: GameModel?
+    var room: Course3D? { didSet { seenVersion = -1 } }
 
     private let world = SKNode(), guideLayer = SKNode(), padLayer = SKNode(), fxLayer = SKNode()
     private let marble = PadArt.marble()
@@ -54,6 +56,9 @@ final class RunScene: SKScene {
         guard let m = model else { return }
         guideLayer.removeAllChildren(); padLayer.removeAllChildren(); padNodes.removeAll()
         let live = Set(m.run.hits.map(\.pad))
+        var cup: (x: Double, y: Double)?
+        if case let .target(cx, cy)? = m.challenge?.goal { cup = (cx, cy) }
+        room?.rebuild(m.course, beats: m.beats, playing: m.playing, cup: cup)
 
         if !m.playing {                                       // the predicted path, with a ring on every beat
             let path = CGMutablePath(), pts = m.run.path
@@ -85,7 +90,7 @@ final class RunScene: SKScene {
             }
         }
 
-        if case let .target(cx, cy)? = m.challenge?.goal {                       // the cup: a glowing ring with a dot
+        if room == nil, case let .target(cx, cy)? = m.challenge?.goal {          // the cup: a glowing ring with a dot
             let r = Challenge.cupRadius
             let glow = SKShapeNode(circleOfRadius: r); glow.position = CGPoint(x: cx, y: cy)
             glow.strokeColor = PadArt.beatGold; glow.lineWidth = 4; glow.glowWidth = 10; glow.fillColor = PadArt.beatGold.withAlphaComponent(0.15)
@@ -95,18 +100,21 @@ final class RunScene: SKScene {
             guideLayer.addChild(dot)
         }
 
-        let hop = CGMutablePath(), dx = m.course.dropX, dy = m.course.dropY          // the hopper the marble drops from
+        let hop = CGMutablePath(), dx = m.course.dropX, dy = m.course.dropY          // the hopper the marble drops from (the room draws its own)
+        if room == nil {
         hop.move(to: CGPoint(x: dx - 26, y: dy - 44)); hop.addLine(to: CGPoint(x: dx + 26, y: dy - 44))
         hop.addLine(to: CGPoint(x: dx + 9, y: dy - 22)); hop.addLine(to: CGPoint(x: dx - 9, y: dy - 22)); hop.closeSubpath()
         let hopper = SKShapeNode(path: hop); hopper.fillColor = UIColor(white: 0.88, alpha: 0.9); hopper.strokeColor = .clear
         guideLayer.addChild(hopper)
+        }
 
         for (i, p) in m.course.pads.enumerated() {
             let node = PadArt.node(for: p)
             node.alpha = (live.contains(i) || m.playing) ? 1 : 0.4
-            padLayer.addChild(node); padNodes.append(node)
+            if room == nil { padLayer.addChild(node) }                          // with the room, the 3D piece is drawn underneath
+            padNodes.append(node)
             let beat = i < m.beats.count ? m.beats[i] : .unused
-            if !m.playing && (beat == .on || beat == .near) { padLayer.addChild(PadArt.halo(for: p, onBeat: beat == .on)) }
+            if room == nil, !m.playing && (beat == .on || beat == .near) { padLayer.addChild(PadArt.halo(for: p, onBeat: beat == .on)) }
             if drag != nil, beat == .on, let was = lastBeats[p.id], was != .on { Haptics.onBeat() }
             lastBeats[p.id] = beat
 
@@ -118,7 +126,7 @@ final class RunScene: SKScene {
             label.position = CGPoint(x: mid.x - sin(p.angle) * off, y: mid.y + cos(p.angle) * off)
             label.alpha = node.alpha
             if m.isLocked(p.id) { label.text = "🔒 " + (label.text ?? "") }      // locked puzzle pieces
-            padLayer.addChild(label)
+            if room == nil || !m.playing { padLayer.addChild(label) }              // the show camera tilts: labels would drift off their pieces
 
             if p.id == m.selected && !m.playing {                                  // selection ring and the tilt handle
                 let r = switch p.kind {
@@ -140,6 +148,7 @@ final class RunScene: SKScene {
     }
 
     private func flash(_ h: Hit, in m: GameModel) {
+        if let room { room.flash(pad: h.pad, at: h); return }
         guard h.pad < padNodes.count else { return }
         let node = padNodes[h.pad], col = color(m.course.pads[h.pad])
         PadArt.flash(node, color: col, at: CGPoint(x: h.x, y: h.y), sparksIn: fxLayer)
@@ -164,6 +173,11 @@ final class RunScene: SKScene {
             if let ty = targetCamY, drag == nil { camY += (ty - camY) * 0.12; if abs(ty - camY) < 1 { targetCamY = nil } }
         }
         layoutWorld()
+        if let room {
+            marble.isHidden = true                                                   // the room's chrome marble takes its place
+            room.update(camY: camY, viewSize: size, playing: m.playing, marbleAt: (Double(marble.position.x), Double(marble.position.y)),
+                        marbleVisible: m.playing)
+        } else { marble.isHidden = false }
     }
 
     // MARK: touches
