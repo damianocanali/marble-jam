@@ -33,13 +33,13 @@ struct MenuView: View {
                 if let season, let art = UIImage(named: season.titleArt) {      // the holiday's own artwork replaces title and banner
                     Image(uiImage: art).resizable().scaledToFit().frame(maxWidth: 320, maxHeight: 235)   // clear of the centred buttons
                         .padding(.top, 8)
-                        .accessibilityLabel("Marble Jam. \(season.banner)")
+                        .accessibilityLabel("Rolling Notes. \(season.banner)")
                         .accessibilityAddTraits(.isHeader)
                 } else {
                     Image("Title").resizable().scaledToFit().frame(maxWidth: 300)
                         .shadow(color: .black.opacity(0.5), radius: 12, y: 4)
                         .padding(.top, 24)
-                        .accessibilityLabel("Marble Jam")
+                        .accessibilityLabel("Rolling Notes")
                         .accessibilityAddTraits(.isHeader)
                 }
                 if let season, UIImage(named: season.titleArt) == nil {
