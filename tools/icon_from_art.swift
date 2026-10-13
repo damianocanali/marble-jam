@@ -1,5 +1,5 @@
 // Makes the app icon and menu logo from the source art. Run from the repo root:
-//   swift tools/icon_from_art.swift art/MarbleJam.png MarbleJam/Assets.xcassets/AppIcon.appiconset/AppIcon.png MarbleJam/Assets.xcassets/Logo.imageset/Logo.png
+//   swift tools/icon_from_art.swift art/RollingNotes.png MarbleJam/Assets.xcassets/AppIcon.appiconset/AppIcon.png MarbleJam/Assets.xcassets/Logo.imageset/Logo.png
 import CoreGraphics
 import ImageIO
 import Foundation
