@@ -88,7 +88,7 @@ struct ContentView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 3) {
             Image("Title").resizable().scaledToFit().frame(height: 54)    // the lettering drawn by tools/make_title.swift
-                .accessibilityLabel("Rolling Notes").allowsHitTesting(false)
+                .accessibilityLabel("Marble Beats").allowsHitTesting(false)
             if let c = model.challenge {
                 Text("\(c.world)-\(c.number) · \(c.title)").font(.system(size: 13, weight: .heavy, design: .rounded)).foregroundStyle(ink).lineLimit(1)
                 Text(c.goalText).font(.system(size: 12, weight: .semibold, design: .rounded)).foregroundStyle(muted).lineLimit(2)

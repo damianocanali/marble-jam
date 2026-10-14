@@ -1,5 +1,29 @@
 [
   {
+    "id" : "bg-33",
+    "image" : "bg-33.jpg",
+    "luminance" : 0.315,
+    "name" : "Spooky Track",
+    "season" : "halloween",
+    "thumb" : "bg-33-thumb.jpg"
+  },
+  {
+    "id" : "bg-34",
+    "image" : "bg-34.jpg",
+    "luminance" : 0.38300000000000001,
+    "name" : "Piano Forest",
+    "season" : "thanksgiving",
+    "thumb" : "bg-34-thumb.jpg"
+  },
+  {
+    "id" : "bg-35",
+    "image" : "bg-35.jpg",
+    "luminance" : 0.47999999999999998,
+    "name" : "Candy Cane Road",
+    "season" : "christmas",
+    "thumb" : "bg-35-thumb.jpg"
+  },
+  {
     "id" : "bg-01",
     "image" : "bg-01.jpg",
     "luminance" : 0.28899999999999998,
@@ -231,5 +255,33 @@
     "name" : "Snowflakes",
     "season" : "christmas",
     "thumb" : "bg-32-thumb.jpg"
+  },
+  {
+    "id" : "bg-36",
+    "image" : "bg-36.jpg",
+    "luminance" : 0.88900000000000001,
+    "name" : "Pastel Notes",
+    "thumb" : "bg-36-thumb.jpg"
+  },
+  {
+    "id" : "bg-37",
+    "image" : "bg-37.jpg",
+    "luminance" : 0.308,
+    "name" : "Neon Staff",
+    "thumb" : "bg-37-thumb.jpg"
+  },
+  {
+    "id" : "bg-38",
+    "image" : "bg-38.jpg",
+    "luminance" : 0.28799999999999998,
+    "name" : "Moonlit Melody",
+    "thumb" : "bg-38-thumb.jpg"
+  },
+  {
+    "id" : "bg-39",
+    "image" : "bg-39.jpg",
+    "luminance" : 0.253,
+    "name" : "Neon Waves",
+    "thumb" : "bg-39-thumb.jpg"
   }
 ]

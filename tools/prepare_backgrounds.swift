@@ -1,12 +1,14 @@
-// Turns the drawn backgrounds in art/backgrounds-drawn (from tools/make_backgrounds.swift) into what the app bundles.
-// Run from the repo root after redrawing:  swift tools/prepare_backgrounds.swift
-// Writes MarbleJamBackgrounds/: bg-NN.jpg, bg-NN-thumb.jpg and manifest.json. Files named "NN-some-name.png" get the name "Some Name".
+// Turns the backgrounds into what the app bundles: the drawn ones in art/backgrounds-drawn (from tools/make_backgrounds.swift,
+// kept out of git) and the artist's in art/backgrounds-artist (in git). Run from the repo root:  swift tools/prepare_backgrounds.swift
+// Writes MarbleJamBackgrounds/: bg-NN.jpg, bg-NN-thumb.jpg and manifest.json. Files named "NN-some-name.png" become bg-NN, named
+// "Some Name"; "NN-halloween-some-name.png" also belongs to that holiday. Numbers must be unique across both folders and never
+// reused, since players' choices are saved by id. Within a holiday the artist's backgrounds come first (the default one).
 import CoreGraphics
 import Foundation
 import ImageIO
 import UniformTypeIdentifiers
 
-let srcDir = "art/backgrounds-drawn", outDir = "MarbleJamBackgrounds"
+let srcDirs = ["art/backgrounds-drawn", "art/backgrounds-artist"], artistDir = "art/backgrounds-artist", outDir = "MarbleJamBackgrounds"
 let W = 1170, H = 2532                 // iPhone screen in pixels; the art is scaled to fill and the sides trimmed
 let TW = 240, TH = 520                 // thumbnail for the picker
 let fm = FileManager.default
@@ -42,16 +44,23 @@ func writeJPEG(_ img: CGImage, _ path: String, quality: Double) {
     CGImageDestinationFinalize(d)
 }
 
-guard let names = try? fm.contentsOfDirectory(atPath: srcDir) else { print("no \(srcDir) folder: nothing to do"); exit(0) }
-let art = names.filter { ["png", "jpg", "jpeg"].contains(($0 as NSString).pathExtension.lowercased()) && !$0.hasPrefix("preview") }.sorted { number($0) < number($1) }
+guard fm.fileExists(atPath: srcDirs[0]) else { print("no \(srcDirs[0]) folder (run tools/make_backgrounds.swift first): nothing to do"); exit(0) }
+let art: [(dir: String, name: String)] = srcDirs.flatMap { dir in
+    ((try? fm.contentsOfDirectory(atPath: dir)) ?? [])
+        .filter { ["png", "jpg", "jpeg"].contains(($0 as NSString).pathExtension.lowercased()) && !$0.hasPrefix("preview") }
+        .map { (dir: dir, name: $0) }
+}.sorted { number($0.name) < number($1.name) }
+for (k, a) in art.enumerated() where number(a.name) != k + 1 {
+    print("background numbers must run 1, 2, 3... with no gaps or repeats: \(a.name) is number \(k + 1)"); exit(1)
+}
 try? fm.createDirectory(atPath: outDir, withIntermediateDirectories: true)
 for old in (try? fm.contentsOfDirectory(atPath: outDir)) ?? [] where old.hasPrefix("bg-") || old == "manifest.json" {
     try? fm.removeItem(atPath: outDir + "/" + old)
 }
 
-var manifest: [[String: Any]] = []
-for (i, name) in art.enumerated() {
-    guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: srcDir + "/" + name) as CFURL, nil),
+var manifest: [[String: Any]] = [], artistSeasonal: Set<String> = []
+for (i, (dir, name)) in art.enumerated() {
+    guard let src = CGImageSourceCreateWithURL(URL(fileURLWithPath: dir + "/" + name) as CFURL, nil),
           let img = CGImageSourceCreateImageAtIndex(src, 0, nil) else { print("skipped \(name): not an image"); continue }
     let id = String(format: "bg-%02d", i + 1)
     let full = render(img, W, H)
@@ -65,10 +74,11 @@ for (i, name) in art.enumerated() {
     let title = parts.map { $0.prefix(1).uppercased() + $0.dropFirst() }.joined(separator: " ")
     var entry: [String: Any] = ["id": id, "name": title.isEmpty ? id : title, "image": "\(id).jpg", "thumb": "\(id)-thumb.jpg",
                                 "luminance": (luminance(full) * 1000).rounded() / 1000]
-    if let season { entry["season"] = season }
+    if let season { entry["season"] = season; if dir == artistDir { artistSeasonal.insert(id) } }
     manifest.append(entry)
     print("\(id)  <- \(name)")
 }
+manifest = manifest.filter { artistSeasonal.contains($0["id"] as! String) } + manifest.filter { !artistSeasonal.contains($0["id"] as! String) }
 let json = try! JSONSerialization.data(withJSONObject: manifest, options: [.prettyPrinted, .sortedKeys])
 try! json.write(to: URL(fileURLWithPath: "\(outDir)/manifest.json"))
 print("wrote \(manifest.count) backgrounds to \(outDir)/")

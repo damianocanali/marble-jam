@@ -1,4 +1,4 @@
-// Draws the Rolling Notes logo (1024x1024, opaque PNG) into art/RollingNotes.png.
+// Draws the Marble Beats logo (1024x1024, opaque PNG) into art/MarbleBeats.png.
 // Everything is drawn here or comes from the open-licensed fonts in art/fonts, so the logo is ours to use.
 // Run from the repo root: swift tools/make_logo.swift   (then tools/icon_from_art.swift to update the app icon and menu logo)
 import CoreGraphics
@@ -8,7 +8,7 @@ import ImageIO
 import UniformTypeIdentifiers
 
 let size = 1024.0
-let out = "art/RollingNotes.png"
+let out = "art/MarbleBeats.png"
 srand48(7)                                                              // same marbles every run
 
 func rgb(_ r: Double, _ g: Double, _ b: Double, _ a: Double = 1) -> CGColor { CGColor(srgbRed: r, green: g, blue: b, alpha: a) }
@@ -249,8 +249,8 @@ func title(_ s: String, at p: CGPoint, angle: Double, pt: Double) {
     ctx.addPath(path); ctx.setFillColor(rgb(1, 1, 1)); ctx.fillPath()
     ctx.restoreGState()
 }
-title("ROLLING", at: CGPoint(x: 500, y: 690), angle: 0.04, pt: 215)
-title("NOTES", at: CGPoint(x: 700, y: 500), angle: -0.12, pt: 215)
+title("MARBLE", at: CGPoint(x: 500, y: 690), angle: 0.04, pt: 235)
+title("BEATS", at: CGPoint(x: 700, y: 500), angle: -0.12, pt: 225)
 
 let dest = CGImageDestinationCreateWithURL(URL(fileURLWithPath: out) as CFURL, UTType.png.identifier as CFString, 1, nil)!
 CGImageDestinationAddImage(dest, ctx.makeImage()!, nil)

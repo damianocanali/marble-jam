@@ -1,7 +1,7 @@
-# Rolling Notes (iOS)
+# Marble Beats (iOS)
 
 A marble-run music game for families: build a course, drop the marble, and every pad it hits plays a note.
-(Called Marble Jam while in development; the code, folder and bundle id still use that name, which players never see.)
+(Called Marble Jam, then briefly Rolling Notes, while in development; the code, folder and bundle id still say "marblejam", which players never see.)
 
 Native rebuild of the web prototype. SwiftUI for the controls, SpriteKit for the run, AVAudioEngine for sound.
 
@@ -34,16 +34,16 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `PadController.swift` tilt dial and note buttons for the selected piece; length and bend for ramps (curved tracks the marble rolls along, defined in `Engine.swift`)
 - `Celebration.swift` / `CelebrationView.swift` star rating and the end-of-song sticker
 - `Backgrounds.swift` / `BackgroundViews.swift` the background list, the picker and the tinted backdrop
-- `MarbleJamBackgrounds/` the 23 bundled backgrounds, all drawn from scratch: `tools/make_backgrounds.swift` paints them (command at its top) into `art/backgrounds-drawn/`, then `swift tools/prepare_backgrounds.swift` sizes them for the app
+- `MarbleJamBackgrounds/` the bundled backgrounds, made by `swift tools/prepare_backgrounds.swift` from two folders: the 32 drawn from scratch by `tools/make_backgrounds.swift` (command at its top) into `art/backgrounds-drawn/` (kept out of git), and the artist's in `art/backgrounds-artist/` (33 and up). Name files `NN-name.jpg`, or `NN-halloween-name.jpg` for a holiday; numbers are ids, so never reuse one
 - `MarbleJamTests/`   unit tests for the rules, the controller commands and the star rating
-- `Assets.xcassets`   app icon (made from `art/Logo.JPG`, kept out of git, with `tools/icon_from_logo.swift`) and menu logo (made from `art/MarbleJam.png`)
-- `Title` image (menu and game header) and the `SeasonTitle-<holiday>` images: the "ROLLING NOTES" lettering, drawn by `swift tools/make_title.swift [halloween|thanksgiving|christmas]`
+- `Assets.xcassets`   app icon: for now a stand-in made by `tools/icon_from_title.swift` (command at its top) from the artist's Moonlit Melody background and the lettering; replace it with the artist's everyday icon when there is one. Menu logo: `art/MarbleBeats.png`
+- `Title` image (menu and game header) and the `SeasonTitle-<holiday>` images: the artist's "MARBLE BEATS" lettering, kept as three tone masks in `art/title/` (fill, outline, shadow; made from the artist's `art/title/source.png` by `tools/title_masks.swift`, command at its top) and painted by `swift tools/make_title.swift [halloween|thanksgiving|christmas]`: white for the menu, holiday colours with the greeting above for the holidays
 - `art/seasons/<holiday>/` your holiday artwork:
-  - (older Marble Jam art, kept for reference) `source.jpg` → `title.png` via `tools/cutout_from_art.swift` (removes the white page; Halloween: `0 0 1024 1024 225 4000`, Christmas: defaults) or, for art that keeps its page, `tools/card_from_art.swift` (Thanksgiving: `70 150 884 760 56`) → `SeasonTitle-<holiday>` image
-  - `icon-source.jpg` → `icon.png` via `tools/icon_from_tile.swift` (Halloween `158 110 702 FFFFFF`, Thanksgiving `168 112 744 F8F5E6`, Christmas `62 66 904 FFFFFF`) → `AppIcon-<holiday>` icon set
+  - (older Marble Jam art, kept for reference only) `source.jpg`, `title.png`
+  - `icon-source.jpg` (the artist's Marble Beats icon) → `icon.png` via `tools/icon_from_tile.swift` (crops inside the tile drawn in the art; Halloween `112 112 800 3F3C50`, Thanksgiving `112 112 800 FAEFD4`, Christmas `36 36 952 103922`: that one is drawn edge to edge, so only a slight trim) → `AppIcon-<holiday>` icon set
 - `Theme.swift`      holiday colours for buttons, panels, accents and the marble (pads keep their note colours)
 - `AppIcons.swift`   holiday app icons, switched automatically. To add one: make an `AppIcon-<holiday>` app icon set in `Assets.xcassets` (1024 px, no transparency; `tools/icon_from_art.swift` prepares it) and add its name to `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` in `project.yml`
-- `art/`              the logo, drawn by `swift tools/make_logo.swift`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Then `tools/icon_from_art.swift` (command at its top) updates the icon and menu logo
+- `art/`              the logo, drawn by `swift tools/make_logo.swift` into `art/MarbleBeats.png`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Don't run `tools/icon_from_art.swift` on it unless you want the drawn logo as the app icon
 
 ## Next steps (not built yet)
 Login and store (Project B), easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
