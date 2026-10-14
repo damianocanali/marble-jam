@@ -66,4 +66,24 @@ final class BackgroundTests: XCTestCase {
         XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: "halloween"))
         XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil))
     }
+
+    /// The bundled set: the 32 drawn ones keep their ids (players' saved choices stay valid), the artist's 7 come after,
+    /// and each holiday opens on the artist's own holiday background.
+    func testBundledCatalogue() {
+        let all = BackgroundLibrary.bundled
+        XCTAssertEqual(all.map(\.id).sorted(), (1...39).map { String(format: "bg-%02d", $0) })
+        XCTAssertEqual(all.first { $0.id == "bg-01" }?.name, "Dark Wood")
+        XCTAssertEqual(all.first { $0.id == "bg-24" }?.name, "Pumpkin Patch")
+        XCTAssertEqual(all.first { $0.id == "bg-32" }?.name, "Snowflakes")
+        let defaults = ["halloween": "Spooky Track", "thanksgiving": "Piano Forest", "christmas": "Candy Cane Road"]
+        for (season, name) in defaults {
+            XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: season)?.name, name, season)
+            XCTAssertEqual(all.filter { $0.season == season }.count, 4, season)
+        }
+        XCTAssertEqual(all.filter { $0.season == nil }.count, 27)
+        for b in all {
+            XCTAssertTrue(FileManager.default.fileExists(atPath: b.image.path), b.id)
+            XCTAssertTrue(FileManager.default.fileExists(atPath: b.thumb.path), b.id)
+        }
+    }
 }
