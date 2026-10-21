@@ -46,7 +46,7 @@ Banners: "🎆 Happy New Year!", "💘 Happy Valentine's Day!", "☘️ Happy St
 | Holiday | Songs |
 |---|---|
 | New Year's Eve | Auld Lang Syne · The Blue Danube (Strauss II) · Radetzky March (Strauss I) |
-| Valentine's Day | Plaisir d'amour (Martini, 1784) · Let Me Call You Sweetheart (Friedman, 1910) · Für Elise (Beethoven) |
+| Valentine's Day | Plaisir d'amour (Martini, 1784) · Let Me Call You Sweetheart (Friedman, 1910) · Aura Lee (1861; replaces Für Elise, whose opening needs the black key D♯) |
 | St. Patrick's Day | Molly Malone · The Irish Washerwoman · Londonderry Air |
 | Easter | Hot Cross Buns · Christ the Lord Is Risen Today (Easter Hymn, 1708) · Spring (Vivaldi, The Four Seasons) |
 | Día de los Muertos | La Llorona · Cielito Lindo (Mendoza, 1882) · La Bamba (traditional son jarocho) |
