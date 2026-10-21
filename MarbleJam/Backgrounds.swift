@@ -16,6 +16,8 @@ enum BackgroundLibrary {
     static let folderName = "MarbleJamBackgrounds"
     /// Stored when the player picks the night sky on purpose. "" means they never chose (a live season may then show its own).
     static let nightID = "night"
+    /// The artist's everyday background: shown off-season until the player picks something, and listed first.
+    static let everydayID = "bg-40"
 
     private struct Entry: Decodable { let id, image, thumb: String; let name: String?; let luminance: Double; let season: String? }
 
@@ -30,18 +32,23 @@ enum BackgroundLibrary {
     /// Brighter pictures need more black on top for the glowing pads and the white marble to stand out.
     static func tint(forLuminance l: Double) -> Double { max(0.3, min(0.72, 0.3 + 0.45 * l)) }
 
-    /// All-year backgrounds, with the live season's first. Other seasons' are hidden until their time comes.
+    /// All-year backgrounds (the everyday one first), with the live season's before them. Other seasons' are hidden until their time comes.
     static func available(_ all: [BackgroundOption], season: String?) -> [BackgroundOption] {
-        all.filter { $0.season != nil && $0.season == season } + all.filter { $0.season == nil }
+        let year = all.filter { $0.season == nil }
+        return all.filter { $0.season != nil && $0.season == season } + year.filter { $0.id == everydayID } + year.filter { $0.id != everydayID }
     }
 
-    /// What to show: the player's choice if it is available now; with no choice, the season's first background; else nil (night sky).
+    /// What to show: the player's choice if it is available now; with no choice, the season's first background, or off-season
+    /// the everyday one; nil means the night sky.
     static func resolve(_ all: [BackgroundOption], chosenID: String, season: String?) -> BackgroundOption? {
         let now = available(all, season: season)
         if chosenID == nightID { return nil }
-        if chosenID.isEmpty { return season == nil ? nil : now.first { $0.season == season } }
+        if chosenID.isEmpty { return season == nil ? now.first { $0.id == everydayID } : now.first { $0.season == season } }
         return now.first { $0.id == chosenID }
     }
+
+    /// The picker's tick: the background on screen, or the night sky tile when there is none.
+    static func shownID(_ shown: BackgroundOption?) -> String { shown?.id ?? nightID }
 
     static func load(from folder: URL) -> [BackgroundOption] {
         guard let data = try? Data(contentsOf: folder.appendingPathComponent("manifest.json")) else { return [] }

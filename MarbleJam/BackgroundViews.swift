@@ -28,7 +28,9 @@ struct Backdrop: View {
 /// Grid of thumbnails: the night sky first, then every bundled background. Tapping one selects it.
 struct BackgroundPicker: View {
     let options: [BackgroundOption]
-    @Binding var selectedID: String          // BackgroundLibrary.nightID or "" (never chose) mean the night sky
+    @Binding var selectedID: String          // what the player picked: BackgroundLibrary.nightID, "" (never chose) or an id
+    /// What is on screen now (the pick, or the season's or everyday default), so the tick matches what the player sees.
+    let shown: BackgroundOption?
     @Environment(\.dismiss) private var dismiss
     @Environment(\.theme) private var theme
 
@@ -56,7 +58,7 @@ struct BackgroundPicker: View {
         }
     }
 
-    private func isSelected(_ id: String) -> Bool { id == selectedID || (id == BackgroundLibrary.nightID && selectedID.isEmpty) }
+    private func isSelected(_ id: String) -> Bool { id == BackgroundLibrary.shownID(shown) }
 
     private func tile<Content: View>(id: String, label: String, @ViewBuilder content: () -> Content) -> some View {
         Button { selectedID = id } label: {

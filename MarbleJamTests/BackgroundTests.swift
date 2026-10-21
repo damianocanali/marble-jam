@@ -67,11 +67,11 @@ final class BackgroundTests: XCTestCase {
         XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil))
     }
 
-    /// The bundled set: the 32 drawn ones keep their ids (players' saved choices stay valid), the artist's 7 come after,
-    /// and each holiday opens on the artist's own holiday background.
+    /// The bundled set: the 32 drawn ones keep their ids (players' saved choices stay valid), the artist's come after,
+    /// each holiday opens on the artist's own holiday background, and the rest of the year on the artist's Marble Track.
     func testBundledCatalogue() {
         let all = BackgroundLibrary.bundled
-        XCTAssertEqual(all.map(\.id).sorted(), (1...39).map { String(format: "bg-%02d", $0) })
+        XCTAssertEqual(all.map(\.id).sorted(), (1...40).map { String(format: "bg-%02d", $0) })
         XCTAssertEqual(all.first { $0.id == "bg-01" }?.name, "Dark Wood")
         XCTAssertEqual(all.first { $0.id == "bg-24" }?.name, "Pumpkin Patch")
         XCTAssertEqual(all.first { $0.id == "bg-32" }?.name, "Snowflakes")
@@ -80,10 +80,30 @@ final class BackgroundTests: XCTestCase {
             XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: season)?.name, name, season)
             XCTAssertEqual(all.filter { $0.season == season }.count, 4, season)
         }
-        XCTAssertEqual(all.filter { $0.season == nil }.count, 27)
+        XCTAssertEqual(all.filter { $0.season == nil }.count, 28)
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: nil)?.name, "Marble Track")
         for b in all {
             XCTAssertTrue(FileManager.default.fileExists(atPath: b.image.path), b.id)
             XCTAssertTrue(FileManager.default.fileExists(atPath: b.thumb.path), b.id)
         }
+    }
+
+    /// Off-season, a player who never picked a background sees the everyday one, listed first; picking the night sky still works.
+    func testEverydayBackgroundIsTheOffSeasonDefault() {
+        func bg(_ id: String, _ season: String? = nil) -> BackgroundOption {
+            BackgroundOption(id: id, name: id, image: URL(fileURLWithPath: "/\(id)"), thumb: URL(fileURLWithPath: "/\(id)-t"), tint: 0.4, season: season)
+        }
+        let all = [bg("pumpkin", "halloween"), bg("wood"), bg(BackgroundLibrary.everydayID)]
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: nil)?.id, BackgroundLibrary.everydayID)
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: "halloween")?.id, "pumpkin", "a holiday still opens on its own")
+        XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil), "the night sky on purpose")
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "wood", season: nil)?.id, "wood")
+        XCTAssertEqual(BackgroundLibrary.available(all, season: nil).map(\.id), [BackgroundLibrary.everydayID, "wood"])
+        XCTAssertEqual(BackgroundLibrary.available(all, season: "halloween").map(\.id), ["pumpkin", BackgroundLibrary.everydayID, "wood"])
+        // the picker ticks what is showing: the everyday default (never chose), not the night sky
+        XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: "", season: nil)), BackgroundLibrary.everydayID)
+        XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil)), BackgroundLibrary.nightID)
+        XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: nil)), BackgroundLibrary.nightID,
+                       "a holiday pick out of season shows the night sky, so that's what is ticked")
     }
 }
