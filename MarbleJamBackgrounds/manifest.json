@@ -283,5 +283,12 @@
     "luminance" : 0.253,
     "name" : "Neon Waves",
     "thumb" : "bg-39-thumb.jpg"
+  },
+  {
+    "id" : "bg-40",
+    "image" : "bg-40.jpg",
+    "luminance" : 0.627,
+    "name" : "Marble Track",
+    "thumb" : "bg-40-thumb.jpg"
   }
 ]

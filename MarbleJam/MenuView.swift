@@ -83,7 +83,7 @@ struct MenuView: View {
         .onChange(of: theme) { _, t in attract.marbleGlow = t.marbleGlow.uiColor }
         .onChange(of: skin.id) { _, _ in attract.skin = skin }
         .onChange(of: reduceMotion) { _, still in attract.animated = !still }
-        .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID) }
+        .sheet(isPresented: $picking) { BackgroundPicker(options: backgrounds, selectedID: $backgroundID, shown: background) }
     }
 
     private func menuButton(_ title: String, primary: Bool = false, action: @escaping () -> Void) -> some View {
