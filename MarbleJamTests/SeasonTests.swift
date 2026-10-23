@@ -86,4 +86,14 @@ final class SeasonTests: XCTestCase {
         XCTAssertNotNil(UIImage(named: byID["christmas"]!.titleArt), "Christmas artwork")
         XCTAssertNotNil(UIImage(named: byID["thanksgiving"]!.titleArt), "Thanksgiving artwork")
     }
+
+    func testTheNewHolidaysHaveTitleArt() {
+        let plain = UIImage(named: "Title")!
+        for id in ["newyear", "valentines", "stpatricks", "easter", "muertos"] {
+            let art = UIImage(named: "SeasonTitle-\(id)")
+            XCTAssertNotNil(art, id)
+            XCTAssertEqual(art?.size.width ?? 0, plain.size.width, accuracy: 1, "\(id): the greeting never widens the title")
+            XCTAssertGreaterThan(art?.size.height ?? 0, plain.size.height, "\(id): the greeting sits above the lettering")
+        }
+    }
 }

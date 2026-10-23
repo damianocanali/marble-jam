@@ -4,7 +4,7 @@
 // Run from the repo root:
 //   swift tools/make_title.swift                 → MarbleJam/Assets.xcassets/Title.imageset/Title.png
 //   swift tools/make_title.swift halloween       → MarbleJam/Assets.xcassets/SeasonTitle-halloween.imageset/Title.png
-//   (also thanksgiving, christmas)
+//   (also thanksgiving, christmas, newyear, valentines, stpatricks, easter, muertos)
 import CoreGraphics
 import CoreText
 import Foundation
@@ -27,6 +27,16 @@ let styles: [String: Style] = [                // holiday colours follow the art
                           greeting: "HAPPY THANKSGIVING", greetingColor: rgb(1, 0.86, 0.5)),
     "christmas": Style(top: rgb(1, 0.32, 0.3), bottom: rgb(0.76, 0.05, 0.1), shadow: rgb(0.05, 0.32, 0.14),
                        greeting: "MERRY CHRISTMAS", greetingColor: rgb(1, 1, 1)),
+    "newyear": Style(top: rgb(1, 0.88, 0.45), bottom: rgb(0.85, 0.62, 0.12), shadow: rgb(0.07, 0.1, 0.3),
+                     greeting: "HAPPY NEW YEAR", greetingColor: rgb(0.92, 0.93, 0.98)),
+    "valentines": Style(top: rgb(1, 0.6, 0.78), bottom: rgb(0.9, 0.2, 0.45), shadow: rgb(0.4, 0.05, 0.2),
+                        greeting: "HAPPY VALENTINE'S DAY", greetingColor: rgb(1, 0.85, 0.9)),
+    "stpatricks": Style(top: rgb(1, 0.84, 0.35), bottom: rgb(0.2, 0.7, 0.3), shadow: rgb(0.05, 0.25, 0.1),
+                        greeting: "HAPPY ST. PATRICK'S DAY", greetingColor: rgb(0.75, 1, 0.75)),
+    "easter": Style(top: rgb(1, 0.92, 0.55), bottom: rgb(0.62, 0.55, 1), shadow: rgb(0.25, 0.18, 0.45),
+                    greeting: "HAPPY EASTER", greetingColor: rgb(0.7, 0.95, 0.85)),
+    "muertos": Style(top: rgb(1, 0.75, 0.2), bottom: rgb(1, 0.3, 0.6), shadow: rgb(0.25, 0.05, 0.35),
+                     greeting: "DÍA DE LOS MUERTOS", greetingColor: rgb(0.4, 0.9, 0.85)),
 ]
 let season = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : ""
 guard let style = styles[season] else { print("unknown season \(season)"); exit(1) }
