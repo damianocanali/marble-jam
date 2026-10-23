@@ -11,6 +11,15 @@ final class SkinTests: XCTestCase {
         for season in Seasons.all { XCTAssertEqual(Skins.all.filter { $0.unlock == .holiday(season.id) }.count, 1, season.id) }
     }
 
+    func testEachNewHolidayHasARewardMarble() {
+        let expected = ["newyear": "Fireworks", "valentines": "Sweetheart", "stpatricks": "Four-Leaf Clover",
+                        "easter": "Easter Egg", "muertos": "Marigold"]
+        for (season, name) in expected {
+            let rewards = Skins.all.filter { $0.unlock == .holiday(season) }
+            XCTAssertEqual(rewards.map(\.name), [name], season)
+        }
+    }
+
     func testStarRewardsAreSpreadAndReachable() {
         let needs = Skins.all.compactMap { s -> Int? in if case let .stars(n) = s.unlock { n } else { nil } }
         XCTAssertEqual(needs, needs.sorted(), "listed in the order they're earned")

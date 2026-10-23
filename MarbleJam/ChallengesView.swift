@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The five worlds and their levels, with stars and locks. Tap an open level to play it.
+/// The five main worlds (and the live holiday's world, shown first) with their levels, stars and locks. Tap an open level to play it.
 struct ChallengesView: View {
     let progress: ChallengeProgress
     let background: BackgroundOption?

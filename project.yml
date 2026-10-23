@@ -29,7 +29,7 @@ targets:
         CODE_SIGN_STYLE: Automatic
         GENERATE_INFOPLIST_FILE: YES
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
-        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-halloween AppIcon-thanksgiving AppIcon-christmas"   # holiday icons, switched by AppIcons
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: "AppIcon-halloween AppIcon-thanksgiving AppIcon-christmas AppIcon-newyear AppIcon-valentines AppIcon-stpatricks AppIcon-easter AppIcon-muertos"   # holiday icons, switched by AppIcons
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
         INFOPLIST_KEY_UIRequiresFullScreen: YES                   # portrait-only on iPad must opt out of multitasking, or the upload is refused (ITMS-90474); deprecated in iOS 26, revisit with the iOS 27 SDK

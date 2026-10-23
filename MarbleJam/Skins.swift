@@ -44,6 +44,11 @@ enum Skins {
         Skin(id: "pumpkin", name: "Jack-o'-lantern", unlock: .holiday("halloween")) { c, s in pumpkin(c, s) },
         Skin(id: "leaf", name: "Autumn Leaf", unlock: .holiday("thanksgiving")) { c, s in autumn(c, s) },
         Skin(id: "snowglobe", name: "Snow Globe", unlock: .holiday("christmas")) { c, s in snowGlobe(c, s) },
+        Skin(id: "fireworks", name: "Fireworks", unlock: .holiday("newyear")) { c, s in fireworks(c, s) },
+        Skin(id: "sweetheart", name: "Sweetheart", unlock: .holiday("valentines")) { c, s in sweetheart(c, s) },
+        Skin(id: "clover", name: "Four-Leaf Clover", unlock: .holiday("stpatricks")) { c, s in clover(c, s) },
+        Skin(id: "easteregg", name: "Easter Egg", unlock: .holiday("easter")) { c, s in easterEgg(c, s) },
+        Skin(id: "marigold", name: "Marigold", unlock: .holiday("muertos")) { c, s in marigold(c, s) },
         // Glass Pack
         Skin(id: "catseye", name: "Cat's Eye", unlock: .pack("glass")) { c, s in glass(c, s, inner: (0.9, 0.97, 1), outer: (0.55, 0.75, 0.9)); catsEye(c, s) },
         Skin(id: "emerald", name: "Emerald Swirl", unlock: .pack("glass")) { c, s in glass(c, s, inner: (0.6, 1, 0.75), outer: (0, 0.45, 0.2)); swirl(c, s, (0.85, 1, 0.9), 0.7) },
@@ -393,5 +398,80 @@ enum Skins {
         c.setStrokeColor(col((0.05, 0.3, 0.05))); c.setLineWidth(s * 0.04); c.setLineCap(.round)
         c.move(to: CGPoint(x: s * 0.3, y: s * 0.62)); c.addQuadCurve(to: CGPoint(x: s * 0.7, y: s * 0.62), control: CGPoint(x: s * 0.5, y: s * 0.78)); c.strokePath()
         c.setFillColor(col((1, 0.55, 0.6), 0.6)); dot(c, s, 0.22, 0.6, 0.05); dot(c, s, 0.78, 0.6, 0.05)
+    }
+
+    /// A heart centred on (cx, cy), `w` wide, tip pointing down.
+    private static func heartPath(_ cx: CGFloat, _ cy: CGFloat, _ w: CGFloat) -> CGPath {
+        let p = CGMutablePath(), h = w * 0.9, tip = CGPoint(x: cx, y: cy + h * 0.45)
+        p.move(to: tip)
+        p.addCurve(to: CGPoint(x: cx - w * 0.5, y: cy - h * 0.1), control1: CGPoint(x: cx - w * 0.15, y: cy + h * 0.3), control2: CGPoint(x: cx - w * 0.5, y: cy + h * 0.15))
+        p.addCurve(to: CGPoint(x: cx, y: cy - h * 0.25), control1: CGPoint(x: cx - w * 0.5, y: cy - h * 0.45), control2: CGPoint(x: cx - w * 0.05, y: cy - h * 0.5))
+        p.addCurve(to: CGPoint(x: cx + w * 0.5, y: cy - h * 0.1), control1: CGPoint(x: cx + w * 0.05, y: cy - h * 0.5), control2: CGPoint(x: cx + w * 0.5, y: cy - h * 0.45))
+        p.addCurve(to: tip, control1: CGPoint(x: cx + w * 0.5, y: cy + h * 0.15), control2: CGPoint(x: cx + w * 0.15, y: cy + h * 0.3))
+        p.closeSubpath()
+        return p
+    }
+
+    private static func fireworks(_ c: CGContext, _ s: CGFloat) {
+        glass(c, s, inner: (0.2, 0.25, 0.55), outer: (0.02, 0.03, 0.15))
+        c.setLineCap(.round)
+        for (x, y, r, color) in [(0.35, 0.35, 0.22, (1.0, 0.82, 0.3)), (0.68, 0.45, 0.18, (1.0, 0.45, 0.7)), (0.45, 0.72, 0.16, (0.4, 0.9, 1.0))] as [(CGFloat, CGFloat, CGFloat, RGB)] {
+            c.setStrokeColor(col(color)); c.setLineWidth(s * 0.025)
+            for k in 0..<10 {
+                let a = CGFloat(k) * .pi / 5
+                c.move(to: CGPoint(x: s * x + cos(a) * s * r * 0.3, y: s * y + sin(a) * s * r * 0.3))
+                c.addLine(to: CGPoint(x: s * x + cos(a) * s * r, y: s * y + sin(a) * s * r))
+            }
+            c.strokePath()
+            c.setFillColor(col(color)); dot(c, s, x, y, 0.025)
+        }
+    }
+
+    private static func sweetheart(_ c: CGContext, _ s: CGFloat) {
+        glass(c, s, inner: (1, 0.75, 0.85), outer: (0.85, 0.2, 0.45))
+        c.addPath(heartPath(s / 2, s * 0.52, s * 0.56)); c.setFillColor(col((0.9, 0.05, 0.25))); c.fillPath()
+        c.addPath(heartPath(s * 0.42, s * 0.44, s * 0.14)); c.setFillColor(col((1, 0.85, 0.9), 0.8)); c.fillPath()
+        sparkle(c, s)
+    }
+
+    private static func clover(_ c: CGContext, _ s: CGFloat) {
+        glass(c, s, inner: (0.7, 1, 0.7), outer: (0.05, 0.45, 0.15))
+        c.setStrokeColor(col((0.05, 0.35, 0.1))); c.setLineWidth(s * 0.04); c.setLineCap(.round)
+        c.move(to: CGPoint(x: s / 2, y: s / 2)); c.addQuadCurve(to: CGPoint(x: s * 0.68, y: s * 0.9), control: CGPoint(x: s * 0.52, y: s * 0.75)); c.strokePath()
+        c.saveGState(); c.translateBy(x: s / 2, y: s / 2)
+        for k in 0..<4 {                                                   // four heart leaves, tips to the middle
+            c.saveGState(); c.rotate(by: CGFloat(k) * .pi / 2 + .pi / 4)
+            c.addPath(heartPath(0, -s * 0.17, s * 0.3)); c.setFillColor(col((0.15, 0.65, 0.25))); c.fillPath()
+            c.restoreGState()
+        }
+        c.restoreGState()
+        c.setFillColor(col((0.95, 0.8, 0.3))); dot(c, s, 0.5, 0.5, 0.03)
+    }
+
+    private static func easterEgg(_ c: CGContext, _ s: CGFloat) {
+        glass(c, s, inner: (0.95, 0.9, 1), outer: (0.65, 0.55, 0.95))
+        c.setLineWidth(s * 0.07); c.setLineJoin(.round)
+        for (y, color) in [(0.3, (1.0, 0.85, 0.35)), (0.5, (0.55, 0.9, 0.75)), (0.7, (1.0, 0.6, 0.75))] as [(CGFloat, RGB)] {
+            c.setStrokeColor(col(color))
+            c.move(to: CGPoint(x: 0, y: s * y))
+            for k in 1...8 { c.addLine(to: CGPoint(x: s * CGFloat(k) / 8, y: s * (y + (k % 2 == 0 ? 0 : 0.06)))) }
+            c.strokePath()
+        }
+        c.setFillColor(UIColor(white: 1, alpha: 0.9).cgColor)
+        for (x, y) in [(0.25, 0.4), (0.5, 0.4), (0.75, 0.4), (0.38, 0.6), (0.62, 0.6)] as [(CGFloat, CGFloat)] { dot(c, s, x, y, 0.025) }
+    }
+
+    private static func marigold(_ c: CGContext, _ s: CGFloat) {
+        glass(c, s, inner: (1, 0.85, 0.4), outer: (0.85, 0.35, 0.02))
+        c.saveGState(); c.translateBy(x: s / 2, y: s / 2)
+        for (ring, color, n) in [(0.3, (0.95, 0.45, 0.05), 14), (0.2, (1.0, 0.65, 0.1), 12), (0.11, (1.0, 0.82, 0.25), 10)] as [(CGFloat, RGB, Int)] {
+            for k in 0..<n {                                                // petals in rings, darker outside
+                c.saveGState(); c.rotate(by: CGFloat(k) * 2 * .pi / CGFloat(n) + ring)
+                c.addEllipse(in: CGRect(x: -s * 0.045, y: -s * ring - s * 0.06, width: s * 0.09, height: s * 0.14))
+                c.setFillColor(col(color)); c.fillPath(); c.restoreGState()
+            }
+        }
+        c.restoreGState()
+        c.setFillColor(col((0.55, 0.25, 0.05))); dot(c, s, 0.5, 0.5, 0.05)
     }
 }

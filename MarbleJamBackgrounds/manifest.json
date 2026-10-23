@@ -24,6 +24,46 @@
     "thumb" : "bg-35-thumb.jpg"
   },
   {
+    "id" : "bg-41",
+    "image" : "bg-41.jpg",
+    "luminance" : 0.55400000000000005,
+    "name" : "Love Track",
+    "season" : "valentines",
+    "thumb" : "bg-41-thumb.jpg"
+  },
+  {
+    "id" : "bg-42",
+    "image" : "bg-42.jpg",
+    "luminance" : 0.745,
+    "name" : "Spring Meadow",
+    "season" : "easter",
+    "thumb" : "bg-42-thumb.jpg"
+  },
+  {
+    "id" : "bg-43",
+    "image" : "bg-43.jpg",
+    "luminance" : 0.55600000000000005,
+    "name" : "Rainbow Hills",
+    "season" : "stpatricks",
+    "thumb" : "bg-43-thumb.jpg"
+  },
+  {
+    "id" : "bg-44",
+    "image" : "bg-44.jpg",
+    "luminance" : 0.34399999999999997,
+    "name" : "Fireworks",
+    "season" : "newyear",
+    "thumb" : "bg-44-thumb.jpg"
+  },
+  {
+    "id" : "bg-45",
+    "image" : "bg-45.jpg",
+    "luminance" : 0.33100000000000002,
+    "name" : "Marigold Path",
+    "season" : "muertos",
+    "thumb" : "bg-45-thumb.jpg"
+  },
+  {
     "id" : "bg-01",
     "image" : "bg-01.jpg",
     "luminance" : 0.28899999999999998,
