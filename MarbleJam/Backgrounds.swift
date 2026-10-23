@@ -38,13 +38,14 @@ enum BackgroundLibrary {
         return all.filter { $0.season != nil && $0.season == season } + year.filter { $0.id == everydayID } + year.filter { $0.id != everydayID }
     }
 
-    /// What to show: the player's choice if it is available now; with no choice, the season's first background, or off-season
-    /// the everyday one; nil means the night sky.
+    /// What to show: the player's choice if it is available now. With no choice — or a holiday pick that's out of season, or an
+    /// id this build doesn't have — the live season's first background, or off-season the everyday one. The pick isn't
+    /// forgotten: a Halloween pick shows again next Halloween. nil means the night sky (chosen on purpose, or nothing bundled).
     static func resolve(_ all: [BackgroundOption], chosenID: String, season: String?) -> BackgroundOption? {
         let now = available(all, season: season)
         if chosenID == nightID { return nil }
-        if chosenID.isEmpty { return season == nil ? now.first { $0.id == everydayID } : now.first { $0.season == season } }
-        return now.first { $0.id == chosenID }
+        if let chosen = now.first(where: { $0.id == chosenID }) { return chosen }
+        return season == nil ? now.first { $0.id == everydayID } : now.first { $0.season == season }
     }
 
     /// The picker's tick: the background on screen, or the night sky tile when there is none.

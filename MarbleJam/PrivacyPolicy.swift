@@ -1,9 +1,10 @@
 import Foundation
 
-/// The game's public web pages (GitHub Pages of the repo), also entered in App Store Connect.
+/// The game's public web pages and contact address, also entered in App Store Connect.
 enum AppLinks {
-    static let support = URL(string: "https://damianocanali.github.io/marble-jam/support/")!
-    static let privacy = URL(string: "https://damianocanali.github.io/marble-jam/privacy/")!
+    static let email = "support@marblebeats.com"
+    static let support = URL(string: "https://marblebeats.com/support/")!
+    static let privacy = URL(string: "https://marblebeats.com/privacy/")!
 }
 
 /// The privacy policy, shown inside the app (Account screen) so it can be read offline. The web page says the same.
@@ -36,6 +37,6 @@ enum PrivacyPolicy {
     If this policy ever changes, the new version will be in the app and on our website before the change takes effect.
 
     Questions
-    Visit \(AppLinks.support.absoluteString)
+    Email \(AppLinks.email), or visit \(AppLinks.support.absoluteString)
     """
 }
