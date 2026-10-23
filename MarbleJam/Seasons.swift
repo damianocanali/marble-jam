@@ -36,6 +36,14 @@ enum Seasons {
         return calendar.date(from: DateComponents(year: year, month: 11, day: firstThursday + 21))!
     }
 
+    /// Western (Gregorian) Easter Sunday, at the start of the day: the anonymous Gregorian algorithm (Meeus/Jones/Butcher).
+    static func easter(year y: Int, calendar: Calendar) -> Date {
+        let a = y % 19, b = y / 100, c = y % 100, d = b / 4, e = b % 4, f = (b + 8) / 25, g = (b - f + 1) / 3
+        let h = (19 * a + b - d - g + 15) % 30, i = c / 4, k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = (a + 11 * h + 22 * l) / 451
+        let n = h + l - 7 * m + 114
+        return calendar.date(from: DateComponents(year: y, month: n / 31, day: n % 31 + 1))!
+    }
+
     private static func date(_ y: Int, _ m: Int, _ d: Int, _ cal: Calendar) -> Date { cal.date(from: DateComponents(year: y, month: m, day: d))! }
 
     static let all: [Season] = [
@@ -46,7 +54,7 @@ enum Seasons {
                 (1, 9), (1, 8), (1, 9), (3, 8), (1, 7), (1.5, 6), (1.5, 5), (1, 4), (2, 5), (3, 9), (1, 8), (1, 9), (3, 8), (1, 7), (1, 6), (1, 5), (1, 4), (2, 5), (3, 9), (1, 8), (1, 7), (1, 6), (1, 5), (1, 4), (1, 3), (1, 2), (1, 1), (2, 2), (2, 5)]),
             SongRecipe(name: "Funeral March", instrument: .marimba, melody: [
                 (1, 5), (2, 5), (3, 5), (1, 5), (2, 7), (3, 6), (1, 6), (3, 5), (1, 5), (3, 4), (1, 5), (3, 5), (2, 5), (3, 5), (1, 5), (2, 7), (3, 6), (1, 6), (3, 5), (1.5, 5), (3, 4), (1, 5), (3, 9), (3, 8), (1, 7), (2, 6), (2, 5), (3, 4), (1, 5)]),
-        ], window: { y, cal in (date(y, 10, 1, cal), date(y, 11, 1, cal)) }),
+        ], window: { y, cal in (date(y, 10, 1, cal), date(y, 10, 31, cal)) }),
         Season(id: "thanksgiving", title: "Thanksgiving", emoji: "🦃", banner: "🦃 Happy Thanksgiving!", songs: [
             SongRecipe(name: "We Gather Together", instrument: .guitar, melody: [
                 (1, 11), (1, 11), (1.5, 12), (0.5, 11), (1, 9), (1.5, 10), (0.5, 11), (1, 10), (1.5, 9), (0.5, 8), (1, 9), (2, 7), (1.5, 11), (1, 11), (1.5, 12)]),
@@ -54,7 +62,7 @@ enum Seasons {
                 (1, 9), (3, 9), (1, 11), (2, 9), (2, 7), (2, 8), (2, 9), (3, 9), (3, 9), (1, 11), (2, 9), (2, 7), (2, 8), (2, 9), (3, 9), (3, 9), (1, 10), (2, 10), (2, 8), (3, 8), (1, 9), (3, 9), (2, 10), (2, 11), (2, 7), (2, 6), (2, 5), (2, 4), (3, 6), (3, 6), (1, 8), (2, 6), (2, 7), (2, 8), (2, 9), (3, 9), (3, 9), (1, 11), (2, 9), (2, 10), (2, 11), (2, 12), (3, 12), (3, 12), (1, 10), (2, 8), (2, 11), (3, 11), (1, 9), (3, 10), (2, 12), (2, 11), (2, 7), (2, 9), (2, 8), (2, 7)]),
             SongRecipe(name: "Simple Gifts", instrument: .guitar, melody: [
                 (1, 4), (1, 4), (1, 7), (1, 7), (1, 8), (1, 9), (1, 7), (1.5, 9), (0.5, 10), (1, 11), (1, 11), (1, 11), (1, 9), (1, 8), (1, 7)]),
-        ], window: { y, cal in (date(y, 11, 2, cal), cal.date(byAdding: .day, value: 1, to: thanksgiving(year: y, calendar: cal))!) }),
+        ], window: { y, cal in (date(y, 11, 8, cal), cal.date(byAdding: .day, value: 1, to: thanksgiving(year: y, calendar: cal))!) }),
         Season(id: "christmas", title: "Christmas", emoji: "🎄", banner: "🎄 Merry Christmas!", songs: [
             SongRecipe(name: "Jingle Bells", instrument: .bells, melody: [
                 (1, 9), (2, 9), (2, 9), (3, 9), (2, 9), (2, 9), (3, 9), (2, 11), (2, 7), (3, 8), (1, 9), (3, 10), (2, 10), (2, 10), (3, 10), (1, 10), (2, 9), (2, 9), (2, 9), (1, 9), (1, 9), (2, 8), (2, 8), (2, 9), (2, 8), (3, 11), (3, 9), (2, 9), (2, 9), (3, 9), (2, 9), (2, 9), (3, 9), (2, 11), (2, 7), (3, 8), (1, 9), (3, 10), (2, 10), (2, 10), (3, 10), (1, 10), (2, 9), (2, 9), (2, 9), (1, 9), (1, 11), (2, 11), (2, 10), (2, 8), (2, 7)]),
@@ -64,7 +72,19 @@ enum Seasons {
                 (1, 4), (2, 7), (2, 7), (1, 8), (1, 7), (1, 6), (1, 5), (2, 5), (2, 5), (2, 8), (2, 8), (1, 9), (1, 8), (1, 7), (1, 6), (2, 4), (2, 4), (2, 9), (2, 9), (1, 10), (1, 9), (1, 8), (1, 7), (2, 5), (2, 4), (1, 4), (1, 5), (2, 8), (2, 6), (2, 7)]),
             SongRecipe(name: "Silent Night", instrument: .bells, melody: [
                 (1, 4), (3, 5), (1, 4), (2, 2), (3, 4), (3, 5), (1, 4), (2, 2), (3, 8), (3, 8), (2, 6), (3, 7), (3, 7), (2, 4), (3, 5), (3, 5), (2, 7), (3, 6), (1, 5), (2, 4), (3, 5), (1, 4), (2, 2), (3, 5), (3, 5), (2, 7), (3, 6), (1, 5), (2, 4), (3, 5), (1, 4), (2, 2), (3, 8), (3, 8), (2, 10), (3, 8), (1, 6), (2, 7), (3, 9), (3, 7), (3, 4), (1, 2), (2, 4), (3, 3), (1, 1), (2, 0)]),
-        ], window: { y, cal in (date(y, 12, 1, cal), date(y + 1, 1, 6, cal)) }),
+        ], window: { y, cal in (date(y, 12, 1, cal), date(y, 12, 30, cal)) }),
+        Season(id: "newyear", title: "New Year's Eve", emoji: "🎆", banner: "🎆 Happy New Year!", songs: HolidaySongs.newYear,
+               window: { y, cal in (date(y, 12, 31, cal), date(y + 1, 1, 6, cal)) }),
+        Season(id: "valentines", title: "Valentine's Day", emoji: "💘", banner: "💘 Happy Valentine's Day!", songs: HolidaySongs.valentines,
+               window: { y, cal in (date(y, 2, 1, cal), date(y, 2, 14, cal)) }),
+        Season(id: "stpatricks", title: "St. Patrick's Day", emoji: "☘️", banner: "☘️ Happy St. Patrick's Day!", songs: HolidaySongs.stPatricks,
+               window: { y, cal in (date(y, 3, 1, cal), date(y, 3, 17, cal)) }),
+        Season(id: "easter", title: "Easter", emoji: "🐣", banner: "🐣 Happy Easter!", songs: HolidaySongs.easter, window: { y, cal in
+            let sunday = easter(year: y, calendar: cal)
+            return (max(cal.date(byAdding: .day, value: -14, to: sunday)!, date(y, 3, 18, cal)), cal.date(byAdding: .day, value: 1, to: sunday)!)
+        }),
+        Season(id: "muertos", title: "Día de los Muertos", emoji: "🌼", banner: "🌼 ¡Feliz Día de los Muertos!", songs: HolidaySongs.muertos,
+               window: { y, cal in (date(y, 11, 1, cal), date(y, 11, 7, cal)) }),
     ]
 
     /// The season whose window contains `date` (windows starting this year or, for ones crossing New Year, last year).
