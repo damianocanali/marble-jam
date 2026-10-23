@@ -59,19 +59,21 @@ struct MenuView: View {
                 menuButton("Account", action: onAccount)
             }
             #if DEBUG
-            VStack {                                                             // preview a holiday pack before its date (never in release builds)
-                Spacer()
-                HStack {
-                    Menu {
-                        Button("By date") { seasonPreview = "" }
-                        Button("Off-season") { seasonPreview = "off" }
-                        ForEach(Seasons.all) { s in Button("\(s.emoji) \(s.title)") { seasonPreview = s.id } }
-                    } label: { Text("Preview season").font(.system(size: 12, weight: .bold, design: .rounded)) }
-                    .menuStyle(.button).buttonStyle(Chip())
+            if !CaptureMode.current.isActive {                                       // hidden in captures (see CaptureMode)
+                VStack {                                                             // preview a holiday pack before its date (never in release builds)
                     Spacer()
+                    HStack {
+                        Menu {
+                            Button("By date") { seasonPreview = "" }
+                            Button("Off-season") { seasonPreview = "off" }
+                            ForEach(Seasons.all) { s in Button("\(s.emoji) \(s.title)") { seasonPreview = s.id } }
+                        } label: { Text("Preview season").font(.system(size: 12, weight: .bold, design: .rounded)) }
+                        .menuStyle(.button).buttonStyle(Chip())
+                        Spacer()
+                    }
                 }
+                .padding(12)
             }
-            .padding(12)
             #endif
             if let t = toast {
                 VStack { Spacer(); Toast(text: t).padding(.bottom, 12) }
