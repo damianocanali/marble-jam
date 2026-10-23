@@ -48,10 +48,16 @@ final class BackgroundTests: XCTestCase {
         XCTAssertEqual(BackgroundLibrary.available(all, season: nil).map(\.id), ["wood"])
     }
 
-    func testOffSeasonChoiceFallsBackToNight() {
-        let all = [opt("wood", nil), opt("pumpkin", "halloween")]
-        XCTAssertNil(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: nil))
-        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: "halloween")?.id, "pumpkin")
+    /// A holiday pick that's out of season shows what an empty pick would: the live holiday's background, or the everyday one.
+    /// The pick itself is kept, so it comes back by itself next time its holiday comes round.
+    func testAnExpiredHolidayPickFallsBackToTheDefault() {
+        let all = [opt("wood", nil), opt(BackgroundLibrary.everydayID, nil), opt("pumpkin", "halloween"), opt("marigold", "muertos")]
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: "muertos")?.id, "marigold", "the next holiday's own")
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: nil)?.id, BackgroundLibrary.everydayID, "off-season: everyday")
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: "halloween")?.id, "pumpkin", "back next Halloween")
+        XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "gone-in-an-update", season: nil)?.id, BackgroundLibrary.everydayID, "unknown ids too")
+        XCTAssertNil(BackgroundLibrary.resolve([opt("wood", nil), opt("pumpkin", "halloween")], chosenID: "pumpkin", season: nil),
+                     "no everyday background bundled: night sky")
     }
 
     func testNoChoiceUsesTheSeasonsBackground() {
@@ -113,7 +119,7 @@ final class BackgroundTests: XCTestCase {
         // the picker ticks what is showing: the everyday default (never chose), not the night sky
         XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: "", season: nil)), BackgroundLibrary.everydayID)
         XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: BackgroundLibrary.nightID, season: nil)), BackgroundLibrary.nightID)
-        XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: nil)), BackgroundLibrary.nightID,
-                       "a holiday pick out of season shows the night sky, so that's what is ticked")
+        XCTAssertEqual(BackgroundLibrary.shownID(BackgroundLibrary.resolve(all, chosenID: "pumpkin", season: nil)), BackgroundLibrary.everydayID,
+                       "a holiday pick out of season shows the everyday background, so that's what is ticked")
     }
 }

@@ -46,7 +46,9 @@ final class ReleaseTests: XCTestCase {
         for phrase in ["does not collect", "iCloud", "Game Center", "purchases", "children"] {
             XCTAssertTrue(text.localizedCaseInsensitiveContains(phrase), phrase)
         }
-        XCTAssertEqual(AppLinks.support.host, "damianocanali.github.io")
-        XCTAssertEqual(AppLinks.privacy.host, "damianocanali.github.io")
+        XCTAssertTrue(text.contains(AppLinks.email), "the policy gives the contact address")
+        XCTAssertEqual(AppLinks.email, "support@marblebeats.com")
+        XCTAssertEqual(AppLinks.support.absoluteString, "https://marblebeats.com/support/")
+        XCTAssertEqual(AppLinks.privacy.absoluteString, "https://marblebeats.com/privacy/")
     }
 }
