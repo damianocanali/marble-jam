@@ -48,3 +48,10 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 
 ## Next steps (not built yet)
 Login and store (Project B), easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
+
+## Releasing to the App Store
+- Settings that upload validation and review need are in `project.yml`: version 1.0 (raise `CURRENT_PROJECT_VERSION` for every upload), `UIRequiresFullScreen` (portrait-only iPad; deprecated in iOS 26, so add real landscape support before moving to the iOS 27 SDK), `ITSAppUsesNonExemptEncryption: NO`.
+- `MarbleJam/PrivacyInfo.xcprivacy`: no tracking, no collected data, UserDefaults for the app's own settings (CA92.1). Keep it in line with the App Privacy answers ("Data Not Collected").
+- The privacy policy is in the app (Account › Privacy policy, `PrivacyPolicy.swift`) and on the web (`AppLinks`).
+- `MarbleJam/Products.storekit` is for local testing only and is not shipped. App Store Connect needs the same 6 product ids, with descriptions of 45 characters or fewer.
+- Archive from this checkout: Product › Archive (Any iOS Device), then Distribute App › App Store Connect.

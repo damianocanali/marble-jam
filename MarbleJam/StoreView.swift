@@ -67,6 +67,9 @@ struct StoreView: View {
                     ForEach([store.failed, store.message].compactMap { $0 }, id: \.self) { line in
                         Text(line).font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted)
                     }
+                    if store.products.isEmpty, store.failed != nil {
+                        Button("Try again") { Task { await store.load() } }.buttonStyle(Chip())
+                    }
                 }
                 .padding(16)
             }
