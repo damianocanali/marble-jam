@@ -71,7 +71,7 @@ final class BackgroundTests: XCTestCase {
     /// each holiday opens on the artist's own holiday background, and the rest of the year on the artist's Marble Track.
     func testBundledCatalogue() {
         let all = BackgroundLibrary.bundled
-        XCTAssertEqual(all.map(\.id).sorted(), (1...40).map { String(format: "bg-%02d", $0) })
+        XCTAssertEqual(all.map(\.id).sorted(), (1...45).map { String(format: "bg-%02d", $0) })
         XCTAssertEqual(all.first { $0.id == "bg-01" }?.name, "Dark Wood")
         XCTAssertEqual(all.first { $0.id == "bg-24" }?.name, "Pumpkin Patch")
         XCTAssertEqual(all.first { $0.id == "bg-32" }?.name, "Snowflakes")
@@ -85,6 +85,16 @@ final class BackgroundTests: XCTestCase {
         for b in all {
             XCTAssertTrue(FileManager.default.fileExists(atPath: b.image.path), b.id)
             XCTAssertTrue(FileManager.default.fileExists(atPath: b.thumb.path), b.id)
+        }
+    }
+
+    func testTheNewHolidaysOpenOnTheirOwnBackground() {
+        let all = BackgroundLibrary.bundled
+        let defaults = ["valentines": "Love Track", "easter": "Spring Meadow", "stpatricks": "Rainbow Hills",
+                        "newyear": "Fireworks", "muertos": "Marigold Path"]
+        for (season, name) in defaults {
+            XCTAssertEqual(all.filter { $0.season == season }.count, 1, season)
+            XCTAssertEqual(BackgroundLibrary.resolve(all, chosenID: "", season: season)?.name, name, season)
         }
     }
 

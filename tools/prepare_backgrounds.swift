@@ -67,7 +67,7 @@ for (i, (dir, name)) in art.enumerated() {
     writeJPEG(full, "\(outDir)/\(id).jpg", quality: 0.82)
     writeJPEG(render(img, TW, TH), "\(outDir)/\(id)-thumb.jpg", quality: 0.8)
     let words = ((name as NSString).deletingPathExtension).split(separator: "-").drop { Int($0) != nil }
-    let seasons: Set<Substring> = ["halloween", "thanksgiving", "christmas"]
+    let seasons: Set<Substring> = ["halloween", "thanksgiving", "christmas", "newyear", "valentines", "stpatricks", "easter", "muertos"]
     var parts = Array(words)
     let season = parts.first.flatMap { seasons.contains($0) ? String($0) : nil }
     if season != nil { parts.removeFirst() }
