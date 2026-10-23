@@ -29,6 +29,21 @@ struct Theme: Equatable {
         case "christmas":
             Theme(primary: hex(0xD63A3A), primaryText: hex(0xFFFFFF), chipFill: hex(0x0F3A26), chipStroke: hex(0xE8C45A),
                   chipStrokeOpacity: 0.5, accent: hex(0xE8C45A), marbleGlow: hex(0xFFE08A))
+        case "newyear":            // navy night, gold and silver
+            Theme(primary: hex(0xF5C542), primaryText: hex(0x0B1030), chipFill: hex(0x121A4A), chipStroke: hex(0xF5C542),
+                  chipStrokeOpacity: 0.45, accent: hex(0xFFD86B), marbleGlow: hex(0xFFE9A8))
+        case "valentines":         // pink and rose
+            Theme(primary: hex(0xFF5C8A), primaryText: hex(0x2A0012), chipFill: hex(0x4A1030), chipStroke: hex(0xFF9EC0),
+                  chipStrokeOpacity: 0.45, accent: hex(0xFF9EC0), marbleGlow: hex(0xFFB3CC))
+        case "stpatricks":         // shamrock green and gold
+            Theme(primary: hex(0x2FBF5A), primaryText: hex(0x062010), chipFill: hex(0x0F3A1E), chipStroke: hex(0xF2C94C),
+                  chipStrokeOpacity: 0.45, accent: hex(0xF2C94C), marbleGlow: hex(0x8CF2A6))
+        case "easter":             // lavender, mint and butter yellow
+            Theme(primary: hex(0xB89CFF), primaryText: hex(0x1E0F3D), chipFill: hex(0x2E2350), chipStroke: hex(0xFFE08A),
+                  chipStrokeOpacity: 0.45, accent: hex(0x8FE3C8), marbleGlow: hex(0xFFD1E8))
+        case "muertos":            // marigold, magenta and turquoise papel picado on purple
+            Theme(primary: hex(0xFFA620), primaryText: hex(0x2A0E00), chipFill: hex(0x3A1450), chipStroke: hex(0xFF4FA3),
+                  chipStrokeOpacity: 0.45, accent: hex(0x3FD7C8), marbleGlow: hex(0xFFC04D))
         default: .standard
         }
     }

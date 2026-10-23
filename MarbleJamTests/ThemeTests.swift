@@ -4,13 +4,21 @@ import XCTest
 final class ThemeTests: XCTestCase {
     func testNoSeasonOrUnknownIsTheStandardLook() {
         XCTAssertEqual(Theme.forSeason(nil), .standard)
-        XCTAssertEqual(Theme.forSeason("easter"), .standard)
+        XCTAssertEqual(Theme.forSeason("summer"), .standard)
     }
 
     func testEachHolidayHasItsOwnLook() {
         let looks = Seasons.all.map { Theme.forSeason($0.id) }
         XCTAssertFalse(looks.contains(.standard))
         XCTAssertEqual(Set(looks.map(\.primary)).count, looks.count, "every holiday has its own main colour")
+    }
+
+    func testTheNewHolidaysHaveTheirOwnReadableLook() {
+        let ids = ["newyear", "valentines", "stpatricks", "easter", "muertos"]
+        let looks = (["halloween", "thanksgiving", "christmas"] + ids).map { Theme.forSeason($0) }
+        XCTAssertFalse(looks.contains(.standard))
+        XCTAssertEqual(Set(looks.map(\.primary)).count, looks.count, "every holiday has its own main colour")
+        for t in looks { XCTAssertGreaterThanOrEqual(Theme.contrast(t.primary, t.primaryText), 4.5, "\(t.primary)") }
     }
 
     func testMainButtonTextIsReadable() {
