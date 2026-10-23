@@ -38,4 +38,10 @@ final class AppIconTests: XCTestCase {
     func testEveryHolidayIconIsBundled() {
         for season in Seasons.all { XCTAssertTrue(AppIcons.available.contains("AppIcon-\(season.id)"), season.id) }
     }
+
+    func testTheNewHolidayIconsAreBundled() {
+        for id in ["newyear", "valentines", "stpatricks", "easter", "muertos"] {
+            XCTAssertTrue(AppIcons.available.contains("AppIcon-\(id)"), id)
+        }
+    }
 }
