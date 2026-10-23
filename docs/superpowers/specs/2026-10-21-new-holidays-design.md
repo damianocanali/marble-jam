@@ -45,15 +45,16 @@ Banners: "🎆 Happy New Year!", "💘 Happy Valentine's Day!", "☘️ Happy St
 
 | Holiday | Songs |
 |---|---|
-| New Year's Eve | Auld Lang Syne · The Blue Danube (Strauss II) · Radetzky March (Strauss I) |
-| Valentine's Day | Plaisir d'amour (Martini, 1784) · Let Me Call You Sweetheart (Friedman, 1910) · Aura Lee (1861; replaces Für Elise, whose opening needs the black key D♯) |
+| New Year's Eve | Auld Lang Syne · The Blue Danube (Strauss II) · Ode to Joy (Beethoven; replaces Radetzky March, whose theme needs ten pitch classes, the bars have seven) |
+| Valentine's Day | Plaisir d'amour (Martini, 1784) · Drink to Me Only with Thine Eyes (traditional English, 18th c.; replaces Let Me Call You Sweetheart, which needs a black key in every transposition) · Aura Lee (1861; replaces Für Elise, whose opening needs the black key D♯) |
 | St. Patrick's Day | Molly Malone · The Irish Washerwoman · Londonderry Air |
 | Easter | Hot Cross Buns · Christ the Lord Is Risen Today (Easter Hymn, 1708) · Spring (Vivaldi, The Four Seasons) |
-| Día de los Muertos | La Llorona · Cielito Lindo (Mendoza, 1882) · La Bamba (traditional son jarocho) |
+| Día de los Muertos | La Llorona · Cielito Lindo (Mendoza, 1882) · Las Mañanitas (traditional Mexican; replaces La Bamba, whose best-known version is the 1958 recording) |
 
 Each melody is transcribed from a published public-domain score (source noted in the code), kept within the bars' range
 (C4…C6, white keys; transposed where needed) and fitted so every note lands on the beat (`testSongbookTunesAreAllOnTheBeat`
-covers every season's songs). Avoided as still under copyright: "Here Comes Peter Cottontail", "Easter Parade".
+covers every season's songs). Where the engine could not lay a pad out at the score's spacing, that note's beats were lengthened
+to the next allowed value (the Task 1 commit lists each change). Avoided as still under copyright: "Here Comes Peter Cottontail", "Easter Parade".
 
 ## Challenge worlds
 
