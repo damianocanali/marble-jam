@@ -79,6 +79,7 @@ struct AccountView: View {
     let background: BackgroundOption?
     let onBack: () -> Void
     @State private var iCloudOn = FileManager.default.ubiquityIdentityToken != nil
+    @State private var readingPolicy = false
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
 
@@ -117,11 +118,19 @@ struct AccountView: View {
                         Button("Restore purchases") { Task { await store.restore() } }.buttonStyle(Chip())
                         if let m = store.message ?? store.failed { line(m) }
                     }
+                    card("Privacy & help", icon: "hand.raised") {
+                        line("Marble Beats doesn't collect any personal information.")
+                        HStack(spacing: 10) {
+                            Button("Privacy policy") { readingPolicy = true }.buttonStyle(Chip())
+                            Link("Help & support", destination: AppLinks.support).buttonStyle(Chip())
+                        }
+                    }
                 }
                 .padding(16)
             }
         }
         .background { Backdrop(option: background) }
+        .sheet(isPresented: $readingPolicy) { PolicySheet() }
         .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in
             iCloudOn = FileManager.default.ubiquityIdentityToken != nil
         }
@@ -140,5 +149,24 @@ struct AccountView: View {
         .padding(16)
         .background(Color.black.opacity(0.45), in: RoundedRectangle(cornerRadius: 18))
         .overlay(RoundedRectangle(cornerRadius: 18).stroke(Color.white.opacity(0.15)))
+    }
+}
+
+/// The privacy policy, readable inside the app (no link out needed).
+private struct PolicySheet: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Updated \(PrivacyPolicy.updated)").font(.footnote).foregroundStyle(.secondary)
+                    Text(PrivacyPolicy.text).font(.body)
+                }
+                .padding(20)
+            }
+            .navigationTitle("Privacy Policy")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Done") { dismiss() } } }
+        }
     }
 }
