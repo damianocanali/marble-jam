@@ -41,7 +41,7 @@ Banners: "🎆 Happy New Year!", "💘 Happy Valentine's Day!", "☘️ Happy St
 - **Backgrounds:** bg-41 … bg-45, tagged with the holiday (`NN-<id>-name.jpg` in art/backgrounds-artist), so each holiday opens
   on the artist's background. bg-40 (Marble Track, the everyday background) lands first.
 
-## Songs (holiday shelf, 3 each, all public domain)
+## Songs (holiday shelf, 3 each, all public domain or traditional)
 
 | Holiday | Songs |
 |---|---|
@@ -49,12 +49,24 @@ Banners: "🎆 Happy New Year!", "💘 Happy Valentine's Day!", "☘️ Happy St
 | Valentine's Day | Plaisir d'amour (Martini, 1784) · Drink to Me Only with Thine Eyes (traditional English, 18th c.; replaces Let Me Call You Sweetheart, which needs a black key in every transposition) · Aura Lee (1861; replaces Für Elise, whose opening needs the black key D♯) |
 | St. Patrick's Day | Molly Malone · The Irish Washerwoman · Londonderry Air |
 | Easter | Hot Cross Buns · Christ the Lord Is Risen Today (Easter Hymn, 1708) · Spring (Vivaldi, The Four Seasons) |
-| Día de los Muertos | La Llorona · Cielito Lindo (Mendoza, 1882) · Las Mañanitas (traditional Mexican; replaces La Bamba, whose best-known version is the 1958 recording) |
+| Día de los Muertos | La Llorona · Cielito Lindo (Mendoza, 1882) · Las Mañanitas (traditional Mexican; replaces La Bamba, see below) |
 
-Each melody is transcribed from a published public-domain score (source noted in the code), kept within the bars' range
-(C4…C6, white keys; transposed where needed) and fitted so every note lands on the beat (`testSongbookTunesAreAllOnTheBeat`
-covers every season's songs). Where the engine could not lay a pad out at the score's spacing, that note's beats were lengthened
-to the next allowed value (the Task 1 commit lists each change). Avoided as still under copyright: "Here Comes Peter Cottontail", "Easter Parade".
+Substitutions. The plan pre-approved Ode to Joy for Radetzky March and Beautiful Dreamer for Let Me Call You Sweetheart;
+Beautiful Dreamer also needs a black key, so Drink to Me Only took that slot by a ruling in the SDD ledger. For La Bamba the plan's
+pre-approved substitute was La Cucaracha, but that ruling replaced the plan's chain: La Bamba's best-known version is the 1958
+recording (still in copyright) and it could not be transcribed, so the ruling chose Las Golondrinas (Serradell, 1862) as a farewell
+song that suits the holiday, then Las Mañanitas when Las Golondrinas turned out to need a black key (A, B♭, B, C in a row in both
+IMSLP editions). La Cucaracha was not tried; swapping it in later is one recipe.
+
+Each melody is transcribed from a published score of a public-domain or traditional tune (source noted in the code), kept within
+the bars' range (C4…C6, white keys; transposed where needed) and fitted so every note lands on the beat
+(`testSongbookTunesAreAllOnTheBeat` covers every season's songs). Where the engine could not lay a pad out at the score's spacing,
+that note's beats were lengthened to the next allowed value (the Task 1 commit lists each change). Other departures from the scores
+(octave moves, rounded rhythms, capped holds, sections left out) are listed per song under "Departures" in the code comments. Three
+tunes rest on being traditional or 19th-century rather than on a pre-1930 score, and say so beside their recipe: Molly Malone (published
+in 1876; the ABC read is a 1974 copy), La Llorona (traditional, earliest prints 1935-36; read from a modern ABC export) and Las Mañanitas
+(traditional, authorship disputed; read from a Wikipedia score and a 2024 CC0 edition). Avoided as still under copyright: "Here Comes
+Peter Cottontail", "Easter Parade".
 
 ## Challenge worlds
 
