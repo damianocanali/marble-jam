@@ -63,7 +63,23 @@ final class ChallengeTests: XCTestCase {
             XCTAssertTrue(levels.allSatisfy { $0.world > 5 }, "holiday worlds come after the main five")
         }
         XCTAssertEqual(Challenges.all.count, 30, "the main worlds are unchanged")
-        XCTAssertEqual(Set(Challenges.everything.map(\.id)).count, 48)
+        XCTAssertEqual(Set(Challenges.everything.map(\.id)).count, 78)
+    }
+
+    func testTheNewHolidaysEachHaveASixLevelWorld() {
+        let worlds = ["newyear": 9, "valentines": 10, "stpatricks": 11, "easter": 12, "muertos": 13]
+        for (id, w) in worlds {
+            XCTAssertEqual(Challenges.holidayWorlds[id], w, id)
+            let levels = Challenges.holiday.filter { $0.season == id }
+            XCTAssertEqual(levels.map(\.number), Array(1...6), id)
+            XCTAssertTrue(levels.allSatisfy { $0.world == w }, id)
+            XCTAssertEqual(Challenges.holidayIDs(id), (1...6).map { "w\(w)-\($0)" })
+            let first = levels.first { $0.number == 1 }!
+            XCTAssertLessThanOrEqual(first.tray.count, 1, id)
+            XCTAssertLessThanOrEqual(first.solution.pads.count, 10, id)
+        }
+        XCTAssertEqual(Challenges.worldNames.count, 13)
+        XCTAssertEqual(Challenges.worldNames.last, "🌼 Día de los Muertos")
     }
 
     /// Easier at the start: the first levels of a world put missing pieces right beside their spot, already tilted;

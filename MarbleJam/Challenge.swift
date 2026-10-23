@@ -61,13 +61,16 @@ struct Challenge: Identifiable {
 
 /// The 30 levels in 5 worlds.
 enum Challenges {
-    static let worldNames = ["First Notes", "Fix It", "Bullseye", "Ramps", "Maestro", "🎃 Halloween", "🦃 Thanksgiving", "🎄 Christmas"]
+    static let worldNames = ["First Notes", "Fix It", "Bullseye", "Ramps", "Maestro", "🎃 Halloween", "🦃 Thanksgiving", "🎄 Christmas",
+                             "🎆 New Year", "💘 Valentine's", "☘️ St. Patrick's", "🐣 Easter", "🌼 Día de los Muertos"]
 
-    /// Holiday worlds (6: Halloween, 7: Thanksgiving, 8: Christmas), built from the holiday songs; shown only during the holiday.
+    /// Holiday worlds (6: Halloween, 7: Thanksgiving, 8: Christmas, 9: New Year, 10: Valentine's, 11: St. Patrick's, 12: Easter,
+    /// 13: Día de los Muertos), built from the holiday songs; shown only during the holiday.
     static let holiday: [Challenge] = {
         let h = Seasons.all[0].songs, t = Seasons.all[1].songs, x = Seasons.all[2].songs
         let king = h[0], toccata = h[1], funeral = h[2], gather = t[0], comeYe = t[1], gifts = t[2]
         let jingle = x[0], deck = x[1], wish = x[2], silent = x[3]
+        let ny = HolidaySongs.newYear, va = HolidaySongs.valentines, sp = HolidaySongs.stPatricks, ea = HolidaySongs.easter, mu = HolidaySongs.muertos
         return [
             melody(6, 1, king, notes: 8, remove: [4], season: "halloween", hint: .near),
             fix(6, 2, toccata, notes: 14, loose: [2, 6, 10], season: "halloween", spread: 0.6),
@@ -87,12 +90,43 @@ enum Challenges {
             melody(8, 4, deck, notes: 17, remove: [3, 7, 12, 15], season: "christmas", hint: .mirrored),
             fix(8, 5, silent, notes: 20, loose: [3, 8, 13, 17], season: "christmas"),
             target(8, 6, jingle, base: 6, pieces: [.ramp, .bar, .ramp], season: "christmas"),
+            melody(9, 1, ny[0], notes: 8, remove: [4], season: "newyear", hint: .near),
+            fix(9, 2, ny[1], notes: 15, loose: [3, 8, 12], season: "newyear", spread: 0.6),
+            target(9, 3, ny[2], base: 5, pieces: [.bar, .bar], season: "newyear", hint: .mirrored),
+            melody(9, 4, ny[1], notes: 16, remove: [3, 7, 12], season: "newyear", hint: .mirrored),
+            fix(9, 5, ny[2], notes: 20, loose: [3, 8, 13, 17], season: "newyear"),
+            target(9, 6, ny[0], base: 6, pieces: [.ramp, .bar], season: "newyear"),
+            melody(10, 1, va[0], notes: 8, remove: [4], season: "valentines", hint: .near),
+            fix(10, 2, va[1], notes: 15, loose: [3, 8, 12], season: "valentines", spread: 0.6),
+            target(10, 3, va[2], base: 5, pieces: [.bar, .bar], season: "valentines", hint: .mirrored),
+            melody(10, 4, va[1], notes: 16, remove: [3, 7, 12], season: "valentines", hint: .mirrored),
+            fix(10, 5, va[2], notes: 20, loose: [3, 8, 13, 17], season: "valentines"),
+            target(10, 6, va[0], base: 6, pieces: [.ramp, .bar], season: "valentines"),
+            melody(11, 1, sp[0], notes: 8, remove: [4], season: "stpatricks", hint: .near),
+            fix(11, 2, sp[1], notes: 15, loose: [3, 8, 12], season: "stpatricks", spread: 0.6),
+            target(11, 3, sp[2], base: 5, pieces: [.bar, .bar], season: "stpatricks", hint: .mirrored),
+            melody(11, 4, sp[1], notes: 16, remove: [3, 7, 12], season: "stpatricks", hint: .mirrored),
+            fix(11, 5, sp[2], notes: 20, loose: [3, 8, 13, 17], season: "stpatricks"),
+            target(11, 6, sp[0], base: 5, pieces: [.ramp, .bar], season: "stpatricks"),
+            melody(12, 1, ea[0], notes: 8, remove: [4], season: "easter", hint: .near),          // Hot Cross Buns
+            fix(12, 2, ea[1], notes: 15, loose: [3, 8, 12], season: "easter", spread: 0.6),
+            target(12, 3, ea[0], base: 5, pieces: [.bar, .bar], season: "easter", hint: .mirrored),
+            melody(12, 4, ea[2], notes: 16, remove: [3, 7, 12], season: "easter", hint: .mirrored),
+            fix(12, 5, ea[1], notes: 20, loose: [3, 8, 13, 17], season: "easter"),
+            target(12, 6, ea[2], base: 7, pieces: [.ramp, .bar], season: "easter"),
+            melody(13, 1, mu[0], notes: 8, remove: [4], season: "muertos", hint: .near),
+            fix(13, 2, mu[1], notes: 15, loose: [3, 8, 12], season: "muertos", spread: 0.6),
+            target(13, 3, mu[2], base: 5, pieces: [.bar, .bar], season: "muertos", hint: .mirrored),
+            melody(13, 4, mu[1], notes: 16, remove: [3, 7, 12], season: "muertos", hint: .mirrored),
+            fix(13, 5, mu[2], notes: 20, loose: [3, 8, 13, 17], season: "muertos"),
+            target(13, 6, mu[0], base: 6, pieces: [.ramp, .bar], season: "muertos"),
         ]
     }()
 
     /// Level ids without building any level (building runs the engine many times): stars can be counted from these at launch.
     static let mainIDs: [String] = (1...5).flatMap { w in (1...6).map { "w\(w)-\($0)" } }
-    static let holidayWorlds = ["halloween": 6, "thanksgiving": 7, "christmas": 8]
+    static let holidayWorlds = ["halloween": 6, "thanksgiving": 7, "christmas": 8, "newyear": 9, "valentines": 10, "stpatricks": 11,
+                                "easter": 12, "muertos": 13]
     static func holidayIDs(_ season: String) -> [String] { holidayWorlds[season].map { w in (1...6).map { "w\(w)-\($0)" } } ?? [] }
 
     /// Main and holiday levels together (for lookups and tests).
