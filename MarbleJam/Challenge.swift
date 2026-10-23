@@ -59,7 +59,7 @@ struct Challenge: Identifiable {
     }
 }
 
-/// The 30 levels in 5 worlds.
+/// The 78 levels in 13 worlds: 30 in the five main worlds (`all`) and 48 in the eight holiday worlds (`holiday`).
 enum Challenges {
     static let worldNames = ["First Notes", "Fix It", "Bullseye", "Ramps", "Maestro", "🎃 Halloween", "🦃 Thanksgiving", "🎄 Christmas",
                              "🎆 New Year", "💘 Valentine's", "☘️ St. Patrick's", "🐣 Easter", "🌼 Día de los Muertos"]

@@ -29,7 +29,7 @@ struct Theme: Equatable {
         case "christmas":
             Theme(primary: hex(0xD63A3A), primaryText: hex(0xFFFFFF), chipFill: hex(0x0F3A26), chipStroke: hex(0xE8C45A),
                   chipStrokeOpacity: 0.5, accent: hex(0xE8C45A), marbleGlow: hex(0xFFE08A))
-        case "newyear":            // navy night, gold and silver
+        case "newyear":            // navy night and gold
             Theme(primary: hex(0xF5C542), primaryText: hex(0x0B1030), chipFill: hex(0x121A4A), chipStroke: hex(0xF5C542),
                   chipStrokeOpacity: 0.45, accent: hex(0xFFD86B), marbleGlow: hex(0xFFE9A8))
         case "valentines":         // pink and rose

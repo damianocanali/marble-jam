@@ -47,6 +47,7 @@ final class SeasonTests: XCTestCase {
     func testEasterSunday() {
         let known = [(2024, 3, 31), (2025, 4, 20), (2026, 4, 5), (2027, 3, 28), (2028, 4, 16), (2038, 4, 25), (2285, 3, 22)]
         for (y, m, d) in known { XCTAssertEqual(Seasons.easter(year: y, calendar: cal), day(y, m, d, hour: 0), "\(y)") }
+        XCTAssertNil(season(2026, 3, 21, hour: 23))                             // 2026: the day before the window opens
         XCTAssertEqual(season(2026, 3, 22, hour: 0), "easter")                  // 2026: two weeks before Apr 5
         XCTAssertEqual(season(2026, 4, 6, hour: 23), "easter")                  // Easter Monday
         XCTAssertNil(season(2026, 4, 7))

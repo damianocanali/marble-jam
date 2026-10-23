@@ -36,11 +36,12 @@ enum HolidaySongs {
             (1.5, 7), (1, 7)]),
     ]
     static let valentines: [SongRecipe] = [
-        // Plaisir d'amour (Martini, first published 1785; the refrain, F major moved up a fifth to C)
+        // Plaisir d'amour (Martini, composed 1784, published 1785; the refrain, F major moved up a fifth to C)
         // Leduc edition, Paris 1918: https://commons.wikimedia.org/wiki/File:Plaisir_d%27amour._Paroles_de_Florian._Musique_de_J.-P._Martini_-_bpt6k889731m_(4_of_8).jpg
         // Departures: one statement of the refrain only; two 2.5-beat gaps are rounded (#5 up to 3, #12 down to 2, so 'Chagrin'
-        // is back on its beat); the four 32nd-note gaps of the run on 'vie' (#24-27, each 0.125 beat) are 0.5 beat each, so the
-        // run lasts 1.5 beats longer than written.
+        // is back on its beat); the four 32nd-note gaps of the run on 'vie' (#24-27, each 0.125 beat) are 0.5 beat each before
+        // fitting (1.5 beats longer than written); fitting then lengthened #24 and #27 to 1, so as shipped (1, 0.5, 0.5, 1) the
+        // run lasts 2.5 beats longer than written.
         SongRecipe(name: "Plaisir d'amour", instrument: .piano, melody: [
             (1, 4), (1, 7), (1.5, 8), (1.5, 9), (3, 9), (1, 10), (1.5, 10), (1, 9), (0.5, 8), (0.5, 9), (1, 8), (2, 4),
             (1, 5), (1.5, 6), (1.5, 7), (0.5, 8), (0.5, 9), (0.5, 5), (1.5, 8), (1, 10), (1, 9), (1.5, 8), (0.5, 9), (1, 8),
@@ -91,7 +92,8 @@ enum HolidaySongs {
         // Londonderry Air (Petrie, 1855; the second strain, E-flat major moved up a step to F)
         // https://en.wikipedia.org/wiki/Londonderry_Air
         // Departures: the second strain only (the first needs a black key); the 2.5-beat gap after 'snow' (G4, #22) is 3 beats
-        // (#23 C5 comes 3 after it); every other beats value is the score's own.
+        // (#23 C5 comes 3 after it); before fitting, every other beats value is the score's own (fitting then lengthened 31 of the
+        // 46 notes, as the header's commit message lists).
         SongRecipe(name: "Londonderry Air", instrument: .guitar, melody: [
             (1, 7), (1, 8), (1, 9), (1, 10), (1.5, 9), (1, 9), (1, 8), (1, 7), (1, 5), (1, 7), (1, 5), (1, 3),
             (1.5, 7), (1, 8), (0.5, 9), (0.5, 10), (1.5, 9), (0.5, 9), (1, 8), (0.5, 7), (1, 5), (1, 4), (3, 7), (1, 7),

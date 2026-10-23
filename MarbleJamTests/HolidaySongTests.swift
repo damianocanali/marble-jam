@@ -16,10 +16,12 @@ final class HolidaySongTests: XCTestCase {
         }
     }
 
-    func testCompleteSongs() {
+    func testCompleteSongs() throws {
         for r in HolidaySongs.all where r.name != "Hot Cross Buns" {
             XCTAssertGreaterThanOrEqual(r.melody.count, 25, "\(r.name) is only its opening phrase")
         }
+        let buns = try XCTUnwrap(HolidaySongs.easter.first { $0.name == "Hot Cross Buns" })
+        XCTAssertEqual(buns.melody.count, 17, "Hot Cross Buns is the whole song: E D C twice, C C C C D D D D, E D C")
     }
 
     func testEveryHolidaySongPlaysOnTheBeat() {
