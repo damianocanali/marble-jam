@@ -68,8 +68,16 @@ enum Seasons {
                 (1, 9), (2, 9), (2, 9), (3, 9), (2, 9), (2, 9), (3, 9), (2, 11), (2, 7), (3, 8), (1, 9), (3, 10), (2, 10), (2, 10), (3, 10), (1, 10), (2, 9), (2, 9), (2, 9), (1, 9), (1, 9), (2, 8), (2, 8), (2, 9), (2, 8), (3, 11), (3, 9), (2, 9), (2, 9), (3, 9), (2, 9), (2, 9), (3, 9), (2, 11), (2, 7), (3, 8), (1, 9), (3, 10), (2, 10), (2, 10), (3, 10), (1, 10), (2, 9), (2, 9), (2, 9), (1, 9), (1, 11), (2, 11), (2, 10), (2, 8), (2, 7)]),
             SongRecipe(name: "Deck the Halls", instrument: .bells, melody: [
                 (1, 11), (3, 10), (1, 9), (2, 8), (2, 7), (2, 8), (2, 9), (2, 7), (2, 8), (1, 9), (1, 10), (1, 8), (1, 9), (3, 8), (1, 7), (2, 6), (2, 7), (3, 11), (3, 10), (1, 9), (2, 8), (2, 7), (2, 8), (2, 9), (2, 7), (2, 8), (1, 9), (1, 10), (1, 8), (1, 9), (3, 8), (1, 7), (2, 6), (2, 7), (3, 8), (3, 9), (1, 10), (2, 8), (2, 9), (3, 10), (1, 11), (2, 8), (2, 9), (1, 10), (1, 11), (2, 9), (1, 10), (1, 11), (2, 12), (1, 13), (1, 14), (2, 13), (2, 12), (2, 11), (3, 11), (3, 10), (1, 9), (2, 8), (2, 7), (2, 8), (2, 9), (2, 7), (2, 12), (1, 12), (1, 12), (1, 11), (1, 10), (3, 9), (1, 8), (2, 7)]),
-            SongRecipe(name: "We Wish You a Merry Christmas", instrument: .bells, melody: [
-                (1, 4), (2, 7), (2, 7), (1, 8), (1, 7), (1, 6), (1, 5), (2, 5), (2, 5), (2, 8), (2, 8), (1, 9), (1, 8), (1, 7), (1, 6), (2, 4), (2, 4), (2, 9), (2, 9), (1, 10), (1, 9), (1, 8), (1, 7), (2, 5), (2, 4), (1, 4), (1, 5), (2, 8), (2, 6), (2, 7)]),
+            // O Christmas Tree (traditional German, the 'Lauriger Horatius' tune; the whole tune, G major moved up a fourth to C;
+            // replaces We Wish You a Merry Christmas, see the Rights notes in docs/superpowers/specs/2026-10-21-new-holidays-design.md)
+            // Score: Marzo, Fifty Christmas Carols of All Nations (Cincinnati: Willis, 1923), p. 22 - https://archive.org/details/uclamusic_9921601523606533
+            // checked against Bantock, One Hundred Folksongs of All Nations (Ditson, 1911), no. 34 - https://archive.org/details/onehundredfolkso00bant
+            // Public domain: an anonymous German folk tune, in print with music by 1843 (https://de.wikipedia.org/wiki/O_Tannenbaum);
+            // both scores read are themselves pre-1931 US prints.
+            // Departures: 1 beat is an eighth (the dotted-eighth + sixteenth figure is exact); the eighth rest in bar 4 is folded into
+            // the gap before #16 (3); fitting lengthened #8 (0.5 to 1 to 1.5) and #35 (0.5 to 1).
+            SongRecipe(name: "O Christmas Tree", instrument: .bells, melody: [
+                (1, 4), (2, 7), (1.5, 7), (0.5, 7), (2, 8), (2, 9), (1.5, 9), (1.5, 9), (3, 9), (1, 8), (1, 9), (1, 10), (2, 6), (2, 8), (2, 7), (3, 11), (1, 11), (1, 9), (1, 12), (3, 11), (1, 11), (1, 10), (1, 10), (3, 10), (1, 10), (1, 8), (1, 11), (3, 10), (1, 10), (1, 9), (1, 9), (2, 4), (2, 7), (1.5, 7), (1, 7), (2, 8), (2, 9), (1.5, 9), (0.5, 9), (3, 9), (1, 8), (1, 9), (1, 10), (2, 6), (2, 8), (2, 7)]),
             SongRecipe(name: "Silent Night", instrument: .bells, melody: [
                 (1, 4), (3, 5), (1, 4), (2, 2), (3, 4), (3, 5), (1, 4), (2, 2), (3, 8), (3, 8), (2, 6), (3, 7), (3, 7), (2, 4), (3, 5), (3, 5), (2, 7), (3, 6), (1, 5), (2, 4), (3, 5), (1, 4), (2, 2), (3, 5), (3, 5), (2, 7), (3, 6), (1, 5), (2, 4), (3, 5), (1, 4), (2, 2), (3, 8), (3, 8), (2, 10), (3, 8), (1, 6), (2, 7), (3, 9), (3, 7), (3, 4), (1, 2), (2, 4), (3, 3), (1, 1), (2, 0)]),
         ], window: { y, cal in (date(y, 12, 1, cal), date(y, 12, 30, cal)) }),
