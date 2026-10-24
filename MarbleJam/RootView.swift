@@ -2,7 +2,7 @@ import SwiftUI
 
 /// Menu → My Songs → builder. Owns the song store and the one GameModel.
 struct RootView: View {
-    enum Screen { case menu, library, play, challenges, store, account }
+    enum Screen: String { case menu, library, play, challenges, store, account }
     @State private var store: SongStore
     @State private var model: GameModel                 // not observed here: ContentView observes it, so the scene is not rebuilt per change
     @State private var screen = Screen.menu
@@ -13,6 +13,9 @@ struct RootView: View {
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
+        #if DEBUG
+        if let id = CaptureMode.current.skin { return Skins.skin(id) }          // captures may show any marble
+        #endif
         let s = Skins.skin(skinID)
         return Skins.isOwned(s, stars: progress.mainStars(), holidaysDone: progress.holidaysDone(), purchased: shop.purchased) ? s : Skins.classic
     }
@@ -21,18 +24,32 @@ struct RootView: View {
     @AppStorage("season.preview") private var seasonPreview = ""        // DEBUG builds only (see MenuView); "" = by date
     private var season: Season? {
         #if DEBUG
-        Seasons.current(on: Date(), preview: seasonPreview)
+        Seasons.current(on: Date(), preview: CaptureMode.current.season ?? seasonPreview)
         #else
         Seasons.current(on: Date(), preview: "")
         #endif
     }
     private var backgrounds: [BackgroundOption] { BackgroundLibrary.available(BackgroundLibrary.bundled, season: season?.id) }
-    private var background: BackgroundOption? { BackgroundLibrary.resolve(BackgroundLibrary.bundled, chosenID: backgroundID, season: season?.id) }
+    private var background: BackgroundOption? {
+        #if DEBUG
+        let chosen = CaptureMode.current.background ?? backgroundID
+        #else
+        let chosen = backgroundID
+        #endif
+        return BackgroundLibrary.resolve(BackgroundLibrary.bundled, chosenID: chosen, season: season?.id)
+    }
 
     init() {
         let s = SongStore(folder: SongStore.appFolder())
         _store = State(initialValue: s)
-        _model = State(initialValue: GameModel(store: s))
+        let m = GameModel(store: s)
+        #if DEBUG
+        if let open = CaptureMode.current.screen {                          // captures: straight to a screen, the builder with a fresh demo
+            _screen = State(initialValue: open)
+            if open == .play { m.open(s.resetDemo()) }
+        }
+        #endif
+        _model = State(initialValue: m)
     }
 
     var body: some View {
@@ -81,6 +98,13 @@ struct RootView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)) { _ in pullFromCloud() }
         .onChange(of: skinID) { _, id in NSUbiquitousKeyValueStore.default.set(id, forKey: "skin.v1") }
+        #if DEBUG
+        .task {                                                             // captures: press Drop after the delay asked for
+            guard let delay = CaptureMode.current.autoPlay, screen == .play else { return }
+            try? await Task.sleep(for: .seconds(delay))
+            if screen == .play, !model.playing { model.start() }
+        }
+        #endif
     }
 
     /// iCloud: stars and the chosen marble through the key-value store, songs through the app's iCloud Drive folder.
