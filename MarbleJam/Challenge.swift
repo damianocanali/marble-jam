@@ -119,7 +119,7 @@ enum Challenges {
             target(13, 3, mu[2], base: 5, pieces: [.bar, .bar], season: "muertos", hint: .mirrored),
             melody(13, 4, mu[1], notes: 16, remove: [3, 7, 12], season: "muertos", hint: .mirrored),
             fix(13, 5, mu[2], notes: 20, loose: [3, 8, 13, 17], season: "muertos"),
-            target(13, 6, mu[0], base: 7, pieces: [.ramp, .bar], season: "muertos"),             // La Cucaracha: at base 6 the bar has no spot
+            target(13, 6, mu[0], base: 6, pieces: [.ramp, .bar], season: "muertos"),
         ]
     }()
 

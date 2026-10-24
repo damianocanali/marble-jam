@@ -5,8 +5,8 @@ import Foundation
 /// notes differ from that score apart from the transposition. Note numbers count from 1, and "beats" is the gap before a note.
 /// Where Engine.smartAdd could not lay out a pad at the score's spacing, that note's beats were lengthened to the next allowed
 /// value; the messages of the commits "Songs for the five new holidays" and "Swap four holiday songs whose rights are unclear"
-/// list each of those, and they are not repeated below. Why each song is safe to use: the Rights notes in
-/// docs/superpowers/specs/2026-10-21-new-holidays-design.md.
+/// list each of those, and they are not repeated below (La Cucaracha, re-timed since, lists its own in its Departures). Why
+/// each song is safe to use: the Rights notes in docs/superpowers/specs/2026-10-21-new-holidays-design.md.
 enum HolidaySongs {
     static let newYear: [SongRecipe] = [
         // Auld Lang Syne (verse and chorus, F major score moved up a fifth to C) - https://en.wikipedia.org/wiki/Auld_Lang_Syne
@@ -143,15 +143,19 @@ enum HolidaySongs {
         // Public domain: traditional, no known author; named in a novel of 1819, verses printed in 1883, printed with music in the
         // US in 1927 (https://en.wikipedia.org/wiki/La_Cucaracha); the edition read is CC0. Spanish in origin, not the expression of
         // one Indigenous or Afro-Mexican community.
-        // Departures: none before fitting (the chorus is not sung again after the verse); where the 1927 print differs (chorus bar
-        // 3, verse bar 3, dotted eighths in chorus bars 1 and 5) the anthology is followed; fitting lengthened 33 of the 66 notes.
+        // Departures: 1 beat is an eighth (every value doubled, so the eighths, quarters and the dotted quarter are exact); the
+        // half notes are held 3 eighths, not 4 (#11, #28, #43, #51 and #59 come 3 after them), and the dotted half that ends the
+        // chorus 3, not 6 (#35); fitting lengthened 4 of the 66 notes, the gaps before #20, #21, #23 and #26 from 1 to 1.5 (the
+        // eighths #19, #20, #22 and #25, in bars 4-5, are held a dotted eighth); the chorus is not sung again after the verse;
+        // where the 1927 print differs (chorus bar 3, verse bar 3, dotted eighths in chorus bars 1 and 5) the anthology is
+        // followed.
         SongRecipe(name: "La Cucaracha", instrument: .guitar, melody: [
-            (1, 4), (1, 4), (1, 4), (1, 7), (1, 9), (1, 4), (1, 4), (1, 4), (1, 7), (1, 9), (2, 7), (0.5, 7),
-            (1, 6), (0.5, 6), (1, 5), (1, 5), (1, 4), (1.5, 4), (1, 4), (1, 4), (1, 6), (1, 8), (1, 4), (1, 4),
-            (1, 4), (1, 6), (1, 8), (2, 11), (0.5, 12), (1, 11), (0.5, 10), (0.5, 9), (1, 8), (0.5, 7), (3, 4), (1, 4),
-            (1, 7), (1, 7), (1, 9), (1, 9), (1, 11), (1, 9), (2, 11), (0.5, 12), (1, 11), (0.5, 10), (0.5, 9), (1, 11),
-            (0.5, 10), (1, 8), (2, 4), (0.5, 4), (0.5, 6), (1, 6), (0.5, 8), (0.5, 8), (0.5, 10), (1, 8), (2, 11), (0.5, 12),
-            (1, 11), (0.5, 10), (1, 9), (1, 8), (1, 9), (1, 7)]),
+            (1, 4), (1, 4), (1, 4), (1, 7), (2, 9), (1, 4), (1, 4), (1, 4), (1, 7), (2, 9), (3, 7), (1, 7),
+            (1, 6), (1, 6), (1, 5), (1, 5), (1, 4), (3, 4), (1, 4), (1.5, 4), (1.5, 6), (2, 8), (1.5, 4), (1, 4),
+            (1, 4), (1.5, 6), (2, 8), (3, 11), (1, 12), (1, 11), (1, 10), (1, 9), (1, 8), (1, 7), (3, 4), (1, 4),
+            (1, 7), (1, 7), (1, 9), (1, 9), (1, 11), (2, 9), (3, 11), (1, 12), (1, 11), (1, 10), (1, 9), (1, 11),
+            (1, 10), (2, 8), (3, 4), (1, 4), (1, 6), (1, 6), (1, 8), (1, 8), (1, 10), (2, 8), (3, 11), (1, 12),
+            (1, 11), (1, 10), (1, 9), (1, 8), (1, 9), (2, 7)]),
         // La Paloma (Yradier, c. 1860; the refrain, C major as printed; replaces Cielito Lindo)
         // Score: 'Original edition', Boston, Ditson?, ca. 1885 (IMSLP PMLP100689) - https://imslp.org/wiki/La_paloma_(Yradier,_Sebasti%C3%A1n)
         // (read from its mirror https://archive.org/details/imslp-paloma-yradier-sebastin), checked against White, Smith & Co.'s
