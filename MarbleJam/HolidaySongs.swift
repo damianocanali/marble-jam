@@ -4,7 +4,9 @@ import Foundation
 /// for the note and beat format). Each recipe names the score it was taken from and lists its "Departures": every way the
 /// notes differ from that score apart from the transposition. Note numbers count from 1, and "beats" is the gap before a note.
 /// Where Engine.smartAdd could not lay out a pad at the score's spacing, that note's beats were lengthened to the next allowed
-/// value; the message of the commit "Songs for the five new holidays" lists each of those, and they are not repeated below.
+/// value; the messages of the commits "Songs for the five new holidays" and "Swap four holiday songs whose rights are unclear"
+/// list each of those, and they are not repeated below. Why each song is safe to use: the Rights notes in
+/// docs/superpowers/specs/2026-10-21-new-holidays-design.md.
 enum HolidaySongs {
     static let newYear: [SongRecipe] = [
         // Auld Lang Syne (verse and chorus, F major score moved up a fifth to C) - https://en.wikipedia.org/wiki/Auld_Lang_Syne
@@ -134,38 +136,51 @@ enum HolidaySongs {
             (1, 8), (1, 7)]),
     ]
     static let muertos: [SongRecipe] = [
-        // La Llorona (traditional; the first couplet tune, D minor moved up to A minor)
-        // https://github.com/baobach/abc_search/blob/main/database/abc/QmVxmDt9pfR6yVSK4FK38kehyaVvEoHJ5UZHcC636wwaAr.abc
-        // Basis: a traditional tune of unknown authorship whose earliest prints are from 1935-36; no pre-1930 printed score was
-        // found, so the notes are read from a modern MuseScore export (ABC) of the bare tune, checked against a LilyPond lead sheet.
-        // Departures: the first couplet tune only (the second needs a black key); the ABC's rhythm is followed (the lead sheet has
-        // a plainer one for the same pitches), so the second pass has E5 A5 G5 (#21-23) where the first has E5 E5 (#4-5); the
-        // 5-beat gap (half note D5 plus a whole-bar rest) before #18 is 3 beats.
-        SongRecipe(name: "La Llorona", instrument: .guitar, melody: [
-            (1, 9), (1.5, 9), (0.5, 9), (1, 9), (2, 9), (1, 11), (1, 10), (1.5, 9), (0.5, 11), (1, 10), (2, 9), (1.5, 9),
-            (1, 9), (1, 10), (2, 9), (1, 9), (1, 8), (3, 9), (1.5, 9), (0.5, 9), (1, 9), (1, 12), (1.5, 11), (0.5, 11),
-            (1, 10), (1.5, 9), (0.5, 11), (1, 10), (2, 9), (1.5, 9), (1, 9), (1, 10), (2, 9), (1.5, 9), (1, 8)]),
-        // Cielito Lindo (Mendoza, 1882; the refrain, C major as printed) - https://imslp.org/wiki/Cielito_lindo_(Fernandez,_C.)
-        // Departures: five gaps longer than 3 beats are 3: the 6-beat A4s on 'thine' and 'pines' (#5 and #31 come 3 after them),
-        // the 4-beat C5s on 'lover' and 'discover' (#10 and #36 come 3 after them) and the 3-beat 'hover' plus two quarter rests,
-        // 5 beats in all (#27 comes 3 after it).
-        SongRecipe(name: "Cielito Lindo", instrument: .guitar, melody: [
-            (1, 9), (3, 8), (2, 7), (1, 5), (3, 8), (3, 8), (2, 7), (1, 9), (1.5, 7), (3, 4), (1, 5), (2, 4),
-            (1, 5), (2, 4), (1, 10), (1, 10), (1, 8), (1, 6), (2, 4), (1, 5), (2, 4), (1, 3), (2, 4), (1, 2),
-            (1, 1), (1, 0), (3, 9), (3, 8), (2, 7), (1.5, 5), (3, 8), (3, 8), (2, 7), (1, 9), (1, 7), (3, 4),
-            (1, 5), (2, 4), (1, 5), (2, 4), (1, 10), (1, 10), (1, 8), (1, 6), (2, 4), (1, 5), (2, 4), (1, 3),
-            (1, 3), (1, 4), (1, 2), (1, 1), (1, 0)]),
-        // Las Mañanitas (traditional Mexican; the first strophe, A major moved up a third to C; stands in for La Bamba, see the spec)
-        // https://en.wikipedia.org/wiki/Las_Ma%C3%B1anitas
-        // Basis: a traditional tune of disputed authorship (Esparza Oteo, Ponce and Manzo are all credited, none died before 1931);
-        // the scores read are a Wikipedia LilyPond score and a 2024 CC0 edition, and no pre-1930 printed edition was found.
-        // Departures: the first strophe only (pickup and 16 bars; the second section in Ponce's edition is left out); none in rhythm.
-        SongRecipe(name: "Las Mañanitas", instrument: .guitar, melody: [
-            (1, 4), (1, 4), (1, 7), (1.5, 7), (1, 6), (1, 7), (1, 8), (1.5, 6), (0.5, 7), (1, 8), (1, 9), (1.5, 7),
-            (1, 8), (1, 9), (0.5, 10), (2, 10), (1.5, 10), (1, 9), (1.5, 8), (1, 7), (0.5, 6), (1, 8), (1, 7), (1, 6),
-            (1, 7), (1, 8), (1, 9), (1, 10), (1, 8), (1, 7), (2, 9), (1, 8), (1, 6), (0.5, 6), (1, 7), (1, 8),
-            (1, 9), (1, 7), (1, 9), (1, 8), (1, 6), (1, 6), (1, 7), (1, 8), (1, 9), (2, 7), (0.5, 7), (1, 10),
-            (1.5, 10), (0.5, 11), (0.5, 10), (1, 9), (1, 7), (0.5, 6), (1, 7), (0.5, 8), (0.5, 9), (1, 10), (1, 8), (1, 7)]),
+        // La Cucaracha (traditional; the chorus and the verse, F major moved up a fifth to C; replaces La Llorona)
+        // Score: The Public Domain Song Anthology (Berger and Israels, Aperio, 2020, CC0 1.0), p. 175 - https://doi.org/10.32881/book2
+        // (its MusicXML: https://dataverse.lib.virginia.edu/api/access/datafile/3681), checked against Sandburg, The American
+        // Songbag (1927), pp. 289-291 - https://archive.org/details/americansongbag00sandb
+        // Public domain: traditional, no known author; named in a novel of 1819, verses printed in 1883, printed with music in the
+        // US in 1927 (https://en.wikipedia.org/wiki/La_Cucaracha); the edition read is CC0. Spanish in origin, not the expression of
+        // one Indigenous or Afro-Mexican community.
+        // Departures: none before fitting (the chorus is not sung again after the verse); where the 1927 print differs (chorus bar
+        // 3, verse bar 3, dotted eighths in chorus bars 1 and 5) the anthology is followed; fitting lengthened 33 of the 66 notes.
+        SongRecipe(name: "La Cucaracha", instrument: .guitar, melody: [
+            (1, 4), (1, 4), (1, 4), (1, 7), (1, 9), (1, 4), (1, 4), (1, 4), (1, 7), (1, 9), (2, 7), (0.5, 7),
+            (1, 6), (0.5, 6), (1, 5), (1, 5), (1, 4), (1.5, 4), (1, 4), (1, 4), (1, 6), (1, 8), (1, 4), (1, 4),
+            (1, 4), (1, 6), (1, 8), (2, 11), (0.5, 12), (1, 11), (0.5, 10), (0.5, 9), (1, 8), (0.5, 7), (3, 4), (1, 4),
+            (1, 7), (1, 7), (1, 9), (1, 9), (1, 11), (1, 9), (2, 11), (0.5, 12), (1, 11), (0.5, 10), (0.5, 9), (1, 11),
+            (0.5, 10), (1, 8), (2, 4), (0.5, 4), (0.5, 6), (1, 6), (0.5, 8), (0.5, 8), (0.5, 10), (1, 8), (2, 11), (0.5, 12),
+            (1, 11), (0.5, 10), (1, 9), (1, 8), (1, 9), (1, 7)]),
+        // La Paloma (Yradier, c. 1860; the refrain, C major as printed; replaces Cielito Lindo)
+        // Score: 'Original edition', Boston, Ditson?, ca. 1885 (IMSLP PMLP100689) - https://imslp.org/wiki/La_paloma_(Yradier,_Sebasti%C3%A1n)
+        // (read from its mirror https://archive.org/details/imslp-paloma-yradier-sebastin), checked against White, Smith & Co.'s
+        // Artists' Vocal Album (1878/1887) - https://archive.org/details/artistsvocalalbu00bost
+        // Public domain: Sebastián Iradier (Yradier) died in 1865 (https://en.wikipedia.org/wiki/Sebasti%C3%A1n_Iradier), so even
+        // Mexico's life + 100 ended in 1965.
+        // Departures: 1 beat is a triplet eighth (a quarter is 3), so the triplets are exact; the sixteenth pair G4 F4 (#24-25 and
+        // #49-50) is 0.5 + 1 (F4 comes a quarter of a beat early); the 10.5-beat holds on G4 and E4 are 3 (#13, #26 and #38 come 3
+        // after them); the refrain only (the chorus '¡Ay! chinita que sí' needs F sharp); fitting lengthened 4 of the 50 notes.
+        SongRecipe(name: "La Paloma", instrument: .guitar, melody: [
+            (1, 7), (1, 7), (1, 7), (1, 7), (1.5, 6), (1.5, 8), (1, 8), (1, 7), (1, 6), (1.5, 5), (1.5, 5), (1.5, 4),
+            (3, 6), (1, 6), (1, 6), (1, 6), (1.5, 5), (1.5, 5), (1, 4), (1, 4), (1, 4), (1.5, 5), (1.5, 4), (1, 3),
+            (1, 2), (3, 7), (1, 7), (1.5, 7), (1.5, 7), (1.5, 6), (1.5, 8), (1, 8), (1, 7), (1, 6), (1.5, 5), (1.5, 5),
+            (1.5, 4), (3, 6), (1, 6), (1, 6), (1, 6), (1.5, 5), (1.5, 5), (1, 4), (1, 4), (1, 4), (1.5, 5), (1.5, 4),
+            (1, 3), (1, 2)]),
+        // Mambrú se fue a la guerra (traditional French 'Malbrough s'en va-t-en guerre'; one stanza, G major moved up a fourth to C;
+        // replaces Las Mañanitas)
+        // Score: Chansons de France pour les petits Français (Weckerlin; Paris: Plon-Nourrit, c. 1900), pp. 17-18
+        // https://archive.org/details/chansonsdefrance00weck , checked against Chants et chansons populaires de la France (Paris:
+        // Garnier, 1848) - https://archive.org/details/chantsetchansons03unse
+        // Public domain: anonymous, made after Malplaquet (1709) and famous from 1781; the tune of For He's a Jolly Good Fellow
+        // (https://en.wikipedia.org/wiki/Marlbrough_s%27en_va-t-en_guerre).
+        // Departures: 1 beat is an eighth (Weckerlin's dotted pairs are exact); the 5-eighth gaps before #30 and #36 are 3; part A
+        // is not played again after part B (the print's D.C. al Fine); fitting lengthened 6 of the 41 notes.
+        SongRecipe(name: "Mambrú se fue a la guerra", instrument: .guitar, melody: [
+            (1, 4), (1, 9), (2, 9), (1, 9), (2, 8), (1, 10), (3, 9), (1.5, 10), (1, 9), (1, 8), (2, 8), (1, 8),
+            (1.5, 7), (0.5, 8), (1, 9), (3, 7), (2, 4), (1.5, 9), (2, 9), (1, 9), (2, 8), (1.5, 10), (3, 9), (2, 11),
+            (1.5, 9), (2, 7), (1, 8), (2, 6), (1.5, 7), (3, 11), (1, 11), (2, 9), (1, 12), (2, 12), (1.5, 11), (3, 11),
+            (1, 11), (2, 9), (1, 12), (2, 12), (1, 11)]),
     ]
 
     static var all: [SongRecipe] { newYear + valentines + stPatricks + easter + muertos }
