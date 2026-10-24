@@ -18,6 +18,9 @@ enum AppIcons {
 
     /// Switches only when the icon should change, so iOS's "You have changed the icon" notice appears just at a holiday's start and end.
     @MainActor static func update(for season: String?) {
+        #if DEBUG
+        if CaptureMode.current.isActive { return }          // captures keep the icon they have, so no alert covers the screen
+        #endif
         let app = UIApplication.shared
         guard app.supportsAlternateIcons else { return }
         let wanted = name(for: season, available: available)
