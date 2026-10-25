@@ -9,6 +9,7 @@ struct RootView: View {
     @State private var progress = ChallengeProgress(cloud: NSUbiquitousKeyValueStore.default)
     @StateObject private var shop = Store()
     @StateObject private var gameCenter = GameCenter()
+    @State private var music = MenuMusic()
     @State private var syncTick = 0                       // bumped after iCloud brings in songs or stars, so screens re-read them
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
@@ -86,7 +87,10 @@ struct RootView: View {
         .environment(\.theme, Theme.forSeason(season?.id))
         .environment(\.marbleSkin, skin)
         .task { await shop.refreshPurchases() }
+        .onAppear { updateMusic() }
+        .onChange(of: screen) { _, _ in updateMusic() }
         .onChange(of: phase) { _, p in
+            updateMusic()
             guard p == .active else { return }
             AppIcons.update(for: season?.id)                    // holiday icon on when it starts, off when it ends
             syncSongs()
@@ -105,6 +109,14 @@ struct RootView: View {
             if screen == .play, !model.playing { model.start() }
         }
         #endif
+    }
+
+    /// The menu song plays only while the menu is open and the app is in front; captures stay silent.
+    private func updateMusic() {
+        #if DEBUG
+        if CaptureMode.current.isActive { return }
+        #endif
+        if screen == .menu && phase == .active { music.start() } else { music.stop() }
     }
 
     /// iCloud: stars and the chosen marble through the key-value store, songs through the app's iCloud Drive folder.

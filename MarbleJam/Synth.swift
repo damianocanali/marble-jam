@@ -8,13 +8,15 @@ final class Synth {
     private var voices: [Voice] = []
     private let lock = NSLock()
     private var clock = 0.0                 // seconds rendered so far
+    private var fade: (start: Double, length: Double)?           // fading out: silent from start + length on
     private(set) var sampleRate = 44100.0
 
     var isAudioSetUp: Bool { engine != nil }
     private let audioAllowed: Bool
+    private let ambient: Bool                                    // background music: follows the silent switch
     private var wallClockStart: CFTimeInterval?                  // set when sound can't start: the song is timed by a plain clock
 
-    init(audio: Bool = true) { audioAllowed = audio }
+    init(audio: Bool = true, ambient: Bool = false) { audioAllowed = audio; self.ambient = ambient }
 
     private func setUpAudio() {
         let engine = AVAudioEngine()
@@ -31,7 +33,7 @@ final class Synth {
             let t0 = self.clock
             self.clock += Double(frameCount) / rate
             self.voices.removeAll { t0 > $0.start + Double($0.samples.count) / rate }
-            let vs = self.voices
+            let vs = self.voices, fade = self.fade
             self.lock.unlock()
             for f in 0..<Int(frameCount) {
                 let t = t0 + Double(f) / rate
@@ -40,6 +42,7 @@ final class Synth {
                     let i = Int((t - v.start) * rate)
                     if i >= 0 && i < v.samples.count { s += Double(v.samples[i]) * v.gain * 1.3 }
                 }
+                if let fade { s *= max(0, 1 - (t - fade.start) / fade.length) }
                 let out = Float(tanh(s * 0.6))
                 for b in buffers { b.mData?.assumingMemoryBound(to: Float.self)[f] = out }
             }
@@ -54,11 +57,24 @@ final class Synth {
 
     func start() {
         guard audioAllowed else { if wallClockStart == nil { wallClockStart = CACurrentMediaTime() }; return }
-        try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
+        try? AVAudioSession.sharedInstance().setCategory(ambient ? .ambient : .playback, options: ambient ? [] : [.mixWithOthers])
         try? AVAudioSession.sharedInstance().setActive(true)
         if engine == nil { setUpAudio() }
         if let engine, !engine.isRunning { try? engine.start() }
         if engine?.isRunning != true, wallClockStart == nil { wallClockStart = CACurrentMediaTime() }   // no sound, but the marble still plays
+    }
+
+    /// Stops rendering until the next `start()`; the clock waits too.
+    func pause() { engine?.pause() }
+
+    /// Fades everything playing or queued down to silence over `seconds`.
+    func fadeOut(over seconds: Double) {
+        lock.lock(); fade = (clock, seconds); lock.unlock()
+    }
+
+    /// Drops every queued note and any fade, for a fresh start.
+    func reset() {
+        lock.lock(); voices = []; fade = nil; lock.unlock()
     }
 
     /// Current time on the audio clock, in seconds.
