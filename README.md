@@ -46,9 +46,6 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `AppIcons.swift`   holiday app icons, switched automatically. To add one: make an `AppIcon-<holiday>` app icon set in `Assets.xcassets` (1024 px, no transparency; `tools/icon_from_art.swift` prepares it) and add its name to `ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES` in `project.yml`
 - `art/`              the logo, drawn by `swift tools/make_logo.swift` into `art/MarbleBeats.png`, and its fonts (Luckiest Guy: Apache 2.0; Noto Music: OFL; licences next to them). Don't run `tools/icon_from_art.swift` on it unless you want the drawn logo as the app icon
 
-## Next steps (not built yet)
-Login and store (Project B), easy mode, multiple marbles, challenge levels, store (stars + paid packs via StoreKit 2, parental gate).
-
 ## Releasing to the App Store
 - Settings that upload validation and review need are in `project.yml`: version 1.0 (raise `CURRENT_PROJECT_VERSION` for every upload), `UIRequiresFullScreen` (portrait-only iPad; deprecated in iOS 26, so add real landscape support before moving to the iOS 27 SDK), `ITSAppUsesNonExemptEncryption: NO`.
 - `MarbleJam/PrivacyInfo.xcprivacy`: no tracking, no collected data, UserDefaults for the app's own settings (CA92.1). Keep it in line with the App Privacy answers ("Data Not Collected").

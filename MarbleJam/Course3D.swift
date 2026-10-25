@@ -1,8 +1,8 @@
 import SceneKit
 import SwiftUI
 
-/// The 3D room behind the 2D layer: a warm wall, a spot light with soft shadows, brass pieces hanging on wires and a chrome
-/// marble. The 2D `RunScene` on top keeps drawing labels and guides and handles touches; it drives this scene every frame.
+/// The 3D room behind the 2D layer: a warm wall, a spot light with soft shadows, brass pieces floating in front of it and a
+/// chrome marble. The 2D `RunScene` on top keeps drawing labels and guides and handles touches; it drives this scene every frame.
 final class Course3D {
     let scene = SCNScene()
     let view: SCNView
@@ -143,15 +143,12 @@ final class Course3D {
             box.materials = [brass(tint)]
             node.geometry = box
             node.eulerAngles.z = Float(-p.angle)                       // engine angles turn clockwise on screen (y down)
-            wires(on: node, halfLength: Notes.barLength(p.note) / SceneMapping.unit / 2 * 0.8, angle: p.angle)
         case .bumper:
             let r = Notes.bumperRadius(p.note) / SceneMapping.unit
             let peg = SCNCylinder(radius: CGFloat(r), height: CGFloat(depth)); peg.radialSegmentCount = 40
             peg.materials = [brass(tint)]
             node.geometry = peg
             node.eulerAngles.x = .pi / 2                               // the peg's round face looks at the camera
-            let wire = thinWire(length: 2.6); wire.eulerAngles.x = -.pi / 2; wire.pivot = SCNMatrix4MakeTranslation(0, -1.3, 0)
-            node.addChildNode(wire)                                    // hangs straight up from the peg's centre
         case .ramp:                                                    // the curve as an extruded rail, drawn around the pad's centre
             var local = p; local.x = Rules.width / 2; local.y = 0; local.angle = 0
             let path = UIBezierPath()
@@ -164,32 +161,10 @@ final class Course3D {
             shape.materials = [brass(tint)]
             node.geometry = shape
             node.eulerAngles.z = Float(-p.angle)
-            wires(on: node, halfLength: (p.length ?? Rules.rampLength) / SceneMapping.unit / 2 * 0.8, angle: p.angle)
         }
         node.position = SceneMapping.scene(x: p.x, y: p.y)
         node.castsShadow = true
         return node
-    }
-
-    /// Two thin wires from near the ends of a bar or ramp up out of the picture, like the video's hanging bars.
-    private static func wires(on node: SCNNode, halfLength: Double, angle: Double) {
-        for side in [-1.0, 1.0] {
-            let w = thinWire(length: 2.6)
-            // wires hang straight up in the room, so undo the piece's own tilt for them
-            w.position = SCNVector3(Float(side * halfLength), 0, 0)
-            w.eulerAngles.z = Float(angle)                               // cancels the piece's tilt: the wire points straight up
-            w.pivot = SCNMatrix4MakeTranslation(0, -1.3, 0)
-            node.addChildNode(w)
-        }
-    }
-
-    private static func thinWire(length: CGFloat) -> SCNNode {
-        let c = SCNCylinder(radius: 0.011, height: length); c.radialSegmentCount = 8     // a visible dark cord, like the video
-        let m = SCNMaterial(); m.lightingModel = .physicallyBased; m.diffuse.contents = UIColor(white: 0.08, alpha: 1)
-        m.metalness.contents = 0.7; m.roughness.contents = 0.35
-        c.materials = [m]
-        let n = SCNNode(geometry: c); n.castsShadow = true
-        return n
     }
 
     private static func hopper(x: Double, y: Double) -> SCNNode {

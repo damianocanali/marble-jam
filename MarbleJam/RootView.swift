@@ -11,6 +11,7 @@ struct RootView: View {
     @StateObject private var gameCenter = GameCenter()
     @State private var music = MenuMusic()
     @State private var syncTick = 0                       // bumped after iCloud brings in songs or stars, so screens re-read them
+    @State private var syncing = false                    // an iCloud song sync is running
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
@@ -73,7 +74,7 @@ struct RootView: View {
                 StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
                     .transition(.opacity)
             case .account:
-                AccountView(gameCenter: gameCenter, store: shop, background: background, onBack: { screen = .menu })
+                AccountView(gameCenter: gameCenter, store: shop, progress: progress, background: background, onBack: { screen = .menu })
                     .transition(.opacity)
             case .challenges:
                 ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
@@ -91,6 +92,7 @@ struct RootView: View {
         .onChange(of: screen) { _, _ in updateMusic() }
         .onChange(of: phase) { _, p in
             updateMusic()
+            if p == .background { Task { await ReminderScheduler.shared.reschedule(progress: progress) } }
             guard p == .active else { return }
             AppIcons.update(for: season?.id)                    // holiday icon on when it starts, off when it ends
             syncSongs()
@@ -140,8 +142,12 @@ struct RootView: View {
     }
 
     private func syncSongs() {
-        guard store.mirror != nil, screen != .play else { return }   // never swap a song out from under the builder
-        store.syncWithMirror()
-        syncTick += 1
+        guard store.mirror != nil, screen != .play, !syncing else { return }   // never swap a song out from under the builder
+        syncing = true
+        Task {
+            await Task.detached { [store] in store.syncWithMirror() }.value    // reads and writes every song: off the main thread
+            syncing = false
+            syncTick += 1
+        }
     }
 }

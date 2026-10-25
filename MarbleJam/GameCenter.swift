@@ -18,19 +18,25 @@ import SwiftUI
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
     func signIn() {
-        defaults.set(true, forKey: onKey)
         GKLocalPlayer.local.authenticateHandler = { [weak self] login, error in
             Task { @MainActor in
                 guard let self else { return }
                 if let login { Self.present(login); return }
-                if GKLocalPlayer.local.isAuthenticated {
-                    self.playerName = GKLocalPlayer.local.displayName; self.problem = nil
-                    self.onSignIn?()
-                } else {
-                    self.playerName = nil
-                    self.problem = error == nil ? nil : "Game Center isn't available. Check that you're signed in under Settings › Game Center."
-                }
+                let player = GKLocalPlayer.local
+                self.finishSignIn(name: player.isAuthenticated ? player.displayName : nil, failed: error != nil)
             }
+        }
+    }
+
+    /// After Apple's sheet: remember Game Center only once signed in, so a cancelled sheet doesn't come back every launch.
+    func finishSignIn(name: String?, failed: Bool) {
+        defaults.set(name != nil, forKey: onKey)
+        playerName = name
+        if name != nil {
+            problem = nil
+            onSignIn?()
+        } else {
+            problem = failed ? "Game Center isn't available. Check that you're signed in under Settings › Game Center." : nil
         }
     }
 
@@ -76,10 +82,13 @@ import SwiftUI
 struct AccountView: View {
     @ObservedObject var gameCenter: GameCenter
     @ObservedObject var store: Store
+    let progress: ChallengeProgress
     let background: BackgroundOption?
     let onBack: () -> Void
     @State private var iCloudOn = FileManager.default.ubiquityIdentityToken != nil
     @State private var readingPolicy = false
+    @ObservedObject private var reminders = ReminderScheduler.shared
+    @Environment(\.scenePhase) private var phase
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
 
@@ -118,6 +127,19 @@ struct AccountView: View {
                         Button("Restore purchases") { Task { await store.restore() } }.buttonStyle(Chip())
                         if let m = store.message ?? store.failed { line(m) }
                     }
+                    card("Notifications", icon: "bell") {
+                        Toggle(isOn: Binding(get: { reminders.isOn }, set: { on in
+                            Task {
+                                if on {
+                                    if await reminders.turnOn(progress: progress) == .openSettings,
+                                       let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                                        await UIApplication.shared.open(url)
+                                    }
+                                } else { reminders.turnOff() }
+                            }
+                        })) { line("Holiday news and a gentle reminder now and then. Never at night, never about the store.") }
+                        .tint(.cyan)
+                    }
                     card("Privacy & help", icon: "hand.raised") {
                         line("Marble Beats doesn't collect any personal information.")
                         HStack(spacing: 10) {
@@ -131,6 +153,8 @@ struct AccountView: View {
         }
         .background { Backdrop(option: background) }
         .sheet(isPresented: $readingPolicy) { PolicySheet() }
+        .task { await reminders.refresh() }
+        .onChange(of: phase) { _, p in if p == .active { Task { await reminders.refresh() } } }   // back from Settings
         .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in
             iCloudOn = FileManager.default.ubiquityIdentityToken != nil
         }
