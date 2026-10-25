@@ -9,6 +9,7 @@ struct ContentView: View {
     @Environment(\.theme) private var theme
     @Environment(\.marbleSkin) private var skin
     @State private var renaming = false
+    @State private var offeringReminders = false
     @State private var newName = ""
     @State private var scene: RunScene = {
         let s = RunScene(); s.scaleMode = .resizeFill; return s
@@ -21,6 +22,13 @@ struct ContentView: View {
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
     private let gold = Color(red: 1, green: 0.85, blue: 0.35)
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
+
+    /// Closes the celebration; after the first challenge win, offers reminders.
+    private func closeCelebration(_ c: Celebration) {
+        let inChallenge = model.challenge != nil
+        model.celebration = nil
+        if ReminderScheduler.shared.shouldOffer(after: c, inChallenge: inChallenge) { offeringReminders = true }
+    }
 
     var body: some View {
         ZStack {
@@ -63,10 +71,17 @@ struct ContentView: View {
             }
             if let c = model.celebration {
                 CelebrationView(celebration: c, chime: model.chime,
-                                onPlayAgain: { model.celebration = nil; model.start() },
-                                onDismiss: { model.celebration = nil },
-                                onNext: model.nextChallenge.map { next in { model.celebration = nil; model.open(challenge: next, progress: progress) } })
+                                onPlayAgain: { closeCelebration(c); model.start() },
+                                onDismiss: { closeCelebration(c) },
+                                onNext: model.nextChallenge.map { next in { closeCelebration(c); model.open(challenge: next, progress: progress) } })
                     .transition(.opacity)
+            }
+            if offeringReminders {
+                ReminderCard(onYes: {
+                    offeringReminders = false; ReminderScheduler.shared.markOffered()
+                    Task { await ReminderScheduler.shared.askPermission(progress: progress) }
+                }, onNo: { offeringReminders = false; ReminderScheduler.shared.markOffered() })
+                .transition(.opacity)
             }
         }
         .background { Backdrop(option: background) }
