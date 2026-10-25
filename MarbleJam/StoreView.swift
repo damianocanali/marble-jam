@@ -77,7 +77,7 @@ struct StoreView: View {
         .background { Backdrop(option: background) }
         .task {
             stars = progress.mainStars(); holidaysDone = progress.holidaysDone()
-            await store.load()
+            if !store.loaded { await store.load() }                         // "Try again" reloads on request
         }
         .alert("Ask a grown-up", isPresented: Binding(get: { asking != nil }, set: { if !$0 { asking = nil } })) {
             TextField("Answer", text: $answer).keyboardType(.numberPad)
