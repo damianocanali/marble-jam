@@ -9,7 +9,8 @@ struct RootView: View {
     @State private var progress = ChallengeProgress(cloud: NSUbiquitousKeyValueStore.default)
     @StateObject private var shop = Store()
     @StateObject private var gameCenter = GameCenter()
-    @State private var syncTick = 0                       // bumped after iCloud brings in songs or stars, so screens re-read them
+    @State private var syncTick = 0
+    @State private var syncing = false                       // bumped after iCloud brings in songs or stars, so screens re-read them
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
@@ -128,8 +129,12 @@ struct RootView: View {
     }
 
     private func syncSongs() {
-        guard store.mirror != nil, screen != .play else { return }   // never swap a song out from under the builder
-        store.syncWithMirror()
-        syncTick += 1
+        guard store.mirror != nil, screen != .play, !syncing else { return }   // never swap a song out from under the builder
+        syncing = true
+        Task {
+            await Task.detached { [store] in store.syncWithMirror() }.value    // reads and writes every song: off the main thread
+            syncing = false
+            syncTick += 1
+        }
     }
 }

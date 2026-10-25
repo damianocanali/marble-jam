@@ -18,19 +18,25 @@ import SwiftUI
     init(defaults: UserDefaults = .standard) { self.defaults = defaults }
 
     func signIn() {
-        defaults.set(true, forKey: onKey)
         GKLocalPlayer.local.authenticateHandler = { [weak self] login, error in
             Task { @MainActor in
                 guard let self else { return }
                 if let login { Self.present(login); return }
-                if GKLocalPlayer.local.isAuthenticated {
-                    self.playerName = GKLocalPlayer.local.displayName; self.problem = nil
-                    self.onSignIn?()
-                } else {
-                    self.playerName = nil
-                    self.problem = error == nil ? nil : "Game Center isn't available. Check that you're signed in under Settings › Game Center."
-                }
+                let player = GKLocalPlayer.local
+                self.finishSignIn(name: player.isAuthenticated ? player.displayName : nil, failed: error != nil)
             }
+        }
+    }
+
+    /// After Apple's sheet: remember Game Center only once signed in, so a cancelled sheet doesn't come back every launch.
+    func finishSignIn(name: String?, failed: Bool) {
+        defaults.set(name != nil, forKey: onKey)
+        playerName = name
+        if name != nil {
+            problem = nil
+            onSignIn?()
+        } else {
+            problem = failed ? "Game Center isn't available. Check that you're signed in under Settings › Game Center." : nil
         }
     }
 
