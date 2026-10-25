@@ -73,7 +73,7 @@ struct RootView: View {
                 StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
                     .transition(.opacity)
             case .account:
-                AccountView(gameCenter: gameCenter, store: shop, background: background, onBack: { screen = .menu })
+                AccountView(gameCenter: gameCenter, store: shop, progress: progress, background: background, onBack: { screen = .menu })
                     .transition(.opacity)
             case .challenges:
                 ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },

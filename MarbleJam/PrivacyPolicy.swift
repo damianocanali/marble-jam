@@ -9,11 +9,11 @@ enum AppLinks {
 
 /// The privacy policy, shown inside the app (Account screen) so it can be read offline. The web page says the same.
 enum PrivacyPolicy {
-    static let updated = "October 23, 2026"
+    static let updated = "October 24, 2026"
 
     static let text = """
-    Marble Beats does not collect any personal information. There are no accounts, ads, analytics, tracking or servers \
-    of our own, and nothing you make or do in the game is sent to us.
+    Marble Beats does not collect any personal information. There are no accounts of our own, and no ads, analytics, \
+    tracking or servers, and nothing you make or do in the game is sent to us.
 
     Your songs, stars and chosen marble
     These stay on your device. If you're signed in to iCloud, they're also kept in your own iCloud account so they appear \
@@ -24,6 +24,10 @@ enum PrivacyPolicy {
     If you choose to sign in to Game Center on the Account screen, your total stars and the worlds you finish are sent to \
     Apple's Game Center for the leaderboard and achievements, under your Game Center name. Game Center is Apple's service \
     and follows Apple's privacy policy. Nothing is sent if you don't sign in.
+
+    Reminders
+    If you turn on reminders, they are made and kept on your device; nothing is sent anywhere. You can turn them off \
+    on the Account screen or in Settings.
 
     Purchases
     Marble packs are optional in-app purchases handled by Apple. We never see your payment details; Apple only tells the \
