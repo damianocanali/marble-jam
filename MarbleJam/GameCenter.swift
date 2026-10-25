@@ -82,10 +82,13 @@ import SwiftUI
 struct AccountView: View {
     @ObservedObject var gameCenter: GameCenter
     @ObservedObject var store: Store
+    let progress: ChallengeProgress
     let background: BackgroundOption?
     let onBack: () -> Void
     @State private var iCloudOn = FileManager.default.ubiquityIdentityToken != nil
     @State private var readingPolicy = false
+    @ObservedObject private var reminders = ReminderScheduler.shared
+    @Environment(\.scenePhase) private var phase
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
 
@@ -124,6 +127,19 @@ struct AccountView: View {
                         Button("Restore purchases") { Task { await store.restore() } }.buttonStyle(Chip())
                         if let m = store.message ?? store.failed { line(m) }
                     }
+                    card("Notifications", icon: "bell") {
+                        Toggle(isOn: Binding(get: { reminders.isOn }, set: { on in
+                            Task {
+                                if on {
+                                    if await reminders.turnOn(progress: progress) == .openSettings,
+                                       let url = URL(string: UIApplication.openNotificationSettingsURLString) {
+                                        await UIApplication.shared.open(url)
+                                    }
+                                } else { reminders.turnOff() }
+                            }
+                        })) { line("Holiday news and a gentle reminder now and then. Never at night, never about the store.") }
+                        .tint(.cyan)
+                    }
                     card("Privacy & help", icon: "hand.raised") {
                         line("Marble Beats doesn't collect any personal information.")
                         HStack(spacing: 10) {
@@ -137,6 +153,8 @@ struct AccountView: View {
         }
         .background { Backdrop(option: background) }
         .sheet(isPresented: $readingPolicy) { PolicySheet() }
+        .task { await reminders.refresh() }
+        .onChange(of: phase) { _, p in if p == .active { Task { await reminders.refresh() } } }   // back from Settings
         .onReceive(NotificationCenter.default.publisher(for: .NSUbiquityIdentityDidChange)) { _ in
             iCloudOn = FileManager.default.ubiquityIdentityToken != nil
         }

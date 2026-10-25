@@ -73,7 +73,7 @@ struct RootView: View {
                 StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
                     .transition(.opacity)
             case .account:
-                AccountView(gameCenter: gameCenter, store: shop, background: background, onBack: { screen = .menu })
+                AccountView(gameCenter: gameCenter, store: shop, progress: progress, background: background, onBack: { screen = .menu })
                     .transition(.opacity)
             case .challenges:
                 ChallengesView(progress: progress, background: background, season: season, onPlay: { model.open(challenge: $0, progress: progress); screen = .play },
@@ -88,6 +88,7 @@ struct RootView: View {
         .environment(\.marbleSkin, skin)
         .task { await shop.refreshPurchases() }
         .onChange(of: phase) { _, p in
+            if p == .background { Task { await ReminderScheduler.shared.reschedule(progress: progress) } }
             guard p == .active else { return }
             AppIcons.update(for: season?.id)                    // holiday icon on when it starts, off when it ends
             syncSongs()
