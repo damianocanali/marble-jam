@@ -141,7 +141,7 @@ Happy Easter! Hot Cross Buns and Vivaldi's Spring are on the marble run, with 6 
 Build a marble run that plays music: 30 levels all year, six instruments and songs of your own. Holiday worlds come back with each holiday, starting with Halloween.
 ```
 
-### Description (3732 / 4000 characters)
+### Description (3892 / 4000 characters)
 
 ```
 Build a marble run that plays music. Place the pads, drop the marble, and every pad it hits plays a note. Make up your own songs or solve challenge levels, on your own or together. Made for the whole family.
@@ -180,7 +180,8 @@ ON ALL YOUR DEVICES
 Signed in to iCloud, your songs, challenge stars and chosen marble follow you to your other iPhone and iPad. Sign in to Game Center if you like, for a total-stars leaderboard and an achievement for every world you finish.
 
 FOR PARENTS
-• No ads, no tracking and no data collected. No accounts or sign-up, and the app asks for no permissions such as camera, microphone or location.
+• No ads, no tracking and no data collected. No accounts or sign-up, and no camera, microphone or location access.
+• Holiday reminders are optional: the game offers them once, after the first challenge win, and they never arrive at night. Turn them off any time under Notifications on the Account screen.
 • A grown-up question comes before anything is bought: a multiplication written in words, answered on a number pad. Ask to Buy works too, so the purchase waits for your approval.
 • Every level, song, instrument and holiday is included. The only things to buy are six optional marble packs: one-time purchases that change only how the marble looks. No subscriptions.
 • With Reduce Motion on, the menu demo holds still, the camera doesn't swing and the celebration sticker doesn't spin.
@@ -250,7 +251,7 @@ Not needed. App Store Connect doesn't show this field for an app's first version
   - **Recording:** record a holiday level being played with `xcrun simctl io <UDID> recordVideo holiday.mp4`.
   - Apple suggests a direct link to an `.mp4` file as the best way to share a demo video. An attachment also works, but it has to be uploaded again with each version.
 
-### Notes (3116 / 4000 bytes)
+### Notes (3364 / 4000 bytes)
 
 ```
 Marble Beats is a music game for the whole family. No login or account is needed: tap Challenges or Create on the menu to play.
@@ -280,7 +281,7 @@ ACCOUNTS AND SERVICES
 - No login, sign-up or account.
 - Game Center is optional: Account > Sign in to Game Center. One leaderboard (total stars, 0-234) and 13 achievements, one per world. Nothing is sent unless the player signs in.
 - iCloud is optional: if the device is signed in, songs, stars and the chosen marble sync between the player's devices. Otherwise everything stays on the device.
-- No ads, analytics, tracking or third-party SDKs. The app asks for no permissions.
+- No ads, analytics, tracking or third-party SDKs. The only permission asked is notifications: after the first challenge win, a card offers holiday reminders (local notifications only: each holiday's start, a few days before it ends, and one come-back nudge; never at night). Off by default; Account > Notifications turns them off.
 - Privacy policy: in the app (Account > Privacy policy) and at https://marblebeats.com/privacy/
 Contact: support@marblebeats.com
 ```
