@@ -10,6 +10,7 @@ import Foundation
 /// - `-mbSeason <holiday id|off>`: like the menu's Preview season, for this launch only
 /// - `-mbSkin <skin id>`: the marble, owned or not
 /// - `-mbBackground <background id|night>`: the background, if the season shown offers it
+/// - `-mbStorePack <pack id>`: the Store, scrolled to that pack's card (for the in-app purchase review screenshots)
 /// While any of them is given, the menu hides its Preview season button and the app icon is left alone (no icon alert).
 struct CaptureMode: Equatable {
     var screen: RootView.Screen?
@@ -18,6 +19,7 @@ struct CaptureMode: Equatable {
     var season: String?
     var skin: String?
     var background: String?
+    var storePack: String?
 
     var isActive: Bool { self != CaptureMode() }
 
@@ -37,11 +39,13 @@ struct CaptureMode: Equatable {
             case "-mbSeason": m.season = value == "off" || Seasons.all.contains { $0.id == value } ? value : nil
             case "-mbSkin": m.skin = Skins.all.contains { $0.id == value } ? value : nil
             case "-mbBackground": m.background = value.isEmpty ? nil : value
+            case "-mbStorePack": m.storePack = Skins.packs.contains { $0.id == value } ? value : nil
             default: break
             }
             i += 2
         }
         if m.song != nil && m.screen == nil { m.screen = .play }
+        if m.storePack != nil && m.screen == nil { m.screen = .store }
         return m
     }
 }

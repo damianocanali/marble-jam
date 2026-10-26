@@ -41,6 +41,7 @@ struct StoreView: View {
                     .accessibilityHint("Restores purchases made with this Apple ID")
             }
             .padding(.horizontal, 16).padding(.vertical, 8)
+            ScrollViewReader { proxy in
             ScrollView {
                 VStack(alignment: .leading, spacing: 20) {
                     section("Your marbles") {
@@ -60,7 +61,7 @@ struct StoreView: View {
                             }
                         }
                     }
-                    ForEach(Skins.packs) { pack in packCard(pack) }
+                    ForEach(Skins.packs) { pack in packCard(pack).id(pack.id) }
                     if !store.canPay {
                         Text("Purchases are turned off on this device.").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted)
                     }
@@ -72,6 +73,14 @@ struct StoreView: View {
                     }
                 }
                 .padding(16)
+            }
+            #if DEBUG
+            .task {                                                         // captures: open on one pack's card
+                guard let pack = CaptureMode.current.storePack else { return }
+                try? await Task.sleep(for: .seconds(1.5))
+                proxy.scrollTo(pack, anchor: .center)
+            }
+            #endif
             }
         }
         .background { Backdrop(option: background) }

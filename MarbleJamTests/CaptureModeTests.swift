@@ -26,6 +26,12 @@ final class CaptureModeTests: XCTestCase {
         XCTAssertNil(CaptureMode.parse(["-mbSong", "Jingle Bells"]).screen)
     }
 
+    func testAStorePackOpensTheStore() {
+        XCTAssertEqual(CaptureMode.parse(["-mbStorePack", "glass"]).storePack, "glass")
+        XCTAssertEqual(CaptureMode.parse(["-mbStorePack", "glass"]).screen, .store)
+        XCTAssertNil(CaptureMode.parse(["-mbStorePack", "plaid"]).storePack, "only real packs")
+    }
+
     func testIgnoresWhatItCannotUse() {
         XCTAssertNil(CaptureMode.parse(["-mbScreen", "nowhere"]).screen)
         XCTAssertNil(CaptureMode.parse(["-mbAutoPlay", "soon"]).autoPlay)
