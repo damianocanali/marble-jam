@@ -245,13 +245,13 @@ Not needed. App Store Connect doesn't show this field for an app's first version
 
 - **Sign-in required:** No (untick it). The app has no accounts.
 - **Contact information:** you fill in your first name, last name and phone number. Give the phone in international format with "+" and the country code; the field rejects digits only. Email: your own address, or `support@marblebeats.com`.
-- **Attachment:** the notes below say holiday screenshots and a recording are attached, so attach them or delete that sentence.
+- **Attachment:** none needed. Halloween (then Día de los Muertos) is live while the app is in review. Optional extras if Apple asks:
   - **Menus:** `MarbleBeats-site-raw/menu-<holiday>.png` already covers all eight holiday menus (1206 × 2622, no debug chip).
   - **Challenges:** capture each holiday's Challenges screen with `-mbScreen challenges -mbSeason <id>`. The ids are halloween, muertos, thanksgiving, christmas, newyear, valentines, stpatricks and easter.
   - **Recording:** record a holiday level being played with `xcrun simctl io <UDID> recordVideo holiday.mp4`.
   - Apple suggests a direct link to an `.mp4` file as the best way to share a demo video. An attachment also works, but it has to be uploaded again with each version.
 
-### Notes (3364 / 4000 bytes)
+### Notes (3434 / 4000 bytes)
 
 ```
 Marble Beats is a music game for the whole family. No login or account is needed: tap Challenges or Create on the menu to play.
@@ -274,8 +274,8 @@ Nothing is hidden or dormant, and there is no server or remote switch: the app h
 - St. Patrick's Day: Mar 1-17 (world 11)
 - Easter: 14 days before Easter Sunday, never before Mar 18, through Easter Monday (2027: Mar 18-29) (world 12)
 Outside the windows the app shows its everyday look and the 5 main worlds (30 levels).
-The release build has no setting to change the holiday. From Oct 1 to Jan 6 a holiday is live every day except Nov 28-30, 2026, so you will most likely see one during review. Screenshots of all eight holidays and a short screen recording are attached. The same windows are listed in the App Store description and in the Game Center achievement descriptions.
-When a holiday starts or ends the app switches its icon, so iOS shows its own "You have changed the icon" alert, also on the first launch during a holiday. Tap OK.
+The release build has no setting to change the holiday. From Oct 1 to Jan 6 a holiday is live every day except Nov 28-30, 2026, so you will see one during review: Halloween until Oct 31, then Día de los Muertos from Nov 1. The same windows are listed in the App Store description and in the Game Center achievement descriptions.
+When a holiday starts or ends the app switches its icon, and iOS shows its own "You have changed the icon" alert. Tap OK. The icon is never switched on the very first launch, so on a fresh install the alert appears at the earliest on the next return to the app.
 
 ACCOUNTS AND SERVICES
 - No login, sign-up or account.
