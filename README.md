@@ -18,7 +18,7 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `Engine.swift`      rules, pads, the fixed-step simulation, the "pad on the beat" helper, the demo song
 - `Synth.swift`       bell/pluck synth on the audio clock
 - `GameModel.swift`   app state: course, undo, saving, playback
-- `Course3D.swift` / `SceneMapping.swift` the 3D room (SceneKit): warm wall, spot light with shadows, brass pieces on wires, chrome marble, angled show camera; the 2D `RunScene` on top draws labels and guides, handles touches and drives it
+- `Course3D.swift` / `SceneMapping.swift` the 3D room (SceneKit): light plaster wall with the chosen background hung as framed pictures, soft key light with shadows, painted pieces on pegs, wire-rail ramps, a rolling glass marble (the skin is its core), and a close show camera that follows the marble while a song plays; the look's numbers are in `RoomLook` at the top of `Course3D.swift`. The 2D `RunScene` on top draws labels and guides, handles touches and drives it
 - `RunScene.swift`    SpriteKit drawing and touch handling
 - `ContentView.swift` header, hint, buttons
 - `RootView.swift`    switches between the menu and the game

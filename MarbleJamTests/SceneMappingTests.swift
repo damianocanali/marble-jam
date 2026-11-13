@@ -31,27 +31,41 @@ final class SceneMappingTests: XCTestCase {
         }
     }
 
-    func testPlayCameraLooksAtTheSameSpotFromAnAngle() {
+    func testShowCameraLooksFromAnAngleAndBlendsFromTheBuildCamera() {
         let size = CGSize(width: 402, height: 874)
-        let build = SceneMapping.buildCamera(camY: 500, viewSize: size), play = SceneMapping.playCamera(camY: 500, viewSize: size)
-        XCTAssertNotEqual(play.angles.x, 0); XCTAssertNotEqual(play.angles.y, 0)
-        let mid = SceneMapping.blend(build, play, 0.5)
-        XCTAssertEqual(mid.angles.x, play.angles.x / 2, accuracy: 1e-5)
-        XCTAssertEqual(SceneMapping.blend(build, play, 0).position.y, build.position.y, accuracy: 1e-5)
+        let build = SceneMapping.buildCamera(camY: 500, viewSize: size), show = SceneMapping.showCamera(target: (300, 900), viewSize: size)
+        XCTAssertLessThan(show.angles.x, 0, "looks down"); XCTAssertGreaterThan(show.angles.y, 0, "from the right")
+        XCTAssertEqual(show.fov, SceneMapping.showFieldOfView); XCTAssertEqual(build.fov, SceneMapping.fieldOfView)
+        let mid = SceneMapping.blend(build, show, 0.5)
+        XCTAssertEqual(mid.angles.x, show.angles.x / 2, accuracy: 1e-5)
+        XCTAssertEqual(mid.fov, (build.fov + show.fov) / 2, accuracy: 1e-5)
+        XCTAssertEqual(SceneMapping.blend(build, show, 0).position.y, build.position.y, accuracy: 1e-5)
     }
 
-    /// While playing, the angled camera must still show the whole width of the course at the marble's height.
-    func testPlayCameraShowsTheWholeWidth() {
-        let size = CGSize(width: 402, height: 874), camY = 600.0
-        let pose = SceneMapping.playCamera(camY: camY, viewSize: size)
+    private func project(_ pose: SceneMapping.Pose, _ size: CGSize, _ points: [(x: Double, y: Double)]) -> [CGPoint] {
         let view = SCNView(frame: CGRect(origin: .zero, size: size)), scene = SCNScene(); view.scene = scene
-        let cam = SCNNode(); cam.camera = SCNCamera(); cam.camera!.fieldOfView = SceneMapping.fieldOfView; cam.camera!.zFar = 500
+        let cam = SCNNode(); cam.camera = SCNCamera(); cam.camera!.fieldOfView = pose.fov; cam.camera!.zNear = 0.01; cam.camera!.zFar = 500
         cam.position = pose.position; cam.eulerAngles = pose.angles
         scene.rootNode.addChildNode(cam); view.pointOfView = cam
-        let base = Double(size.width) / Rules.width, mid = camY + Double(size.height) / base * 0.45
-        for x in [20.0, 700] {
-            let s = view.projectPoint(SceneMapping.scene(x: x, y: mid))
-            XCTAssertTrue((0...Double(size.width)).contains(Double(s.x)), "x \(x) lands at \(s.x)")
+        return points.map { let s = view.projectPoint(SceneMapping.scene(x: $0.x, y: $0.y)); return CGPoint(x: CGFloat(s.x), y: CGFloat(s.y)) }
+    }
+
+    /// The show camera puts what it follows in the middle of the screen.
+    func testShowCameraCentresItsTarget() {
+        let size = CGSize(width: 402, height: 874)
+        for t in [(x: 360.0, y: 600.0), (x: 120, y: 2400)] {
+            let s = project(SceneMapping.showCamera(target: t, viewSize: size), size, [t])[0]
+            XCTAssertEqual(Double(s.x), 201, accuracy: 1, "x for \(t)"); XCTAssertEqual(Double(s.y), 437, accuracy: 1, "y for \(t)")
         }
+    }
+
+    /// Up close: about `showWidth` points across at the target, so the marble looks about twice as big as while building.
+    func testShowCameraIsCloseUp() {
+        let size = CGSize(width: 402, height: 874), t = (x: 360.0, y: 1000.0), half = SceneMapping.showWidth / 2
+        let s = project(SceneMapping.showCamera(target: t, viewSize: size), size, [(t.x - half, t.y), (t.x + half, t.y)])
+        let across = Double(s[1].x - s[0].x)
+        XCTAssertEqual(across, Double(size.width), accuracy: Double(size.width) * 0.15)
+        let marble = across / SceneMapping.showWidth * 2 * Rules.radius, building = Double(size.width) / Rules.width * 2 * Rules.radius
+        XCTAssertGreaterThan(marble / building, 1.8)
     }
 }

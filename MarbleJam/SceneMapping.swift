@@ -12,7 +12,8 @@ enum SceneMapping {
 
     static func engine(_ v: SCNVector3) -> (x: Double, y: Double) { (Double(v.x) * unit + Rules.width / 2, -Double(v.y) * unit) }
 
-    struct Pose { var position: SCNVector3; var angles: SCNVector3 }
+    /// Where the camera is, which way it turns (pitch, yaw, roll) and its vertical field of view in degrees.
+    struct Pose { var position: SCNVector3; var angles: SCNVector3; var fov: CGFloat = SceneMapping.fieldOfView }
 
     /// Straight-on camera showing the same strip as the 2D view: 720 points across, engine y `camY` at the top edge.
     static func buildCamera(camY: Double, viewSize: CGSize) -> Pose {
@@ -20,12 +21,21 @@ enum SceneMapping {
         return Pose(position: SCNVector3(0, Float(center), Float(distance)), angles: SCNVector3Zero)
     }
 
-    /// The show camera: the same spot seen from a little above and to the side, a step further back.
-    static func playCamera(camY: Double, viewSize: CGSize, pitch: Double = -0.16, yaw: Double = 0.07) -> Pose {
-        let (center, distance) = frame(camY: camY, viewSize: viewSize), d = distance * 1.12     // a step back, so the whole width stays in view
+    // The show camera: close to the marble, a wider lens and seen from above and to the right, so the pieces stand off the
+    // wall in depth and the marble looks about twice as big as while building.
+    static let showFieldOfView: CGFloat = 34
+    static let showWidth = 320.0                             // engine points across the view at the marble's depth
+    static let showPitch = -0.34, showYaw = 0.16             // radians: looking down about 19°, from about 9° to the right
+
+    /// The show camera looking straight at `target` (engine points): it sits at the centre of the view.
+    static func showCamera(target t: (x: Double, y: Double), viewSize: CGSize,
+                           pitch: Double = showPitch, yaw: Double = showYaw) -> Pose {
+        let aspect = max(0.1, Double(viewSize.width) / max(1, Double(viewSize.height)))
+        let d = showWidth / 2 / unit / (tan(Double(showFieldOfView) / 2 * .pi / 180) * aspect)
+        let c = scene(x: t.x, y: t.y)
         let offset = (x: sin(yaw) * cos(pitch), y: -sin(pitch), z: cos(yaw) * cos(pitch))
-        return Pose(position: SCNVector3(Float(d * offset.x), Float(center + d * offset.y), Float(d * offset.z)),
-                    angles: SCNVector3(Float(pitch), Float(yaw), 0))
+        return Pose(position: SCNVector3(c.x + Float(d * offset.x), c.y + Float(d * offset.y), Float(d * offset.z)),
+                    angles: SCNVector3(Float(pitch), Float(yaw), 0), fov: showFieldOfView)
     }
 
     static func blend(_ a: Pose, _ b: Pose, _ t: Double) -> Pose {
@@ -33,7 +43,7 @@ enum SceneMapping {
             let k = Float(t)
             return SCNVector3(u.x + (v.x - u.x) * k, u.y + (v.y - u.y) * k, u.z + (v.z - u.z) * k)
         }
-        return Pose(position: mix(a.position, b.position), angles: mix(a.angles, b.angles))
+        return Pose(position: mix(a.position, b.position), angles: mix(a.angles, b.angles), fov: a.fov + (b.fov - a.fov) * CGFloat(t))
     }
 
     /// Scene y of the strip's centre, and the camera distance at which it exactly fills the view's height.
