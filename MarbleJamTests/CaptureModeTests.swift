@@ -19,6 +19,13 @@ final class CaptureModeTests: XCTestCase {
         for s in ["menu", "library", "play", "challenges", "store", "account"] { XCTAssertNotNil(CaptureMode.parse(["-mbScreen", s]).screen, s) }
     }
 
+    func testCleanHidesTheButtonsForRecordings() {
+        XCTAssertTrue(CaptureMode.parse(["-mbSong", "demo", "-mbClean", "1"]).clean)
+        XCTAssertTrue(CaptureMode.parse(["-mbClean", "YES"]).isActive)
+        XCTAssertFalse(CaptureMode.parse(["-mbClean", "0"]).clean)
+        XCTAssertFalse(CaptureMode.parse([]).clean)
+    }
+
     func testTheDemoSongOpensTheBuilder() {
         XCTAssertEqual(CaptureMode.parse(["-mbSong", "demo"]).screen, .play)
         XCTAssertEqual(CaptureMode.parse(["-mbSong", "demo", "-mbScreen", "menu"]).screen, .menu, "an explicit screen wins")

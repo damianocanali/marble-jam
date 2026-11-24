@@ -23,6 +23,15 @@ struct ContentView: View {
     private let gold = Color(red: 1, green: 0.85, blue: 0.35)
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
 
+    /// Recording a reel (`-mbClean 1`, DEBUG builds): nothing but the run while the song plays.
+    private var cleanShot: Bool {
+        #if DEBUG
+        return CaptureMode.current.clean && model.playing
+        #else
+        return false
+        #endif
+    }
+
     /// Closes the celebration; after the first challenge win, offers reminders.
     private func closeCelebration(_ c: Celebration) {
         let inChallenge = model.challenge != nil
@@ -40,7 +49,9 @@ struct ContentView: View {
                 Spacer()
             }
             .allowsHitTesting(false)
+            .opacity(cleanShot ? 0 : 1).animation(.easeInOut(duration: 0.5), value: cleanShot)
             VStack(spacing: 0) { header; Spacer(); tray }
+                .opacity(cleanShot ? 0 : 1).animation(.easeInOut(duration: 0.5), value: cleanShot)
             VStack {
                 HStack {
                     Spacer()
@@ -65,6 +76,7 @@ struct ContentView: View {
                 Spacer()
             }
             .padding(.horizontal, 12).padding(.top, 4)
+            .opacity(cleanShot ? 0 : 1).animation(.easeInOut(duration: 0.5), value: cleanShot)
             if let t = model.toast {
                 Toast(text: t)
                     .task(id: t) { try? await Task.sleep(nanoseconds: 2_600_000_000); model.toast = nil }
