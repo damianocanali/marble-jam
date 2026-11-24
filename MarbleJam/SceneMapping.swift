@@ -21,11 +21,11 @@ enum SceneMapping {
         return Pose(position: SCNVector3(0, Float(center), Float(distance)), angles: SCNVector3Zero)
     }
 
-    // The show camera: close to the marble, a wider lens and seen from above and to the right, so the pieces stand off the
-    // wall in depth and the marble looks about twice as big as while building.
-    static let showFieldOfView: CGFloat = 34
-    static let showWidth = 320.0                             // engine points across the view at the marble's depth
-    static let showPitch = -0.34, showYaw = 0.16             // radians: looking down about 19°, from about 9° to the right
+    // The show camera: nearer the marble than the building view, seen a little from above and to the right, so the pieces
+    // stand off the wall in depth. Wide enough to see the next pieces coming (the first, closer version was hard to follow).
+    static let showFieldOfView: CGFloat = 28
+    static let showWidth = 520.0                             // engine points across the view at the marble's depth: marble ~1.4x
+    static let showPitch = -0.2, showYaw = 0.1               // radians: looking down about 11°, from about 6° to the right
 
     /// The show camera looking straight at `target` (engine points): it sits at the centre of the view.
     static func showCamera(target t: (x: Double, y: Double), viewSize: CGSize,

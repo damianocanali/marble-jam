@@ -21,6 +21,7 @@ final class GameModel: ObservableObject {
     @Published private(set) var challenge: Challenge?
     @Published private(set) var trayLeft: [Pad] = []               // tray pieces not placed yet
     private var placed: Set<UUID> = []                             // tray pieces on the course
+    @Published private(set) var hintsShown = 0                     // how many of the level's spots the player has asked to see
     private var progress: ChallengeProgress?
     private(set) var nextChallenge: Challenge?                      // set when a finished level opens the next one
     private var undoStack: [Snapshot] = []
@@ -36,7 +37,7 @@ final class GameModel: ObservableObject {
 
     /// Opens a song in the builder. Undo starts fresh for each visit.
     func open(_ s: Song) {
-        challenge = nil; trayLeft = []; placed = []; nextChallenge = nil
+        challenge = nil; trayLeft = []; placed = []; nextChallenge = nil; hintsShown = 0
         song = s; course = s.course; instrument = s.instrument
         undoStack = []; selected = nil; playing = false; celebration = nil; focusY = 0
         refresh()
@@ -69,6 +70,13 @@ final class GameModel: ObservableObject {
     @discardableResult func finishEdit() -> Bool {
         if let top = undoStack.last, top.course == course, top.instrument == instrument { undoStack.removeLast(); return false }
         defer { save() }
+        if let i = course.pads.firstIndex(where: { $0.id == selected }), let spot = ghost(for: course.pads[i]),
+           hypot(course.pads[i].x - spot.x, course.pads[i].y - spot.y) < 44 {      // let go near its outline: it clicks into place
+            course.pads[i].x = spot.x; course.pads[i].y = spot.y; course.pads[i].angle = spot.angle
+            if spot.kind == .ramp { course.pads[i].length = spot.length; course.pads[i].bend = spot.bend }
+            refresh()
+            return true
+        }
         guard let i = course.pads.firstIndex(where: { $0.id == selected }), beats.indices.contains(i), beats[i] == .near,
               let snapped = Engine.snapToBeat(course, pad: i) else { return false }
         course = snapped; refresh()
@@ -180,9 +188,47 @@ final class GameModel: ObservableObject {
     /// Opens a challenge level: its start course, its tray, no song saving.
     func open(challenge c: Challenge, progress p: ChallengeProgress) {
         song = nil; challenge = c; progress = p; nextChallenge = nil
-        course = c.start; instrument = c.instrument; trayLeft = c.tray; placed = []
+        course = c.start; instrument = c.instrument; trayLeft = c.tray; placed = []; hintsShown = 0
         undoStack = []; selected = nil; playing = false; celebration = nil; focusY = 0
         refresh()
+    }
+
+    /// Glowing outlines of where pieces go, for the spots not filled yet. The first, easiest levels of each world show them all;
+    /// elsewhere they appear one at a time, each time the player asks for a hint.
+    var ghosts: [Pad] {
+        guard let c = challenge, !playing else { return [] }
+        let shown = Set(c.spots.prefix(c.hint == .near ? c.spots.count : hintsShown).map(\.id))
+        return openSpots(c).filter { shown.contains($0.id) }
+    }
+
+    /// The outline a piece belongs in (the nearest one it matches), if one is showing.
+    func ghost(for p: Pad) -> Pad? {
+        guard let c = challenge, !isLocked(p.id) else { return nil }
+        return ghosts.filter { c.matches(p, $0) }.min { hypot(p.x - $0.x, p.y - $0.y) < hypot(p.x - $1.x, p.y - $1.y) }
+    }
+
+    /// A hint is left to give: some spot is still empty and hidden.
+    var canHint: Bool {
+        guard let c = challenge, c.hint != .near, !playing else { return false }
+        let shown = Set(ghosts.map(\.id))
+        return openSpots(c).contains { !shown.contains($0.id) }
+    }
+
+    /// Outlines the next empty spot, top to bottom, and scrolls to it.
+    func showHint() {
+        guard let c = challenge else { return }
+        let open = Set(openSpots(c).map(\.id))
+        while hintsShown < c.spots.count {
+            let s = c.spots[hintsShown]; hintsShown += 1
+            if open.contains(s.id) { focusY = s.y; break }
+        }
+        version += 1
+    }
+
+    /// The level's spots that no movable piece fills yet.
+    private func openSpots(_ c: Challenge) -> [Pad] {
+        let movable = course.pads.filter { !isLocked($0.id) }
+        return c.spots.filter { s in !movable.contains { c.fills($0, s) } }
     }
 
     func isLocked(_ id: UUID) -> Bool { challenge?.locked.contains(id) ?? false }

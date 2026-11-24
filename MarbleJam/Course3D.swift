@@ -10,7 +10,7 @@ enum RoomLook {
     static let ambient = UIColor(red: 0.62, green: 0.56, blue: 0.54, alpha: 1), ambientIntensity: CGFloat = 260
     static let pegDepth = 0.24                                                        // how thick the pieces are, front to back (scene units)
     /// Background blur (aimed at the marble), motion blur and grain while the show camera runs. Off: cheaper on old phones.
-    static let cinematic = true
+    static let cinematic = false
     static let fStop: CGFloat = 0.08                                                  // small, because the room is in metres: blurs the far wall a little
 }
 
@@ -28,7 +28,6 @@ final class Course3D {
     private var playBlend = 0.0                                   // 0 = straight-on building camera, 1 = show camera
     private var follow = (x: Rules.width / 2, y: 0.0)             // where the show camera looks (engine points), eased after the marble
     private var lastMarble: (x: Double, y: Double)?
-    private var velocity = (x: 0.0, y: 0.0)                       // the marble's, points per second, smoothed
     private var effectsOn = false
     var reduceMotion = false
 
@@ -420,20 +419,20 @@ final class Course3D {
 
     func update(camY: Double, viewSize: CGSize, playing: Bool, marbleAt p: (x: Double, y: Double), marbleVisible: Bool) {
         let goal = playing && !reduceMotion ? 1.0 : 0.0
-        playBlend += (goal - playBlend) * 0.08                        // about 0.6 s to swing in or out
+        playBlend += (goal - playBlend) * 0.04                        // about 1.2 s to swing in or out, gently
 
-        if playing {                                                  // the show camera eases after the marble, a little ahead of it
+        if playing {                                                  // the show camera drifts after the marble: calm, never jumping at bounces
             if let l = lastMarble {
-                velocity.x += ((p.x - l.x) * 60 - velocity.x) * 0.2; velocity.y += ((p.y - l.y) * 60 - velocity.y) * 0.2
                 let R = Rules.radius / SceneMapping.unit                       // rolling: the core turns with the distance travelled
                 marbleCore.eulerAngles.z -= Float((p.x - l.x) / SceneMapping.unit / R)
             }
             lastMarble = p
-            let goalX = Rules.width / 2 + (p.x - Rules.width / 2) * 0.8 + velocity.x * 0.08
-            let goalY = p.y + 40 + velocity.y * 0.12
-            follow.x += (goalX - follow.x) * 0.1; follow.y += (goalY - follow.y) * 0.2
+            let goalX = Rules.width / 2 + (p.x - Rules.width / 2) * 0.5      // leans toward the marble, stays mostly on the course
+            follow.x += (goalX - follow.x) * 0.04; follow.y += (p.y + 60 - follow.y) * 0.07
+            let viewHeight = SceneMapping.showWidth * Double(viewSize.height) / max(1, Double(viewSize.width)), keep = viewHeight * 0.28
+            follow.y = min(p.y + keep, max(p.y - keep, follow.y))     // a fast fall still stays well inside the view
         } else {
-            lastMarble = nil; velocity = (0, 0)
+            lastMarble = nil
             if playBlend < 0.02 { follow = (p.x, p.y + 40) }          // waits at the hopper, once the camera is back
         }
 

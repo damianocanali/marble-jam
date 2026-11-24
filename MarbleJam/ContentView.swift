@@ -126,6 +126,7 @@ struct ContentView: View {
     private var hint: String {
         if model.playing { return "Your song is playing." }
         if let id = model.selected, model.isLocked(id) { return "This piece is locked: it's part of the puzzle." }
+        if let c = model.challenge { return challengeHint(c) }
         if let p = model.selectedPad {
             switch p.kind {
             case .bar: return "Drag to move, tilt with the dial. Close to the beat? Let go and it snaps on."
@@ -134,6 +135,27 @@ struct ContentView: View {
             }
         }
         return "The dotted line is where the marble will go. Pads glow gold when they hit on the beat."
+    }
+
+    /// Challenges: what to do next, one step at a time.
+    private func challengeHint(_ c: Challenge) -> String {
+        let stuck = model.canHint ? " Stuck? Tap 💡 Hint." : ""
+        if let p = model.selectedPad {
+            if model.ghost(for: p) != nil { return "Drag it onto the glowing outline. Let go close by and it clicks into place." }
+            switch c.goal {
+            case .melody: return "Drag the note under the dotted line, where the tune has a gap. Turn the dial so the marble bounces on." + stuck
+            case .fix: return "Drag this pad until its ring on the dotted line turns gold: then it plays on the beat." + stuck
+            case .target: return "Drag it under the dotted line and turn the dial to steer the marble into the gold ring." + stuck
+            }
+        }
+        if !model.trayLeft.isEmpty {
+            if case .melody = c.goal { return "Tap a ♪ note below to take it out of the tray." }
+            return "Tap a piece below to take it out of the tray."
+        }
+        switch c.goal {
+        case .fix: return "Pads with a 🔒 stay put. Tap one of the others and drag it until it plays on the beat." + stuck
+        case .melody, .target: return "Press Drop to try it. Tap a piece to move it again." + stuck
+        }
     }
 
     private var tray: some View {
@@ -170,6 +192,9 @@ struct ContentView: View {
                     }
                     if model.trayLeft.isEmpty { Text("Tray empty").font(.system(size: 13, weight: .semibold, design: .rounded)).foregroundStyle(muted) }
                 }
+            }
+            if model.canHint {
+                Button("💡 Hint") { model.showHint() }.accessibilityLabel("Hint: show where a piece goes")
             }
             Button { model.undo() } label: { Image(systemName: "arrow.uturn.backward") }.accessibilityLabel("Undo")
             if let id = model.selected, model.isPlaced(id) {

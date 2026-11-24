@@ -25,10 +25,34 @@ struct Challenge: Identifiable {
 
     var goalText: String {
         switch goal {
-        case .melody: "Place the missing notes so the tune plays."
-        case .fix: "Move the loose pads so every note plays on the beat."
-        case .target: "Get the marble into the cup."
+        case .melody: "Some notes fell out of the tune. Put each ♪ back on the marble's path."
+        case .fix: "Some pads came loose. Move them back so every note plays on the beat."
+        case .target: "Add pieces so the marble lands in the gold ring."
         }
+    }
+
+    /// Where the player's pieces belong in the solution, top to bottom: the missing notes, the loose pads' places, or the pieces
+    /// a target level needs. Hints outline these.
+    var spots: [Pad] {
+        let startIDs = Set(start.pads.map(\.id))
+        let s: [Pad] = switch goal {
+        case .melody: solution.pads.filter { !startIDs.contains($0.id) }
+        case .fix: solution.pads.filter { !locked.contains($0.id) }
+        case .target: Array(solution.pads.suffix(par))
+        }
+        return s.sorted { $0.y < $1.y }
+    }
+
+    /// Whether a piece could go in a spot: the same kind, and the same note where the tune is fixed (melody and fix levels).
+    func matches(_ p: Pad, _ spot: Pad) -> Bool {
+        guard p.kind == spot.kind else { return false }
+        if case .target = goal { return true }
+        return p.note == spot.note
+    }
+
+    /// Whether a piece sits in a spot: it matches, it's within `tolerance` points and (bars and ramps) tilted the same way.
+    func fills(_ p: Pad, _ spot: Pad, tolerance: Double = 18) -> Bool {
+        matches(p, spot) && hypot(p.x - spot.x, p.y - spot.y) <= tolerance && (p.kind == .bumper || abs(p.angle - spot.angle) <= 0.12)
     }
 
     /// 0–3 stars for a course (`placed`: tray pieces used).

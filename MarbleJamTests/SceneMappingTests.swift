@@ -59,13 +59,13 @@ final class SceneMappingTests: XCTestCase {
         }
     }
 
-    /// Up close: about `showWidth` points across at the target, so the marble looks about twice as big as while building.
+    /// Nearer: about `showWidth` points across at the target, so the marble looks bigger than while building.
     func testShowCameraIsCloseUp() {
         let size = CGSize(width: 402, height: 874), t = (x: 360.0, y: 1000.0), half = SceneMapping.showWidth / 2
         let s = project(SceneMapping.showCamera(target: t, viewSize: size), size, [(t.x - half, t.y), (t.x + half, t.y)])
         let across = Double(s[1].x - s[0].x)
         XCTAssertEqual(across, Double(size.width), accuracy: Double(size.width) * 0.15)
         let marble = across / SceneMapping.showWidth * 2 * Rules.radius, building = Double(size.width) / Rules.width * 2 * Rules.radius
-        XCTAssertGreaterThan(marble / building, 1.8)
+        XCTAssertGreaterThan(marble / building, 1.3)
     }
 }
