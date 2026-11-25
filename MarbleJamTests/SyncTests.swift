@@ -117,3 +117,44 @@ final class GameCenterTests: XCTestCase {
         XCTAssertTrue(Skins.packs.allSatisfy { $0.productID.hasPrefix("com.marblejam.app.pack.") })
     }
 }
+
+final class SkinChoiceTests: XCTestCase {
+    private func defaults() -> UserDefaults { UserDefaults(suiteName: "skin-\(UUID())")! }
+    private let pack = Skins.all.first { $0.unlock == .pack(Skins.packs[0].id) }!.id
+
+    func testAPickHereIsNotUndoneByAnOlderCloudValue() {
+        let cloud = FakeCloud(), d = defaults()
+        cloud.values[SkinChoice.cloudKey] = ["id": Skins.classic.id, "at": 100.0]       // what iCloud had from before
+        cloud.values[SkinChoice.oldCloudKey] = Skins.classic.id
+        let here = SkinChoice(defaults: d, cloud: cloud)
+        here.picked(pack, at: 200)
+        XCTAssertNil(here.newerFromCloud(than: pack), "keeps the marble just chosen")
+        cloud.values[SkinChoice.cloudKey] = ["id": Skins.classic.id, "at": 100.0]       // iCloud's late first sync brings the old pick back
+        XCTAssertNil(here.newerFromCloud(than: pack), "an older pick never wins")
+        let fresh = FakeCloud(); fresh.values[SkinChoice.oldCloudKey] = Skins.classic.id
+        XCTAssertNil(SkinChoice(defaults: defaults(), cloud: fresh).newerFromCloud(than: pack), "the old plain key never overrides a pick")
+    }
+
+    func testANewerPickFromAnotherDeviceIsUsed() {
+        let cloud = FakeCloud(), d = defaults()
+        let here = SkinChoice(defaults: d, cloud: cloud)
+        here.picked(Skins.classic.id, at: 100)
+        SkinChoice(defaults: defaults(), cloud: cloud).picked(pack, at: 300)            // the iPad picks later
+        XCTAssertEqual(here.newerFromCloud(than: Skins.classic.id), pack)
+        XCTAssertNil(here.newerFromCloud(than: pack), "adopted once")
+    }
+
+    func testAPickIsSharedForNewAndOldVersions() {
+        let cloud = FakeCloud()
+        SkinChoice(defaults: defaults(), cloud: cloud).picked(pack, at: 50)
+        XCTAssertEqual(cloud.dictionary(forKey: SkinChoice.cloudKey)?["id"] as? String, pack)
+        XCTAssertEqual(cloud.string(forKey: SkinChoice.oldCloudKey), pack)
+        XCTAssertEqual(SkinChoice(defaults: defaults(), cloud: cloud).newerFromCloud(than: Skins.classic.id), pack, "a new phone gets your marble")
+    }
+
+    func testUnknownMarblesAreIgnored() {
+        let cloud = FakeCloud()
+        cloud.values[SkinChoice.cloudKey] = ["id": "no-such-marble", "at": 999.0]
+        XCTAssertNil(SkinChoice(defaults: defaults(), cloud: cloud).newerFromCloud(than: Skins.classic.id))
+    }
+}
