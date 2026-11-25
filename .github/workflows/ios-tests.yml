@@ -17,9 +17,9 @@ concurrency:
 jobs:
   test:
     runs-on: macos-26
-    timeout-minutes: 40
+    timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Use the newest Xcode on the runner
         run: |
@@ -50,24 +50,42 @@ jobs:
           echo "SIMULATOR=$UDID" >> "$GITHUB_ENV"
           xcrun simctl list devices | grep "$UDID"
 
-      - name: Build and test
+      - name: Build
+        timeout-minutes: 30
         run: |
           set -o pipefail
-          xcodebuild test \
+          xcodebuild build-for-testing \
             -project MarbleJam.xcodeproj \
             -scheme MarbleJam \
-            -destination "id=$SIMULATOR" \
-            -resultBundlePath TestResults.xcresult \
+            -destination "id=$SIMULATOR,arch=arm64" \
             CODE_SIGNING_ALLOWED=NO \
-            | tee xcodebuild.log | grep -E "error:|warning: .*will never|Test Case .* failed|Executed|\*\* (BUILD|TEST)" || true
-          grep -q "\*\* TEST SUCCEEDED \*\*" xcodebuild.log
+            2>&1 | tee build.log | grep --line-buffered -E "error:|\*\* (BUILD|TEST BUILD)|^SwiftCompile |^CompileSwift " || true
+          grep -q "\*\* TEST BUILD SUCCEEDED \*\*" build.log
+
+      - name: Test
+        timeout-minutes: 25
+        run: |
+          set -o pipefail
+          xcodebuild test-without-building \
+            -project MarbleJam.xcodeproj \
+            -scheme MarbleJam \
+            -destination "id=$SIMULATOR,arch=arm64" \
+            -resultBundlePath TestResults.xcresult \
+            -test-timeouts-enabled YES \
+            -default-test-execution-time-allowance 120 \
+            -maximum-test-execution-time-allowance 300 \
+            CODE_SIGNING_ALLOWED=NO \
+            2>&1 | tee test.log | grep --line-buffered -E "error:|Test Case .* (passed|failed)|Test Suite .* (passed|failed)|Executed|\*\* TEST" || true
+          grep -q "\*\* TEST EXECUTE SUCCEEDED \*\*" test.log
 
       - name: Keep the results when something fails
-        if: failure()
+        if: failure() || cancelled()
         uses: actions/upload-artifact@v4
         with:
           name: test-results
+          if-no-files-found: ignore
           path: |
             TestResults.xcresult
-            xcodebuild.log
+            build.log
+            test.log
           retention-days: 7
