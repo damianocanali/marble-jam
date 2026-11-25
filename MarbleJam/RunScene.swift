@@ -199,8 +199,10 @@ final class RunScene: SKScene {
         }
         if let f = m.focusY { targetCamY = max(topCam, f - viewHeight * 0.55); m.focusY = nil }
         if m.version != seenVersion { seenVersion = m.version; rebuild() }
+        var spin = 0.0
         if m.playing {
             let t = m.playTime, p = m.run.position(at: max(0, min(t, m.run.duration)))
+            spin = m.run.spin(at: max(0, min(t, m.run.duration)))
             marble.position = CGPoint(x: p.x, y: p.y); marble.alpha = 1
             while hitIndex < m.run.hits.count, m.run.hits[hitIndex].time <= t { flash(m.run.hits[hitIndex], in: m); hitIndex += 1 }
             camY += (p.y - viewHeight * 0.4 - camY) * 0.12                           // the camera follows the marble
@@ -213,6 +215,7 @@ final class RunScene: SKScene {
         if let room {
             marble.isHidden = true                                                   // the room's chrome marble takes its place
             room.update(camY: camY, viewSize: size, playing: m.playing, marbleAt: (Double(marble.position.x), Double(marble.position.y)),
+                        spin: spin,
                         marbleVisible: m.playing)
         } else { marble.isHidden = false }
     }

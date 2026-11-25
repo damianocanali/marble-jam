@@ -27,7 +27,6 @@ final class Course3D {
     private var pads: [Pad] = []
     private var playBlend = 0.0                                   // 0 = straight-on building camera, 1 = show camera
     private var follow = (x: Rules.width / 2, y: 0.0)             // where the show camera looks (engine points), eased after the marble
-    private var lastMarble: (x: Double, y: Double)?
     private var effectsOn = false
     var reduceMotion = false
 
@@ -417,22 +416,17 @@ final class Course3D {
 
     // MARK: every frame (called by the 2D layer)
 
-    func update(camY: Double, viewSize: CGSize, playing: Bool, marbleAt p: (x: Double, y: Double), marbleVisible: Bool) {
+    /// `spin`: the engine's turn of the marble (clockwise on screen, radians), so it rolls on what it touches.
+    func update(camY: Double, viewSize: CGSize, playing: Bool, marbleAt p: (x: Double, y: Double), spin: Double = 0, marbleVisible: Bool) {
         let goal = playing && !reduceMotion ? 1.0 : 0.0
         playBlend += (goal - playBlend) * 0.04                        // about 1.2 s to swing in or out, gently
 
         if playing {                                                  // the show camera drifts after the marble: calm, never jumping at bounces
-            if let l = lastMarble {
-                let R = Rules.radius / SceneMapping.unit                       // rolling: the core turns with the distance travelled
-                marbleCore.eulerAngles.z -= Float((p.x - l.x) / SceneMapping.unit / R)
-            }
-            lastMarble = p
             let goalX = Rules.width / 2 + (p.x - Rules.width / 2) * 0.5      // leans toward the marble, stays mostly on the course
             follow.x += (goalX - follow.x) * 0.04; follow.y += (p.y + 60 - follow.y) * 0.07
             let viewHeight = SceneMapping.showWidth * Double(viewSize.height) / max(1, Double(viewSize.width)), keep = viewHeight * 0.28
             follow.y = min(p.y + keep, max(p.y - keep, follow.y))     // a fast fall still stays well inside the view
         } else {
-            lastMarble = nil
             if playBlend < 0.02 { follow = (p.x, p.y + 40) }          // waits at the hopper, once the camera is back
         }
 
@@ -450,6 +444,7 @@ final class Course3D {
         wall.position = SCNVector3(0, (lookY / 2).rounded() * 2, Float(RoomLook.wallZ))   // centred on the view, moved in whole plaster tiles
         marble.position = SceneMapping.scene(x: p.x, y: p.y)
         marble.opacity = marbleVisible ? 1 : 0.6
+        marbleCore.eulerAngles.z = Float(-spin)                       // scene z points at the camera: clockwise is negative
         setEffects(RoomLook.cinematic && playBlend > 0.5, eye: pose.position, target: show)
         SCNTransaction.commit()
     }
