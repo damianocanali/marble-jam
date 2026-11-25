@@ -332,6 +332,25 @@ final class ChallengeModelTests: XCTestCase {
         XCTAssertEqual(m.celebration?.stars, 3)
     }
 
+    func testAHintCapsTheLevelAtTwoStars() {
+        let m = GameModel(), c = level("w1-5"), p = progress()
+        m.open(challenge: c, progress: p)
+        XCTAssertEqual(m.starCap, 3)
+        m.showHint()
+        XCTAssertEqual(m.starCap, 2)
+        XCTAssertNotNil(m.toast, "the player is told")
+        let startIDs = Set(c.start.pads.map(\.id))
+        for spot in c.solution.pads where !startIDs.contains(spot.id) {
+            m.placeFromTray(0)
+            m.updateSelected { $0.x = spot.x; $0.y = spot.y; $0.angle = spot.angle }
+        }
+        m.start(); m.finish()
+        XCTAssertEqual(m.celebration?.stars, 2)
+        XCTAssertEqual(p.stars(c.id), 2)
+        m.open(challenge: c, progress: p)
+        XCTAssertEqual(m.starCap, 3, "a fresh try can still earn 3")
+    }
+
     func testFarFromItsOutlineAPieceStaysWhereItIsDropped() {
         let m = GameModel(), c = level("w1-1")
         m.open(challenge: c, progress: progress())

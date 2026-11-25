@@ -1,5 +1,6 @@
 import SwiftUI
 import SpriteKit
+import StoreKit
 
 struct ContentView: View {
     @ObservedObject var model: GameModel
@@ -17,6 +18,13 @@ struct ContentView: View {
     @State private var room = Course3D()
     @AppStorage("renderer.3d") private var use3D = true                     // DEBUG builds can switch back to the 2D look to compare
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.requestReview) private var requestReview
+    @StateObject private var recorder = SongRecorder()
+    @State private var sharing: SharedVideo?
+    @State private var askingGrownUp = false
+    @State private var wrongAnswer = false
+    @State private var gate = ParentalGate.question()
+    @State private var answer = ""
 
     private let ink = Color(red: 0.95, green: 0.96, blue: 1)
     private let muted = Color(red: 0.6, green: 0.65, blue: 0.78)
@@ -24,7 +32,9 @@ struct ContentView: View {
     private let night = Color(red: 0.03, green: 0.035, blue: 0.075)
 
     /// Recording a reel (`-mbClean 1`, DEBUG builds): nothing but the run while the song plays.
+    /// Also while recording a video to share.
     private var cleanShot: Bool {
+        if recorder.isRecording { return true }
         #if DEBUG
         return CaptureMode.current.clean && model.playing
         #else
@@ -33,10 +43,41 @@ struct ContentView: View {
     }
 
     /// Closes the celebration; after the first challenge win, offers reminders.
-    private func closeCelebration(_ c: Celebration) {
+    private func closeCelebration(_ c: Celebration, offerReminders: Bool = true) {
         let inChallenge = model.challenge != nil
         model.celebration = nil
-        if ReminderScheduler.shared.shouldOffer(after: c, inChallenge: inChallenge) { offeringReminders = true }
+        ReviewPrompt.shared.recordWin(stars: c.stars)
+        if offerReminders, ReminderScheduler.shared.shouldOffer(after: c, inChallenge: inChallenge) { offeringReminders = true }
+    }
+
+    /// "Keep editing" / "Stay": a calm moment, the only one where the rating prompt may appear.
+    private func dismissCelebration(_ c: Celebration) {
+        closeCelebration(c)
+        #if DEBUG
+        if CaptureMode.current.isActive { return }
+        #endif
+        if !offeringReminders, ReviewPrompt.shared.askNow(version: ReviewPrompt.appVersion) { requestReview() }
+    }
+
+    /// Share a video: a grown-up says yes, then the song replays from the top while the screen is recorded.
+    private func askToShare() {
+        gate = ParentalGate.question(); answer = ""; askingGrownUp = true
+    }
+    private func recordAndShare() {
+        if let c = model.celebration { closeCelebration(c, offerReminders: false) }
+        Task {
+            guard await recorder.start() else { model.toast = "Couldn't record the screen."; return }
+            model.start()
+            if !model.playing { _ = await recorder.stop() }                      // nothing to play after all
+        }
+    }
+    /// The song ended (or hit the time limit): stop recording and open the share sheet.
+    private func finishRecording() {
+        Task {
+            let url = await recorder.stop()
+            model.celebration = nil                                              // they've seen this sticker already
+            if let url { sharing = SharedVideo(url: url) } else { model.toast = "Couldn't save the video." }
+        }
     }
 
     var body: some View {
@@ -84,9 +125,23 @@ struct ContentView: View {
             if let c = model.celebration {
                 CelebrationView(celebration: c, chime: model.chime,
                                 onPlayAgain: { closeCelebration(c); model.start() },
-                                onDismiss: { closeCelebration(c) },
-                                onNext: model.nextChallenge.map { next in { closeCelebration(c); model.open(challenge: next, progress: progress) } })
+                                onDismiss: { dismissCelebration(c) },
+                                onNext: model.nextChallenge.map { next in { closeCelebration(c); model.open(challenge: next, progress: progress) } },
+                                onShare: recorder.isAvailable ? { askToShare() } : nil)
                     .transition(.opacity)
+            }
+            if recorder.isRecording {                                            // the logo, in the corner of every shared video
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Image("Title").resizable().scaledToFit().frame(height: 30)
+                            .padding(.horizontal, 10).padding(.vertical, 6)
+                            .background(.black.opacity(0.35), in: Capsule())
+                    }
+                }
+                .padding(.trailing, 14).padding(.bottom, 24)
+                .allowsHitTesting(false)
             }
             if offeringReminders {
                 ReminderCard(onYes: {
@@ -105,6 +160,21 @@ struct ContentView: View {
         }
         .onChange(of: skin.id) { _, _ in scene.skin = skin; room.setSkin(skin) }
         .onChange(of: use3D) { _, on in scene.room = on ? room : nil }
+        .onChange(of: model.playing) { _, playing in if !playing && recorder.isRecording { finishRecording() } }
+        .task(id: recorder.isRecording) {                                        // shared videos stop at the time limit
+            guard recorder.isRecording else { return }
+            try? await Task.sleep(nanoseconds: SongRecorder.maxSeconds * 1_000_000_000)
+            if recorder.isRecording && model.playing { model.stop() }
+        }
+        .sheet(item: $sharing, onDismiss: { try? FileManager.default.removeItem(at: FileManager.default.temporaryDirectory.appendingPathComponent("Marble Beats.mp4")) }) { v in
+            ShareSheet(items: [v.url]).presentationDetents([.medium, .large])
+        }
+        .alert("Ask a grown-up", isPresented: $askingGrownUp) {
+            TextField("Answer", text: $answer).keyboardType(.numberPad)
+            Button("Continue") { if ParentalGate.check(answer, against: gate) { recordAndShare() } else { wrongAnswer = true } }
+            Button("Cancel", role: .cancel) {}
+        } message: { Text("Sharing a video needs a grown-up. " + gate.text) }
+        .alert("That's not right", isPresented: $wrongAnswer) { Button("OK", role: .cancel) {} } message: { Text("Sharing needs a grown-up.") }
         .alert("Rename song", isPresented: $renaming) {
             TextField("Name", text: $newName)
             Button("Save") { model.rename(to: newName) }
@@ -151,7 +221,7 @@ struct ContentView: View {
 
     /// Challenges: what to do next, one step at a time.
     private func challengeHint(_ c: Challenge) -> String {
-        let stuck = model.canHint ? " Stuck? Tap 💡 Hint." : ""
+        let stuck = model.canHint ? " Stuck? Tap 💡 Hint (the level then gives up to 2 stars)." : ""
         if let p = model.selectedPad {
             if model.ghost(for: p) != nil { return "Drag it onto the glowing outline. Let go close by and it clicks into place." }
             switch c.goal {

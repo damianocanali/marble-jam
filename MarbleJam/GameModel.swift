@@ -214,9 +214,10 @@ final class GameModel: ObservableObject {
         return openSpots(c).contains { !shown.contains($0.id) }
     }
 
-    /// Outlines the next empty spot, top to bottom, and scrolls to it.
+    /// Outlines the next empty spot, top to bottom, and scrolls to it. Using a hint caps the level at 2 stars.
     func showHint() {
         guard let c = challenge else { return }
+        if hintsShown == 0 { toast = "Hint used: this level now gives up to 2 stars." }
         let open = Set(openSpots(c).map(\.id))
         while hintsShown < c.spots.count {
             let s = c.spots[hintsShown]; hintsShown += 1
@@ -267,8 +268,11 @@ final class GameModel: ObservableObject {
         stop()
         celebration = Celebration.make(onBeat: on, total: run.hits.count)
     }
+    /// The most stars this visit can earn: 2 once a hint was used (the easy levels' outlines are free).
+    var starCap: Int { hintsShown > 0 ? 2 : 3 }
+
     private func finishChallenge(_ c: Challenge) {
-        let stars = c.stars(for: course, placed: placed.count)
+        let stars = min(starCap, c.stars(for: course, placed: placed.count))
         stop()
         guard stars > 0 else {
             toast = switch c.goal {
