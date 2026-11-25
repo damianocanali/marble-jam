@@ -5,7 +5,7 @@ A marble-run music game for families: build a course, drop the marble, and every
 
 Native rebuild of the web prototype. SwiftUI for the controls, SpriteKit for the run, AVAudioEngine for sound.
 
-**Status:** builds and passes its unit tests with `xcodegen && xcodebuild test -scheme MarbleJam -destination 'platform=iOS Simulator,name=iPhone 17'`.
+**Status:** builds and passes its unit tests with `xcodegen && xcodebuild test -scheme MarbleJam -destination 'platform=iOS Simulator,name=iPhone 17'`. GitHub Actions runs the same tests on every pull request and push to main (`.github/workflows/ios-tests.yml`: newest Xcode on the `macos-26` runner, newest iPhone simulator, no signing); a failed run keeps the `.xcresult` and log as an artifact.
 
 ## Build
 1. Install XcodeGen once: `brew install xcodegen`
