@@ -283,4 +283,83 @@ final class ChallengeModelTests: XCTestCase {
         XCTAssertNotNil(m.toast)
         XCTAssertEqual(p.stars(c.id), 0)
     }
+
+    func testSpotsAreWhereThePlayersPiecesBelong() {
+        for c in Challenges.everything {
+            switch c.goal {
+            case .melody: XCTAssertEqual(c.spots.count, c.tray.count, c.id)
+            case .fix: XCTAssertEqual(c.spots.count, c.solution.pads.count - c.locked.count, c.id)
+            case .target: XCTAssertEqual(c.spots.count, c.par, c.id)
+            }
+            XCTAssertEqual(c.spots.map(\.y), c.spots.map(\.y).sorted(), "\(c.id): top to bottom")
+            XCTAssertTrue(c.spots.allSatisfy { s in c.solution.pads.contains { c.fills($0, s) } }, "\(c.id): the solution fills every spot")
+        }
+    }
+
+    func testEasyLevelsOutlineEverySpotAndOthersRevealOneHintAtATime() {
+        let m = GameModel(), easy = level("w1-1")
+        m.open(challenge: easy, progress: progress())
+        XCTAssertEqual(m.ghosts.count, easy.spots.count, "the easiest levels show where everything goes")
+        XCTAssertFalse(m.canHint)
+
+        let hard = level("w1-5")
+        XCTAssertEqual(hard.hint, .flat)
+        m.open(challenge: hard, progress: progress())
+        XCTAssertTrue(m.ghosts.isEmpty, "no outlines until the player asks")
+        XCTAssertTrue(m.canHint)
+        m.showHint()
+        XCTAssertEqual(m.ghosts.map(\.id), [hard.spots[0].id], "the first spot the marble reaches")
+        XCTAssertEqual(m.focusY, hard.spots[0].y, "scrolls to it")
+        for _ in hard.spots.dropFirst() { m.showHint() }
+        XCTAssertEqual(m.ghosts.count, hard.spots.count)
+        XCTAssertFalse(m.canHint, "nothing left to reveal")
+        m.open(challenge: hard, progress: progress())
+        XCTAssertTrue(m.ghosts.isEmpty, "hints start over in each visit")
+    }
+
+    func testLettingGoNearAnOutlineClicksIntoPlace() {
+        let m = GameModel(), c = level("w1-1")
+        m.open(challenge: c, progress: progress())
+        m.placeFromTray(0)
+        let spot = try! XCTUnwrap(m.ghost(for: m.selectedPad!))
+        m.mark()
+        m.updateSelected { $0.x = spot.x + 25; $0.y = spot.y - 15; $0.angle = spot.angle + 0.3 }
+        XCTAssertTrue(m.finishEdit())
+        let p = m.selectedPad!
+        XCTAssertEqual(p.x, spot.x); XCTAssertEqual(p.y, spot.y); XCTAssertEqual(p.angle, spot.angle)
+        XCTAssertTrue(m.ghosts.isEmpty, "a filled spot loses its outline")
+        m.start(); m.finish()
+        XCTAssertEqual(m.celebration?.stars, 3)
+    }
+
+    func testAHintCapsTheLevelAtTwoStars() {
+        let m = GameModel(), c = level("w1-5"), p = progress()
+        m.open(challenge: c, progress: p)
+        XCTAssertEqual(m.starCap, 3)
+        m.showHint()
+        XCTAssertEqual(m.starCap, 2)
+        XCTAssertNotNil(m.toast, "the player is told")
+        let startIDs = Set(c.start.pads.map(\.id))
+        for spot in c.solution.pads where !startIDs.contains(spot.id) {
+            m.placeFromTray(0)
+            m.updateSelected { $0.x = spot.x; $0.y = spot.y; $0.angle = spot.angle }
+        }
+        m.start(); m.finish()
+        XCTAssertEqual(m.celebration?.stars, 2)
+        XCTAssertEqual(p.stars(c.id), 2)
+        m.open(challenge: c, progress: p)
+        XCTAssertEqual(m.starCap, 3, "a fresh try can still earn 3")
+    }
+
+    func testFarFromItsOutlineAPieceStaysWhereItIsDropped() {
+        let m = GameModel(), c = level("w1-1")
+        m.open(challenge: c, progress: progress())
+        m.placeFromTray(0)
+        let spot = try! XCTUnwrap(m.ghost(for: m.selectedPad!))
+        m.mark()
+        m.updateSelected { $0.x = spot.x > 360 ? spot.x - 150 : spot.x + 150 }
+        m.finishEdit()
+        XCTAssertGreaterThan(abs(m.selectedPad!.x - spot.x), 100, "no pull from across the screen")
+        XCTAssertEqual(m.ghosts.count, 1)
+    }
 }

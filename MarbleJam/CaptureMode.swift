@@ -10,6 +10,7 @@ import Foundation
 /// - `-mbSeason <holiday id|off>`: like the menu's Preview season, for this launch only
 /// - `-mbSkin <skin id>`: the marble, owned or not
 /// - `-mbBackground <background id|night>`: the background, if the season shown offers it
+/// - `-mbClean 1`: while a song plays, every button and label fades away, leaving only the run (for reels and previews)
 /// While any of them is given, the menu hides its Preview season button and the app icon is left alone (no icon alert).
 struct CaptureMode: Equatable {
     var screen: RootView.Screen?
@@ -18,6 +19,7 @@ struct CaptureMode: Equatable {
     var season: String?
     var skin: String?
     var background: String?
+    var clean = false
 
     var isActive: Bool { self != CaptureMode() }
 
@@ -37,6 +39,7 @@ struct CaptureMode: Equatable {
             case "-mbSeason": m.season = value == "off" || Seasons.all.contains { $0.id == value } ? value : nil
             case "-mbSkin": m.skin = Skins.all.contains { $0.id == value } ? value : nil
             case "-mbBackground": m.background = value.isEmpty ? nil : value
+            case "-mbClean": m.clean = ["1", "yes", "true"].contains(value.lowercased())
             default: break
             }
             i += 2

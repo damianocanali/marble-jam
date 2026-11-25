@@ -81,6 +81,7 @@ struct Hit { let time, x, y: Double; let pad: Int; let speed: Double }
 
 struct Run {
     var path: [Double] = []        // x, y sampled 60 times a second
+    var spin: [Double] = []        // how far the marble has turned, clockwise on screen (radians), at the same samples
     var hits: [Hit] = []
     var duration = 0.0
 
@@ -89,6 +90,13 @@ struct Run {
         guard n > 1 else { return (path.first ?? 0, path.count > 1 ? path[1] : 0) }
         let f = max(0, min(Double(n) - 1.001, t * 60)), i = Int(f), u = f - Double(i)
         return (path[i * 2] + (path[i * 2 + 2] - path[i * 2]) * u, path[i * 2 + 1] + (path[i * 2 + 3] - path[i * 2 + 1]) * u)
+    }
+
+    /// The marble's turn at a time (clockwise on screen, radians): it rolls on what it touches and keeps spinning in the air.
+    func spin(at t: Double) -> Double {
+        guard spin.count > 1 else { return spin.first ?? 0 }
+        let f = max(0, min(Double(spin.count) - 1.001, t * 60)), i = Int(f), u = f - Double(i)
+        return spin[i] + (spin[i + 1] - spin[i]) * u
     }
 }
 
@@ -131,12 +139,14 @@ enum Engine {
         var nearest = [Int](repeating: -1, count: c.pads.count)
         var rolling = 0.0                                                    // seconds of unbroken contact with ramps
         var x = c.dropX, y = c.dropY, vx = 0.0, vy = 0.0, t = 0.0, calm = 0.0, i = 0
+        var omega = 0.0, angle = 0.0                                         // spin, for drawing only: it never changes the path
         var run = Run()
         let h = Rules.step, R = Rules.radius, W = Rules.width
         while t < maxTime {
-            if i % 4 == 0 { run.path.append(x); run.path.append(y) }
+            if i % 4 == 0 { run.path.append(x); run.path.append(y); run.spin.append(angle) }
             i += 1
             vy += Rules.gravity * h; x += vx * h; y += vy * h; t += h
+            angle += omega * h
             if x < R { x = R; if vx < 0 { vx *= -0.6 } } else if x > W - R { x = W - R; if vx > 0 { vx *= -0.6 } }
             for (pad, r) in rampSegments {
                 var best = Double.infinity
@@ -165,6 +175,7 @@ enum Engine {
                     if -vn > 60 && landed { run.hits.append(Hit(time: t, x: qx + dx * g.r, y: qy + dy * g.r, pad: g.pad, speed: -vn)); last[g.pad] = t }
                 }
                 touch[g.pad] = t
+                omega = (vx * -dy + vy * dx) / R                              // touching: it rolls without slipping along the surface
                 if g.rolls { onRamp = true }
                 x = qx + dx * rr; y = qy + dy * rr
             }

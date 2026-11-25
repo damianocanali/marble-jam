@@ -50,6 +50,16 @@ final class RunScene: SKScene {
 
     private func color(_ p: Pad) -> UIColor { PadArt.color(p) }
 
+    // The 3D room's wall is light, the 2D backdrop dark: guides and labels use dark ink on the wall and light ink on the backdrop.
+    private var onLightWall: Bool { room != nil }
+    private var ink: UIColor { onLightWall ? UIColor(red: 0.12, green: 0.1, blue: 0.1, alpha: 1) : .white }
+    private var beatColor: UIColor { onLightWall ? UIColor(red: 0.82, green: 0.48, blue: 0, alpha: 1) : UIColor(red: 1, green: 0.85, blue: 0.35, alpha: 1) }
+    /// A note's label colour: the pad's colour, deepened so it reads on the light wall.
+    private func labelColor(_ p: Pad) -> UIColor {
+        guard onLightWall else { return color(p) }
+        return UIColor(hue: Notes.hue(p), saturation: 0.95, brightness: 0.5, alpha: 1)
+    }
+
     // MARK: drawing
 
     private func rebuild() {
@@ -69,25 +79,26 @@ final class RunScene: SKScene {
                 i += 2
             }
             let line = SKShapeNode(path: path.copy(dashingWithPhase: 0, lengths: [3, 7]))
-            line.strokeColor = UIColor(white: 0.9, alpha: 0.32); line.lineWidth = 2
+            line.strokeColor = onLightWall ? ink.withAlphaComponent(0.55) : UIColor(white: 0.9, alpha: 0.32); line.lineWidth = onLightWall ? 2.5 : 2
             guideLayer.addChild(line)
             var k = 1
             while Double(k) * Rules.beat / 2 < m.run.duration {
                 let p = m.run.position(at: Double(k) * Rules.beat / 2), whole = k % 2 == 0
                 let dot = SKShapeNode(circleOfRadius: whole ? 5 : 2.2)
                 dot.position = CGPoint(x: p.x, y: p.y)
-                if whole { dot.strokeColor = UIColor(red: 1, green: 0.85, blue: 0.35, alpha: 0.85); dot.lineWidth = 2; dot.fillColor = .clear }
-                else { dot.fillColor = UIColor(white: 0.9, alpha: 0.5); dot.strokeColor = .clear }
+                if whole { dot.strokeColor = beatColor.withAlphaComponent(0.9); dot.lineWidth = 2; dot.fillColor = .clear }
+                else { dot.fillColor = onLightWall ? ink.withAlphaComponent(0.5) : UIColor(white: 0.9, alpha: 0.5); dot.strokeColor = .clear }
                 guideLayer.addChild(dot)
                 k += 1
             }
             for h in m.run.hits {
                 let ring = SKShapeNode(circleOfRadius: 9), on = Engine.isOnBeat(h.time)
                 ring.position = CGPoint(x: h.x, y: h.y); ring.fillColor = .clear
-                ring.strokeColor = on ? UIColor(red: 1, green: 0.85, blue: 0.35, alpha: 1) : UIColor(white: 1, alpha: 0.7)
+                ring.strokeColor = on ? beatColor : ink.withAlphaComponent(0.7)
                 ring.lineWidth = on ? 3 : 1.5
                 guideLayer.addChild(ring)
             }
+            drawGhosts(m)
         }
 
         if room == nil, case let .target(cx, cy)? = m.challenge?.goal {          // the cup: a glowing ring with a dot
@@ -119,7 +130,7 @@ final class RunScene: SKScene {
             lastBeats[p.id] = beat
 
             let label = SKLabelNode(text: Notes.label(p, instrument: m.instrument))
-            label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? PadArt.beatGold : color(p); label.yScale = -1
+            label.fontName = "AvenirNext-Bold"; label.fontSize = 15; label.fontColor = beat == .on && !m.playing ? beatColor : labelColor(p); label.yScale = -1
             label.verticalAlignmentMode = .center
             let off = p.kind == .bumper ? Notes.bumperRadius(p.note) + 22 : 30.0
             let mid = p.kind == .ramp ? { let pts = p.rampPoints(); return pts[pts.count / 2] }() : (x: p.x, y: p.y)          // a ramp's label sits under its middle
@@ -136,15 +147,41 @@ final class RunScene: SKScene {
                 }
                 let ringPath = CGPath(ellipseIn: CGRect(x: -r, y: -r, width: 2 * r, height: 2 * r), transform: nil)
                 let ring = SKShapeNode(path: ringPath.copy(dashingWithPhase: 0, lengths: [5, 5]))
-                ring.position = node.position; ring.strokeColor = .white; ring.lineWidth = 2
+                ring.position = node.position; ring.strokeColor = ink; ring.lineWidth = 2
                 padLayer.addChild(ring)
                 if let e = p.tiltHandle, !m.isLocked(p.id) {
                     let handle = SKShapeNode(circleOfRadius: 13)
-                    handle.position = CGPoint(x: e.x, y: e.y); handle.fillColor = .white; handle.strokeColor = .clear; handle.zPosition = 5
+                    handle.position = CGPoint(x: e.x, y: e.y); handle.fillColor = .white; handle.zPosition = 5
+                    handle.strokeColor = onLightWall ? ink : .clear; handle.lineWidth = 2
                     padLayer.addChild(handle)
                 }
             }
         }
+    }
+
+    /// Challenge hints: a glowing outline where each piece goes, and a dashed arrow from the selected piece to its outline.
+    private func drawGhosts(_ m: GameModel) {
+        let glow = beatColor
+        for g in m.ghosts {
+            let node = PadArt.node(for: g)
+            node.fillColor = g.kind == .ramp ? .clear : glow.withAlphaComponent(0.22)
+            node.strokeColor = glow.withAlphaComponent(g.kind == .ramp ? 0.45 : 1); node.glowWidth = 6
+            if g.kind != .ramp { node.lineWidth = 2.5 }
+            node.run(.repeatForever(.sequence([.fadeAlpha(to: 0.45, duration: 0.6), .fadeAlpha(to: 1, duration: 0.6)])))
+            guideLayer.addChild(node)
+        }
+        guard let p = m.selectedPad, let g = m.ghost(for: p) else { return }
+        let dx = g.x - p.x, dy = g.y - p.y, d = hypot(dx, dy)
+        guard d > 60 else { return }                                                // close enough: the outline says it all
+        let ux = dx / d, uy = dy / d, bx = g.x - ux * 28, by = g.y - uy * 28
+        let shaft = CGMutablePath()
+        shaft.move(to: CGPoint(x: p.x + ux * 28, y: p.y + uy * 28)); shaft.addLine(to: CGPoint(x: bx, y: by))
+        let line = SKShapeNode(path: shaft.copy(dashingWithPhase: 0, lengths: [8, 6]))
+        let head = CGMutablePath()
+        head.move(to: CGPoint(x: bx - ux * 14 - uy * 9, y: by - uy * 14 + ux * 9)); head.addLine(to: CGPoint(x: bx, y: by))
+        head.addLine(to: CGPoint(x: bx - ux * 14 + uy * 9, y: by - uy * 14 - ux * 9))
+        let tip = SKShapeNode(path: head)
+        for n in [line, tip] { n.strokeColor = glow; n.lineWidth = 3; n.lineCap = .round; n.zPosition = 4; guideLayer.addChild(n) }
     }
 
     private func flash(_ h: Hit, in m: GameModel) {
@@ -162,8 +199,10 @@ final class RunScene: SKScene {
         }
         if let f = m.focusY { targetCamY = max(topCam, f - viewHeight * 0.55); m.focusY = nil }
         if m.version != seenVersion { seenVersion = m.version; rebuild() }
+        var spin = 0.0
         if m.playing {
             let t = m.playTime, p = m.run.position(at: max(0, min(t, m.run.duration)))
+            spin = m.run.spin(at: max(0, min(t, m.run.duration)))
             marble.position = CGPoint(x: p.x, y: p.y); marble.alpha = 1
             while hitIndex < m.run.hits.count, m.run.hits[hitIndex].time <= t { flash(m.run.hits[hitIndex], in: m); hitIndex += 1 }
             camY += (p.y - viewHeight * 0.4 - camY) * 0.12                           // the camera follows the marble
@@ -176,6 +215,7 @@ final class RunScene: SKScene {
         if let room {
             marble.isHidden = true                                                   // the room's chrome marble takes its place
             room.update(camY: camY, viewSize: size, playing: m.playing, marbleAt: (Double(marble.position.x), Double(marble.position.y)),
+                        spin: spin,
                         marbleVisible: m.playing)
         } else { marble.isHidden = false }
     }

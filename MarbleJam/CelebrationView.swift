@@ -7,6 +7,7 @@ struct CelebrationView: View {
     let onPlayAgain: () -> Void
     let onDismiss: () -> Void
     var onNext: (() -> Void)? = nil                    // challenges: go on to the next level
+    var onShare: (() -> Void)? = nil                   // replay the song as a video to share (nil: recording unavailable)
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var shown = false
@@ -54,6 +55,10 @@ struct CelebrationView: View {
                 }
             }
             .padding(.top, 6)
+            if let onShare {
+                Button("🎬 Share a video", action: onShare).buttonStyle(Chip())
+                    .accessibilityHint("Plays the song again and records it, to send or post")
+            }
         }
         .padding(.horizontal, 26).padding(.vertical, 22)
         .background(LinearGradient(colors: [.purple, .pink, .orange], startPoint: .topLeading, endPoint: .bottomTrailing),

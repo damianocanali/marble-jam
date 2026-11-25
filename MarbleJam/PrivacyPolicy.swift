@@ -9,7 +9,7 @@ enum AppLinks {
 
 /// The privacy policy, shown inside the app (Account screen) so it can be read offline. The web page says the same.
 enum PrivacyPolicy {
-    static let updated = "October 24, 2026"
+    static let updated = "November 25, 2026"
 
     static let text = """
     Marble Beats does not collect any personal information. There are no accounts of our own, and no ads, analytics, \
@@ -29,13 +29,17 @@ enum PrivacyPolicy {
     If you turn on reminders, they are made and kept on your device; nothing is sent anywhere. You can turn them off \
     on the Account screen or in Settings.
 
+    Videos
+    "Share a video" records the game screen and its music (never the microphone) while your song plays. The video stays \
+    on your device until you choose where to send or save it, and the app asks a grown-up first.
+
     Purchases
     Marble packs are optional in-app purchases handled by Apple. We never see your payment details; Apple only tells the \
     app which packs you own.
 
     Children
     Marble Beats is made for the whole family. Because we don't collect personal information from anyone, we don't \
-    collect it from children either. Purchases are behind a grown-up question, and Apple's Ask to Buy works as usual.
+    collect it from children either. Purchases and sharing are behind a grown-up question, and Apple's Ask to Buy works as usual.
 
     Changes
     If this policy ever changes, the new version will be in the app and on our website before the change takes effect.

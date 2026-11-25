@@ -5,7 +5,7 @@ A marble-run music game for families: build a course, drop the marble, and every
 
 Native rebuild of the web prototype. SwiftUI for the controls, SpriteKit for the run, AVAudioEngine for sound.
 
-**Status:** builds and passes its unit tests with `xcodegen && xcodebuild test -scheme MarbleJam -destination 'platform=iOS Simulator,name=iPhone 17'`.
+**Status:** builds and passes its unit tests with `xcodegen && xcodebuild test -scheme MarbleJam -destination 'platform=iOS Simulator,name=iPhone 17'`. GitHub Actions runs the same tests on every pull request and push to main (`.github/workflows/ios-tests.yml`: newest Xcode on the `macos-26` runner, newest iPhone simulator, signed ad hoc to run locally (no certificates); build and test as separate steps, a test stuck for 5 minutes fails); a failed or timed-out run keeps the `.xcresult` and logs as an artifact.
 
 ## Build
 1. Install XcodeGen once: `brew install xcodegen`
@@ -18,7 +18,8 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `Engine.swift`      rules, pads, the fixed-step simulation, the "pad on the beat" helper, the demo song
 - `Synth.swift`       bell/pluck synth on the audio clock
 - `GameModel.swift`   app state: course, undo, saving, playback
-- `Course3D.swift` / `SceneMapping.swift` the 3D room (SceneKit): warm wall, spot light with shadows, brass pieces on wires, chrome marble, angled show camera; the 2D `RunScene` on top draws labels and guides, handles touches and drives it
+- Recording a reel (DEBUG build, simulator): `xcrun simctl launch booted com.marblejam.app -mbSong demo -mbAutoPlay 2 -mbSeason off -mbClean 1`, then `xcrun simctl io booted recordVideo reel.mp4`: the buttons fade away while the song plays
+- `Course3D.swift` / `SceneMapping.swift` the 3D room (SceneKit): light plaster wall with the chosen background hung as framed pictures, soft key light with shadows, painted pieces on pegs, wire-rail ramps, a rolling glass marble (the skin is its core), and a close show camera that follows the marble while a song plays; the look's numbers are in `RoomLook` at the top of `Course3D.swift`. The 2D `RunScene` on top draws labels and guides, handles touches and drives it
 - `RunScene.swift`    SpriteKit drawing and touch handling
 - `ContentView.swift` header, hint, buttons
 - `RootView.swift`    switches between the menu and the game
@@ -27,6 +28,8 @@ Without XcodeGen: create a new iOS App project (SwiftUI) called MarbleJam and re
 - `Challenge.swift` / `ChallengesView.swift` / `Songbook.swift` 78 challenge levels in 13 worlds (5 main, 8 holiday), generated from working solutions (melody, fix, target), stars and unlocking; short public-domain tunes
 - `GameCenter.swift` Game Center sign-in, leaderboard and achievements. Create these in App Store Connect (Game Center): the leaderboard `marblejam.stars` (a score from 0 to 234: 3 stars on each of the 78 levels) and one achievement per world, `marblejam.world1` to `marblejam.world13` (worlds 1-5 main, 6 Halloween, 7 Thanksgiving, 8 Christmas, 9 New Year's Eve, 10 Valentine's Day, 11 St. Patrick's Day, 12 Easter, 13 Día de los Muertos)
 - `Skins.swift` / `Store.swift` / `StoreView.swift` 41 marble skins drawn in code (free, star and holiday rewards, six packs), StoreKit 2 purchases behind a grown-up question, Restore Purchases. `Products.storekit` is the local test store (Run in Xcode); the same product ids (`Store.productPrefix` + `.pack.glass|space|sports|candy|gems|animals`) must be created in App Store Connect
+- `SongRecorder.swift` "Share a video" on the end-of-song sticker: after the grown-up question, the song replays with the buttons hidden and the logo in the corner while ReplayKit records the screen and the app's sound (up to 30 s), then the share sheet opens
+- `ReviewPrompt.swift` when to ask for an App Store rating: after the second 3-star sticker, once per version, only when the sticker is closed with "Keep editing"/"Stay"
 - `LibraryView.swift` "My Songs": song cards with a course preview, rename/duplicate/delete
 - `Song.swift` / `SongStore.swift` each song saved as a JSON file in Documents/Songs; first-launch migration of the old course
 - `Instrument.swift` / `InstrumentSound.swift` the six instruments (bells, piano, guitar, marimba, drums, 8-bit), each note rendered once and cached

@@ -13,6 +13,7 @@ struct RootView: View {
     @State private var syncTick = 0                       // bumped after iCloud brings in songs or stars, so screens re-read them
     @State private var syncing = false                    // an iCloud song sync is running
     @AppStorage("skin.v1") private var skinID = Skins.classic.id
+    private var skinChoice: SkinChoice { SkinChoice(defaults: .standard, cloud: NSUbiquitousKeyValueStore.default) }
     /// The chosen skin while it is owned (a refunded pack falls back to Classic).
     private var skin: Skin {
         #if DEBUG
@@ -71,7 +72,8 @@ struct RootView: View {
                 })
                     .transition(.opacity)
             case .store:
-                StoreView(store: shop, progress: progress, background: background, skinID: $skinID, onBack: { screen = .menu })
+                StoreView(store: shop, progress: progress, background: background,
+                          skinID: Binding(get: { skinID }, set: { skinID = $0; skinChoice.picked($0) }), onBack: { screen = .menu })
                     .transition(.opacity)
             case .account:
                 AccountView(gameCenter: gameCenter, store: shop, progress: progress, background: background, onBack: { screen = .menu })
@@ -103,7 +105,6 @@ struct RootView: View {
             await connectCloud()
         }
         .onReceive(NotificationCenter.default.publisher(for: NSUbiquitousKeyValueStore.didChangeExternallyNotification)) { _ in pullFromCloud() }
-        .onChange(of: skinID) { _, id in NSUbiquitousKeyValueStore.default.set(id, forKey: "skin.v1") }
         #if DEBUG
         .task {                                                             // captures: press Drop after the delay asked for
             guard let delay = CaptureMode.current.autoPlay, screen == .play else { return }
@@ -137,7 +138,7 @@ struct RootView: View {
 
     private func pullFromCloud() {
         progress.pullFromCloud()
-        if let id = NSUbiquitousKeyValueStore.default.string(forKey: "skin.v1"), id != skinID, Skins.all.contains(where: { $0.id == id }) { skinID = id }
+        if let id = skinChoice.newerFromCloud(than: skinID) { skinID = id }       // only a newer pick from another device
         syncTick += 1
     }
 

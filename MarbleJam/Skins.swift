@@ -475,3 +475,28 @@ enum Skins {
         c.setFillColor(col((0.55, 0.25, 0.05))); dot(c, s, 0.5, 0.5, 0.05)
     }
 }
+
+/// The chosen marble across devices. The newest pick wins, so iCloud bringing in an older value (its first sync after
+/// launch, or another device catching up) never undoes a marble you just chose.
+struct SkinChoice {
+    let defaults: UserDefaults
+    let cloud: KeyValueSync?
+    static let stampKey = "skin.v1.at"                 // when this device last picked (seconds since 1970)
+    static let cloudKey = "skin.v2"                    // ["id": skin id, "at": seconds since 1970]
+    static let oldCloudKey = "skin.v1"                 // plain id, still written so older app versions follow along
+
+    /// A pick made on this device.
+    func picked(_ id: String, at time: Double = Date().timeIntervalSince1970) {
+        defaults.set(time, forKey: Self.stampKey)
+        cloud?.set(["id": id, "at": time], forKey: Self.cloudKey)
+        cloud?.set(id, forKey: Self.oldCloudKey)
+    }
+
+    /// The pick in iCloud, if it is newer than this device's and a marble that exists; nil keeps the current one.
+    func newerFromCloud(than current: String) -> String? {
+        guard let d = cloud?.dictionary(forKey: Self.cloudKey), let id = d["id"] as? String, let at = d["at"] as? Double,
+              at > defaults.double(forKey: Self.stampKey), Skins.all.contains(where: { $0.id == id }) else { return nil }
+        defaults.set(at, forKey: Self.stampKey)
+        return id == current ? nil : id
+    }
+}
